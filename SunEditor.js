@@ -77,11 +77,7 @@ class SunEditor extends Component {
     if (show === true) editor.show();
   }
   render() {
-    return (
-      <div>
-        <textarea id={this.state.id} cols="30" rows="10" />
-      </div>
-    );
+    return <textarea id={this.state.id} cols="30" rows="10" />;
   }
 }
 

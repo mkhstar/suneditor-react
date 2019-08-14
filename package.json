@@ -1,15 +1,15 @@
 {
   "name": "suneditor-react",
-  "version": "1.0.0",
+  "version": "1.0.9",
   "description": "A React Component for Suneditor",
   "repository": {
     "type": "git",
     "url": "https://github.com/mkhstar/suneditor-react"
   },
-  "main": "main.js",
+  "main": "dist/main.js",
   "scripts": {
     "start": "parcel index.html",
-    "build": "parcel main.js"
+    "build": "parcel build main.js"
   },
   "keywords": [
     "editor",
@@ -27,12 +27,14 @@
   },
   "devDependencies": {
     "babel-core": "^6.26.3",
+    "babel-loader": "^8.0.6",
     "babel-preset-env": "^1.7.0",
     "babel-preset-react": "^6.24.1",
     "react": "^16.9.0",
     "react-dom": "^16.9.0"
   },
   "dependencies": {
+    "main.js": "0.0.1",
     "prop-types": "^15.7.2",
     "suneditor": "^2.18.0"
   }
