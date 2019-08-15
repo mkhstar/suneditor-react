@@ -32,6 +32,7 @@ class SunEditor extends Component {
           : "en"
     });
     const {
+      autoFocus,
       setOptions,
       insertHTML,
       setContents,
@@ -75,6 +76,13 @@ class SunEditor extends Component {
     if (disabled === true) editor.disabled();
     if (hide === true) editor.hide();
     if (show === true) editor.show();
+    if (autoFocus !== true) {
+      const containsEditor =
+        window
+          .getSelection()
+          .anchorNode.className.indexOf("sun-editor-editable") >= 0;
+      if (containsEditor === true) window.getSelection().removeAllRanges();
+    }
   }
   render() {
     return <textarea id={this.state.id} cols="30" rows="10" />;
@@ -97,6 +105,7 @@ SunEditor.propTypes = {
   disabled: PropTypes.bool,
   hide: PropTypes.bool,
   show: PropTypes.bool,
+  autoFocus: PropTypes.bool,
   lang: PropTypes.oneOfType([PropTypes.object, PropTypes.string])
 };
 export default SunEditor;
