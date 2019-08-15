@@ -1,13 +1,12 @@
 {
   "name": "suneditor-react",
-  "version": "1.0.13",
+  "version": "1.0.14",
   "description": "A React Component for Suneditor",
   "repository": {
     "type": "git",
     "url": "https://github.com/mkhstar/suneditor-react"
   },
   "main": "dist/main",
-  "typings": "dist/main",
   "scripts": {
     "start": "parcel index.html",
     "build": "parcel build main.js"
