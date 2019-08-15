@@ -68,7 +68,7 @@ class SunEditor extends Component {
       editor.onImageUploadError = (errorMessage, result) =>
         onImageUploadError(errorMessage, result);
     if (setOptions) editor.setOptions(setOptions);
-    if (setContents) editor.setContent(setContents);
+    if (setContents) editor.setContents(setContents);
     if (insertHTML) editor.insertHTML(insertHTML);
     if (appendContents) editor.appendContents(appendContents);
     if (enabled === true) editor.enabled();
