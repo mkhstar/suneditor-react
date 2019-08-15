@@ -76,11 +76,11 @@ class SunEditor extends Component {
     if (disabled === true) editor.disabled();
     if (hide === true) editor.hide();
     if (show === true) editor.show();
-    if (autoFocus !== true) {
+    if (autoFocus !== true && window.getSelection().anchorNode) {
       const containsEditor =
         window
           .getSelection()
-          .anchorNode.className.indexOf("sun-editor-editable") >= 0;
+          .anchorNode.className.indexOf("se-wrapper-wysiwyg") >= 0;
       if (containsEditor === true) window.getSelection().removeAllRanges();
     }
   }
