@@ -35,6 +35,7 @@ export default MyComponent;
 # Props
 
 **lang**
+
 **_Language of editor_**
 
 ```javascript
@@ -48,6 +49,7 @@ render() {
 ```
 
 **setOptions**
+
 **_Set Options (Settings) for the editor_**
 [Click to see all options available](https://github.com/JiHong88/SunEditor/blob/master/README.md#options)
 
@@ -70,6 +72,7 @@ render() {
 ```
 
 **setContents**
+
 **_Set Editor Contents_**
 
 ```javascript
@@ -80,6 +83,7 @@ render() {
 ```
 
 **appendContents**
+
 **_Append Editor Content_**
 
 ```javascript
@@ -90,6 +94,7 @@ render() {
 ```
 
 **enabled**
+
 **_Enable Editor_**
 
 ```javascript
@@ -100,6 +105,7 @@ render() {
 ```
 
 **disable**
+
 **_Disable Editor_**
 
 ```javascript
@@ -110,6 +116,7 @@ render() {
 ```
 
 **hide**
+
 **_Hide Editor_**
 
 ```javascript
@@ -120,6 +127,7 @@ render() {
 ```
 
 **show**
+
 **_Show Editor_**
 
 ```javascript
@@ -130,6 +138,7 @@ render() {
 ```
 
 **onChange**
+
 **_Has the content inside editor changed?_**
 
 ```javascript
@@ -143,6 +152,7 @@ render() {
 ```
 
 **onScroll**
+
 **_Has the editor been scrolled?_**
 
 ```javascript
@@ -155,6 +165,7 @@ render() {
 ```
 
 **onClick**
+
 **_Has the editor been clicked?_**
 
 ```javascript
@@ -167,6 +178,7 @@ render() {
 ```
 
 **onKeyUp**
+
 **_Has the key been released up?_**
 
 ```javascript
@@ -179,6 +191,7 @@ render() {
 ```
 
 **onKeyDown**
+
 **_Has the key been pressed down?_**
 
 ```javascript
@@ -191,6 +204,7 @@ render() {
 ```
 
 **onDrop**
+
 **_Has something been dropped into the editor?_**
 
 ```javascript
@@ -203,6 +217,7 @@ render() {
 ```
 
 **onImageUpload**
+
 **_Has an image been uploaded into the editor?_**
 
 ```javascript
@@ -215,6 +230,7 @@ render() {
 ```
 
 **onImageUploadError**
+
 **_Has an image been uploaded into the editor?_**
 
 ```javascript
