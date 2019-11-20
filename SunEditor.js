@@ -75,7 +75,13 @@ class SunEditor extends Component {
     if (disabled === true) editor.disabled();
     if (hide === true) editor.hide();
     if (show === true) editor.show();
+    this.currentEditor = editor;
   }
+  
+  componentWillUnmount(){
+    this.currentEditor.destroy();
+  }
+
   render() {
     return <textarea id={this.state.id} cols="30" rows="10" />;
   }
