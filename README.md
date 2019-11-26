@@ -1,10 +1,10 @@
-# SunEditor React
+# suneditor-react
 
-Pure React Component for [SunEditor](https://suneditor.com)
+> A React Component for [SunEditor](https://suneditor.com)
+
+[![NPM](https://img.shields.io/npm/v/suneditor-react.svg)](https://www.npmjs.com/package/suneditor-react) [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
 
 ![WYSIWYG HTML Editor](http://suneditor.com/docs/screen-main-w.png?v=2180)
-
->
 
 ## Install
 
@@ -45,6 +45,19 @@ render() {
 	// Alternatively, provide object containing your localization for lang prop
 	// Default is en
 	// lang prop can be enum of strings in this array ["en", "da", "de", "fr", "ja", "ko", "ru", "zh_cn"]
+}
+```
+
+**width**
+
+**_Set Editor's width_**
+```javascript
+//...
+// Accepts number representing px all percentage string
+// eg 100 or 100%
+// default 100%
+render() {
+	return <SunEditor width="100%" />
 }
 ```
 
@@ -226,6 +239,18 @@ handleImageUpload(targetImgElement, index, state, imageInfo, remainingFilesCount
 }
 render() {
 	return <SunEditor onImageUpload={handleImageUpload} />
+}
+```
+**onPaste**
+
+**_Has something been pasted into the suneditor?**
+
+```javascript
+handlePaste(e, cleanData, maxCharCount){
+	console.log(e, cleanData, maxCharCount)
+}
+render() {
+	return <SunEditor onPaste={handlePaste} />
 }
 ```
 
