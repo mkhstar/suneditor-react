@@ -4,7 +4,6 @@ const getLanguage = lang => {
       return lang;
     case 'string':
       return require('suneditor/src/lang')[lang];
-      break;
   }
   return require('suneditor/src/lang/en');
 };
