@@ -53,7 +53,7 @@ render() {
 **_Set Editor's width_**
 ```javascript
 //...
-// Accepts number representing px all percentage string
+// Accepts number representing px or percentage string
 // eg 100 or 100%
 // default 100%
 render() {
