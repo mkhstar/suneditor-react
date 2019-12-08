@@ -1,6 +1,6 @@
 {
   "name": "suneditor-react",
-  "version": "2.1.5",
+  "version": "2.1.6",
   "description": "A React Component for Suneditor",
   "repository": {
     "type": "git",
@@ -8,7 +8,8 @@
   },
   "main": "dist/main",
   "scripts": {
-    "build": "parcel build main.js"
+    "build": "rm -rf dist && parcel build main.js",
+    "start": "parcel src/index.html"
   },
   "keywords": [
     "editor",

@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
-import 'suneditor/dist/css/suneditor.min.css';
 import suneditor from 'suneditor';
-import plugins from 'suneditor/src/plugins';
+import getPlugins from './misc/getPlugins'
 import getLanguage from './misc/getLanguage';
 import PropTypes from 'prop-types';
 
@@ -20,14 +19,13 @@ class SunEditor extends Component {
     };
   }
   componentDidMount() {
-    const { lang, width = '100%' } = this.props;
+    const { lang, setOptions = {}, width = '100%' } = this.props;
     const editor = suneditor.create(this.state.id, {
-      plugins,
+      plugins: getPlugins(setOptions),
       width,
       lang: getLanguage(lang)
     });
     const {
-      setOptions,
       insertHTML,
       setContents,
       appendContents,
