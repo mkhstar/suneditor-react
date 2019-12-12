@@ -1,12 +1,12 @@
 {
   "name": "suneditor-react",
-  "version": "2.1.6",
+  "version": "2.2.0",
   "description": "A React Component for Suneditor",
   "repository": {
     "type": "git",
     "url": "https://github.com/mkhstar/suneditor-react"
   },
-  "main": "dist/main",
+  "main": "dist/main.js",
   "scripts": {
     "build": "rm -rf dist && parcel build main.js",
     "start": "parcel src/index.html"
@@ -36,6 +36,11 @@
   },
   "dependencies": {
     "prop-types": "^15.7.2",
-    "suneditor": "^2.21.2"
-  }
+    "suneditor": "^2.23.0"
+  },
+  "browserslist": [
+    "last 1 version",
+    "> 1%",
+    "IE 10"
+  ]
 }

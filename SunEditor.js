@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import suneditor from 'suneditor';
-import getPlugins from './misc/getPlugins'
+import getPlugins from './misc/getPlugins';
 import getLanguage from './misc/getLanguage';
 import PropTypes from 'prop-types';
 
@@ -13,6 +13,9 @@ class SunEditor extends Component {
     this.state = {
       id:
         'editor' +
+        +
+        Date.now().toString() 
+        +
         Math.random()
           .toString(36)
           .slice(-8)

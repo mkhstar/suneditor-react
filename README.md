@@ -17,9 +17,9 @@ $ npm install --save suneditor-react
 ## Getting Started
 
 ```javascript
-import React from "react";
-import SunEditor from "suneditor-react";
-import "suneditor/dist/css/suneditor.min.css"; // Import Sun Editor's CSS File
+import React from 'react';
+import SunEditor from 'suneditor-react';
+import 'suneditor/dist/css/suneditor.min.css'; // Import Sun Editor's CSS File
 
 const MyComponent = props => {
   return (
@@ -34,6 +34,8 @@ export default MyComponent;
 
 # Props
 
+## Basic Settings
+
 **lang**
 
 **_Language of editor_**
@@ -42,20 +44,22 @@ export default MyComponent;
 //...
 render() {
 	return <SunEditor lang="en" />
-	// Alternatively, provide object containing your localization for lang prop
 	// Default is en
-	// lang prop can be enum of strings in this array ["en", "da", "de", "fr", "ja", "ko", "ru", "zh_cn"]
+	// lang prop can be one of the strings provided in this array ["en", "da", "de", "fr", "ja", "ko", "ru", "zh_cn"]
+	// Alternatively, an object of your language can be passed to this prop. To learn how to do it refer to the bottom of the page
 }
 ```
 
 **width**
 
 **_Set Editor's width_**
+
 ```javascript
 //...
-// Accepts number representing px or percentage string
-// eg 100 or 100%
-// default 100%
+// Accepts number representing px
+// or percentage string
+// eg width={100} or width="100%"
+// default is 100%
 render() {
 	return <SunEditor width="100%" />
 }
@@ -70,16 +74,19 @@ render() {
 
 import SunEditor,{buttonList} from "suneditor-react";
 /*
-	buttonList.basic = basic tools for wordprocessing
-	buttonList.formatting = most tools used for formatting
+	buttonList.basic = basic buttons for wordprocessing
+	buttonList.formatting = most tools used for formatting - This is the default option
 	buttonList.complex = contains most of the buttons
+
+	Note that you do not need to pass plugins explicitly from the suneditor package. suneditor-react handles it behind the scenes
 */
 
 //...
 render() {
 	return <SunEditor setOptions={{
 				    height: 200,
-				    buttonList: buttonList.formatting // Or Array of button list
+					buttonList: buttonList.formatting // Or Array of button list, eg. [['font', 'align'], ['image']]
+					// Other option
 			}} />
 }
 ```
@@ -150,9 +157,21 @@ render() {
 }
 ```
 
+## Events
+
+**Note** that you need to bind the function passed to the event in the constructor if you are using a _class Component_, or use arrow functions instead. This is just how react works. Otherwise it won't work. This documentation assumes you bind all your functions to the constructor. Eg below:
+
+```javascript
+
+constructor(props) {
+	super(props);
+	this.handleChange = this.handleChange.bind(this)
+}
+```
+
 **onChange**
 
-**_Has the content inside editor changed?_**
+**_Has the content inside the editor been changed?_**
 
 ```javascript
 
@@ -192,7 +211,7 @@ render() {
 
 **onKeyUp**
 
-**_Has the key been released up?_**
+**_Has the key been released up in the editor?_**
 
 ```javascript
 handleKeyUp(event){
@@ -205,7 +224,7 @@ render() {
 
 **onKeyDown**
 
-**_Has the key been pressed down?_**
+**_Has the key been pressed down in the editor?_**
 
 ```javascript
 handleKeyDown(event){
@@ -241,9 +260,10 @@ render() {
 	return <SunEditor onImageUpload={handleImageUpload} />
 }
 ```
+
 **onPaste**
 
-**_Has something been pasted into the suneditor?**
+**\_Has something been pasted into the suneditor?**
 
 ```javascript
 handlePaste(e, cleanData, maxCharCount){
@@ -256,7 +276,7 @@ render() {
 
 **onImageUploadError**
 
-**_Has an image been uploaded into the editor?_**
+**_Has an image uploaded to the editor resulted in an error?_**
 
 ```javascript
 handleImageUploadError(errorMessage, result){
@@ -269,214 +289,215 @@ render() {
 
 ## Editor Language Object
 
-You can translate the object below to any other language and pass it to the lang prop to set your locale language if it is not part of the enums listed above.
+You can translate the object below to any other language and pass it to the lang prop to set your locale language if it is not part of the strings of array above.
 
 ```javascript
+
 {
 
-toolbar: {
+    toolbar: {
 
-default: 'Default',
+        default: 'Default',
 
-save: 'Save',
+        save: 'Save',
 
-font: 'Font',
+        font: 'Font',
 
-formats: 'Formats',
+        formats: 'Formats',
 
-fontSize: 'Size',
+        fontSize: 'Size',
 
-bold: 'Bold',
+        bold: 'Bold',
 
-underline: 'Underline',
+        underline: 'Underline',
 
-italic: 'Italic',
+        italic: 'Italic',
 
-strike: 'Strike',
+        strike: 'Strike',
 
-subscript: 'Subscript',
+        subscript: 'Subscript',
 
-superscript: 'Superscript',
+        superscript: 'Superscript',
 
-removeFormat: 'Remove Format',
+        removeFormat: 'Remove Format',
 
-fontColor: 'Font Color',
+        fontColor: 'Font Color',
 
-hiliteColor: 'Hilite Color',
+        hiliteColor: 'Hilite Color',
 
-indent: 'Indent',
+        indent: 'Indent',
 
-outdent: 'Outdent',
+        outdent: 'Outdent',
 
-align: 'Align',
+        align: 'Align',
 
-alignLeft: 'Align left',
+        alignLeft: 'Align left',
 
-alignRight: 'Align right',
+        alignRight: 'Align right',
 
-alignCenter: 'Align center',
+        alignCenter: 'Align center',
 
-alignJustify: 'Align justify',
+        alignJustify: 'Align justify',
 
-list: 'list',
+        list: 'list',
 
-orderList: 'Ordered list',
+        orderList: 'Ordered list',
 
-unorderList: 'Unordered list',
+        unorderList: 'Unordered list',
 
-horizontalRule: 'horizontal line',
+        horizontalRule: 'horizontal line',
 
-hr_solid: 'solid',
+        hr_solid: 'solid',
 
-hr_dotted: 'dotted',
+        hr_dotted: 'dotted',
 
-hr_dashed: 'dashed',
+        hr_dashed: 'dashed',
 
-table: 'Table',
+        table: 'Table',
 
-link: 'Link',
+        link: 'Link',
 
-image: 'Image',
+        image: 'Image',
 
-video: 'Video',
+        video: 'Video',
 
-fullScreen: 'Full screen',
+        fullScreen: 'Full screen',
 
-showBlocks: 'Show blocks',
+        showBlocks: 'Show blocks',
 
-codeView: 'Code view',
+        codeView: 'Code view',
 
-undo: 'Undo',
+        undo: 'Undo',
 
-redo: 'Redo',
+        redo: 'Redo',
 
-preview: 'Preview',
+        preview: 'Preview',
 
-print: 'print',
+        print: 'print',
 
-tag_p: 'Paragraph',
+        tag_p: 'Paragraph',
 
-tag_div: 'Normal (DIV)',
+        tag_div: 'Normal (DIV)',
 
-tag_h: 'Header',
+        tag_h: 'Header',
 
-tag_blockquote: 'Quote',
+        tag_blockquote: 'Quote',
 
-tag_pre: 'Code',
+        tag_pre: 'Code',
 
-template: 'Template'
+        template: 'Template'
 
-},
+    },
 
-dialogBox: {
+    dialogBox: {
 
-linkBox: {
+        linkBox: {
 
-title: 'Insert Link',
+            title: 'Insert Link',
 
-url: 'URL to link',
+            url: 'URL to link',
 
-text: 'Text to display',
+            text: 'Text to display',
 
-newWindowCheck: 'Open in new window'
+            newWindowCheck: 'Open in new window'
 
-},
+        },
 
-imageBox: {
+        imageBox: {
 
-title: 'Insert image',
+            title: 'Insert image',
 
-file: 'Select from files',
+            file: 'Select from files',
 
-url: 'Image URL',
+            url: 'Image URL',
 
-altText: 'Alternative text'
+            altText: 'Alternative text'
 
-},
+        },
 
-videoBox: {
+        videoBox: {
 
-title: 'Insert Video',
+            title: 'Insert Video',
 
-url: 'Media embed URL, YouTube'
+            url: 'Media embed URL, YouTube'
 
-},
+        },
 
-caption: 'Insert description',
+        caption: 'Insert description',
 
-close: 'Close',
+        close: 'Close',
 
-submitButton: 'Submit',
+        submitButton: 'Submit',
 
-revertButton: 'Revert',
+        revertButton: 'Revert',
 
-proportion: 'constrain proportions',
+        proportion: 'constrain proportions',
 
-width: 'Width',
+        width: 'Width',
 
-height: 'Height',
+        height: 'Height',
 
-basic: 'Basic',
+        basic: 'Basic',
 
-left: 'Left',
+        left: 'Left',
 
-right: 'Right',
+        right: 'Right',
 
-center: 'Center'
+        center: 'Center'
 
-},
+    },
 
-controller: {
+    controller: {
 
-edit: 'Edit',
+        edit: 'Edit',
 
-remove: 'Remove',
+        remove: 'Remove',
 
-insertRowAbove: 'Insert row above',
+        insertRowAbove: 'Insert row above',
 
-insertRowBelow: 'Insert row below',
+        insertRowBelow: 'Insert row below',
 
-deleteRow: 'Delete row',
+        deleteRow: 'Delete row',
 
-insertColumnBefore: 'Insert column before',
+        insertColumnBefore: 'Insert column before',
 
-insertColumnAfter: 'Insert column after',
+        insertColumnAfter: 'Insert column after',
 
-deleteColumn: 'Delete column',
+        deleteColumn: 'Delete column',
 
-resize100: 'Resize 100%',
+        resize100: 'Resize 100%',
 
-resize75: 'Resize 75%',
+        resize75: 'Resize 75%',
 
-resize50: 'Resize 50%',
+        resize50: 'Resize 50%',
 
-resize25: 'Resize 25%',
+        resize25: 'Resize 25%',
 
-mirrorHorizontal: 'Mirror, Horizontal',
+        mirrorHorizontal: 'Mirror, Horizontal',
 
-mirrorVertical: 'Mirror, Vertical',
+        mirrorVertical: 'Mirror, Vertical',
 
-rotateLeft: 'Rotate left',
+        rotateLeft: 'Rotate left',
 
-rotateRight: 'Rotate right',
+        rotateRight: 'Rotate right',
 
-maxSize: 'Max size',
+        maxSize: 'Max size',
 
-minSize: 'Min size',
+        minSize: 'Min size',
 
-tableHeader: 'Table header',
+        tableHeader: 'Table header',
 
-mergeCells: 'Merge cells',
+        mergeCells: 'Merge cells',
 
-splitCells: 'Split Cells',
+        splitCells: 'Split Cells',
 
-HorizontalSplit: 'Horizontal split',
+        HorizontalSplit: 'Horizontal split',
 
-VerticalSplit: 'Vertical split'
+        VerticalSplit: 'Vertical split'
+
+    }
 
 }
-
-};
 
 ```
 
