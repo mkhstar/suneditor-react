@@ -113,7 +113,13 @@ render() {
 }
 ```
 
-**enabled**
+### Editor Status
+**Note:** This prop is now dynamic! Which means that, the Boolean passed to the Editor's status prop (like enable, disable, show, hide) can be used to toggle the Editor Status.
+
+This is really useful when you are building an app that requires **validation**.
+
+
+**enable**
 
 **_Enable Editor_**
 

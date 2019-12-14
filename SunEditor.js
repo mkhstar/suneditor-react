@@ -5,7 +5,7 @@ import getLanguage from './misc/getLanguage';
 import PropTypes from 'prop-types';
 
 /**
- * @augments {Component<{  onChange:Function,  onScroll:Function,  onClick:Function,  onKeyUp:Function,  onKeyDown:Function,  onDrop:Function,  onImageUpload:Function,  onImageUploadError:Function,  setOptions:object,  setContents:string,  appendContents:string,  enabled:boolean,  disabled:boolean,  hide:boolean,  show:boolean,  lang:oneOfType(object,string])>}
+ * @augments {Component<{  onChange:Function,  onScroll:Function,  onClick:Function,  onKeyUp:Function,  onKeyDown:Function,  onDrop:Function,  onImageUpload:Function,  onImageUploadError:Function,  setOptions:object,  setContents:string,  appendContents:string,  enable:boolean,  disable:boolean,  hide:boolean,  show:boolean,  lang:oneOfType(object,string])>}
  */
 class SunEditor extends Component {
   constructor(props) {
@@ -13,9 +13,7 @@ class SunEditor extends Component {
     this.state = {
       id:
         'editor' +
-        +
-        Date.now().toString() 
-        +
+        +Date.now().toString() +
         Math.random()
           .toString(36)
           .slice(-8)
@@ -32,8 +30,8 @@ class SunEditor extends Component {
       insertHTML,
       setContents,
       appendContents,
-      disabled,
-      enabled,
+      disable,
+      enable,
       hide,
       show,
       onScroll,
@@ -71,11 +69,31 @@ class SunEditor extends Component {
     if (setContents) editor.setContents(setContents);
     if (insertHTML) editor.insertHTML(insertHTML);
     if (appendContents) editor.appendContents(appendContents);
-    if (enabled === true) editor.enabled();
-    if (disabled === true) editor.disabled();
+    if (enable === true) editor.enabled();
+    if (disable === true) editor.disabled();
     if (hide === true) editor.hide();
     if (show === true) editor.show();
     this.editor = editor;
+  }
+
+  componentDidUpdate(prevProps) {
+    // Props compared
+    if (prevProps.enable !== this.props.enable) {
+      if (this.props.enable === true) this.editor.enabled();
+      else this.editor.disabled();
+    }
+    if (prevProps.disable !== this.props.disable) {
+      if (this.props.disable === true) this.editor.disabled();
+      else this.editor.enabled();
+    }
+    if (prevProps.show !== this.props.show) {
+      if (this.props.show === true) this.editor.show();
+      else this.editor.hide();
+    }
+    if (prevProps.hide !== this.props.hide) {
+      if (this.props.hide === true) this.editor.hide();
+      else this.editor.show();
+    }
   }
 
   componentWillUnmount() {
@@ -100,8 +118,8 @@ SunEditor.propTypes = {
   setOptions: PropTypes.object,
   setContents: PropTypes.string,
   appendContents: PropTypes.string,
-  enabled: PropTypes.bool,
-  disabled: PropTypes.bool,
+  enable: PropTypes.bool,
+  disable: PropTypes.bool,
   hide: PropTypes.bool,
   show: PropTypes.bool,
   autoFocus: PropTypes.bool,
