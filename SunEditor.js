@@ -54,14 +54,14 @@ class SunEditor extends Component {
       editor.onPaste = (e, cleanData, maxCharCount) =>
         onPaste(e, cleanData, maxCharCount);
     if (onImageUpload)
-      editor.onDrop = (
+      editor.onImageUpload = (
         targetImgElement,
         index,
         state,
         imageInfo,
         remainingFilesCount
       ) =>
-        onDrop(targetImgElement, index, state, imageInfo, remainingFilesCount);
+        onImageUpload(targetImgElement, index, state, imageInfo, remainingFilesCount);
     if (onImageUploadError)
       editor.onImageUploadError = (errorMessage, result) =>
         onImageUploadError(errorMessage, result);
