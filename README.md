@@ -93,7 +93,9 @@ render() {
 
 **setContents**
 
-**_Set Editor Contents_**
+**_Set Editor's Initial Content_**
+
+**Note** ``setContents`` is used to set the initial contents of the editor. If you are setting the contents with a state variable, make sure that you are not using the same variable to handle the ``onChange`` event.
 
 ```javascript
 //...
@@ -178,6 +180,8 @@ constructor(props) {
 ```
 
 **onChange**
+
+**Note** ``onChange`` is used to handle changes to the editor. Make sure that you are not using the same variable for ``setContents``.
 
 **_Has the content inside the editor been changed?_**
 
