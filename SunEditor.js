@@ -1,8 +1,8 @@
-import React, { Component } from 'react';
-import suneditor from 'suneditor';
-import getPlugins from './misc/getPlugins';
-import getLanguage from './misc/getLanguage';
-import PropTypes from 'prop-types';
+import React, { Component } from "react";
+import suneditor from "suneditor";
+import getPlugins from "./misc/getPlugins";
+import getLanguage from "./misc/getLanguage";
+import PropTypes from "prop-types";
 
 /**
  * @augments {Component<{  onChange:Function,  onScroll:Function,  onClick:Function,  onKeyUp:Function,  onKeyDown:Function,  onDrop:Function,  onImageUpload:Function,  onImageUploadError:Function,  setOptions:object,  setContents:string,  appendContents:string,  enable:boolean,  disable:boolean,  hide:boolean,  show:boolean,  lang:oneOfType(object,string])>}
@@ -12,7 +12,7 @@ class SunEditor extends Component {
     super(props);
     this.state = {
       id:
-        'editor' +
+        "editor" +
         +Date.now().toString() +
         Math.random()
           .toString(36)
@@ -20,7 +20,7 @@ class SunEditor extends Component {
     };
   }
   componentDidMount() {
-    const { lang, setOptions = {}, width = '100%' } = this.props;
+    const { lang, setOptions = {}, width = "100%" } = this.props;
     const editor = suneditor.create(this.state.id, {
       plugins: getPlugins(setOptions),
       width,
@@ -34,6 +34,7 @@ class SunEditor extends Component {
       enable,
       hide,
       show,
+      toolbarShow,
       onScroll,
       onClick,
       onKeyDown,
@@ -61,7 +62,13 @@ class SunEditor extends Component {
         imageInfo,
         remainingFilesCount
       ) =>
-        onImageUpload(targetImgElement, index, state, imageInfo, remainingFilesCount);
+        onImageUpload(
+          targetImgElement,
+          index,
+          state,
+          imageInfo,
+          remainingFilesCount
+        );
     if (onImageUploadError)
       editor.onImageUploadError = (errorMessage, result) =>
         onImageUploadError(errorMessage, result);
@@ -71,6 +78,7 @@ class SunEditor extends Component {
     if (appendContents) editor.appendContents(appendContents);
     if (enable === true) editor.enabled();
     if (disable === true) editor.disabled();
+    if (toolbarShow === true) editor.toolbar.show();
     if (hide === true) editor.hide();
     if (show === true) editor.show();
     this.editor = editor;
@@ -79,10 +87,10 @@ class SunEditor extends Component {
   componentDidUpdate(prevProps) {
     // Props compared
     if (prevProps.setContents !== this.props.setContents) {
-      this.editor.setContents(this.props.setContents)
+      this.editor.setContents(this.props.setContents);
     }
     if (prevProps.appendContents !== this.props.appendContents) {
-      this.editor.appendContents(this.props.appendContents)
+      this.editor.appendContents(this.props.appendContents);
     }
     if (prevProps.enable !== this.props.enable) {
       if (this.props.enable === true) this.editor.enabled();
@@ -91,6 +99,10 @@ class SunEditor extends Component {
     if (prevProps.disable !== this.props.disable) {
       if (this.props.disable === true) this.editor.disabled();
       else this.editor.enabled();
+    }
+    if (prevProps.toolbarShow !== this.props.toolbarShow) {
+      if (this.props.toolbarShow === true) this.editor.toolbar.show();
+      else this.editor.toolbar.hide();
     }
     if (prevProps.show !== this.props.show) {
       if (this.props.show === true) this.editor.show();
@@ -107,7 +119,7 @@ class SunEditor extends Component {
   }
 
   render() {
-    return <textarea id={this.state.id} cols='30' rows='10' />;
+    return <textarea id={this.state.id} cols="30" rows="10" />;
   }
 }
 
