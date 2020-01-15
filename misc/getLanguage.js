@@ -4,12 +4,12 @@ const getLanguage = lang => {
       return lang;
     case 'string':
       switch (lang) {
+        case 'en':
+          return require('suneditor/src/lang/en');
         case 'da':
           return require('suneditor/src/lang/da');
         case 'de':
           return require('suneditor/src/lang/de');
-        case 'en':
-          return require('suneditor/src/lang/en');
         case 'es':
           return require('suneditor/src/lang/es');
         case 'fr':
