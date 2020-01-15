@@ -17,9 +17,9 @@ $ npm install --save suneditor-react
 ## Getting Started
 
 ```javascript
-import React from 'react';
-import SunEditor from 'suneditor-react';
-import 'suneditor/dist/css/suneditor.min.css'; // Import Sun Editor's CSS File
+import React from "react";
+import SunEditor from "suneditor-react";
+import "suneditor/dist/css/suneditor.min.css"; // Import Sun Editor's CSS File
 
 const MyComponent = props => {
   return (
@@ -95,7 +95,7 @@ render() {
 
 **_Set Editor's Initial Content_**
 
-**Note** ``setContents`` is used to set the initial contents of the editor. If you are setting the contents with a state variable, make sure that you are not using the same variable to handle the ``onChange`` event.
+**Note** `setContents` is used to set the initial contents of the editor. If you are setting the contents with a state variable, make sure that you are not using the same variable to handle the `onChange` event.
 
 ```javascript
 //...
@@ -116,10 +116,10 @@ render() {
 ```
 
 ### Editor Status
+
 **Note:** This prop is now dynamic! Which means that, the Boolean passed to the Editor's status prop (like enable, disable, show, hide) can be used to toggle the Editor Status.
 
 This is really useful when you are building an app that requires **validation**.
-
 
 **enable**
 
@@ -140,6 +140,17 @@ render() {
 //...
 render() {
 	return <SunEditor disable={true} />
+}
+```
+
+**toolbarShow**
+
+**_Show/Hide toolbar_**
+
+```javascript
+//...
+render() {
+	return <SunEditor toolbarShow={true} />
 }
 ```
 
@@ -164,6 +175,7 @@ render() {
 	return <SunEditor show={true} />
 }
 ```
+
 Example of Dynamic Editor Status, Code is Included in the gif
 ![Dynamic Editor Status Code](https://media.giphy.com/media/mCgoSYsr707bYW0ybB/giphy.gifhttps://media.giphy.com/media/mCgoSYsr707bYW0ybB/giphy.gif)
 
@@ -181,7 +193,7 @@ constructor(props) {
 
 **onChange**
 
-**Note** ``onChange`` is used to handle changes to the editor. Make sure that you are not using the same variable for ``setContents``.
+**Note** `onChange` is used to handle changes to the editor. Make sure that you are not using the same variable for `setContents`.
 
 **_Has the content inside the editor been changed?_**
 
