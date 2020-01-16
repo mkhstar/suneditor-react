@@ -45,7 +45,7 @@ export default MyComponent;
 render() {
 	return <SunEditor lang="en" />
 	// Default is en
-	// lang prop can be one of the strings provided in this array ["en", "da", "de", "fr", "ja", "ko", "ru", "zh_cn"]
+	// lang prop can be one of the strings provided in this array ["en", "da", "de", "es", "fr", "ja", "ko", "pt_br", "ru", "zh_cn"]
 	// Alternatively, an object of your language can be passed to this prop. To learn how to do it refer to the bottom of the page
 }
 ```
