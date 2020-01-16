@@ -34,6 +34,8 @@ class SunEditor extends Component {
       enable,
       hide,
       show,
+      showToolbar = true,
+      enableToolbar = true,
       onScroll,
       onClick,
       onKeyDown,
@@ -73,7 +75,11 @@ class SunEditor extends Component {
     if (disable === true) editor.disabled();
     if (hide === true) editor.hide();
     if (show === true) editor.show();
-    this.editor = editor;
+    if (showToolbar === true) editor.toolbar.show();
+    else editor.toolbar.hide();
+    if (enableToolbar === true) editor.toolbar.enabled();
+    else editor.toolbar.disabled();
+    this.editor = editor; // Contributed by https://github.com/AramRafeq
   }
 
   componentDidUpdate(prevProps) {
@@ -92,6 +98,14 @@ class SunEditor extends Component {
       if (this.props.disable === true) this.editor.disabled();
       else this.editor.enabled();
     }
+    if (prevProps.showToolbar !== this.props.showToolbar) {
+      if (this.props.showToolbar === true) this.editor.toolbar.show();
+      else this.editor.toolbar.hide(); // showToolbar contributed by https://github.com/nelreina
+    }
+    if (prevProps.enableToolbar !== this.props.enableToolbar) {
+      if (this.props.enableToolbar === true) this.editor.toolbar.enabled();
+      else this.editor.toolbar.disabled();
+    }
     if (prevProps.show !== this.props.show) {
       if (this.props.show === true) this.editor.show();
       else this.editor.hide();
@@ -103,7 +117,7 @@ class SunEditor extends Component {
   }
 
   componentWillUnmount() {
-    this.editor.destroy();
+    this.editor.destroy(); // Contributed by https://github.com/AramRafeq
   }
 
   render() {
@@ -125,6 +139,8 @@ SunEditor.propTypes = {
   setContents: PropTypes.string,
   appendContents: PropTypes.string,
   enable: PropTypes.bool,
+  showToolbar: PropTypes.bool,
+  enableToolbar: PropTypes.bool,
   disable: PropTypes.bool,
   hide: PropTypes.bool,
   show: PropTypes.bool,

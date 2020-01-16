@@ -164,6 +164,28 @@ render() {
 	return <SunEditor show={true} />
 }
 ```
+
+**showToolbar**
+
+**_Show Editor Toolbar_**
+
+```javascript
+//...
+render() {
+	return <SunEditor showToolbar={true} />
+}
+```
+**enableToolbar**
+
+**_Enable Editor Toolbar_**
+
+```javascript
+//...
+render() {
+	return <SunEditor enableToolbar={true} />
+}
+```
+
 Example of Dynamic Editor Status, Code is Included in the gif
 ![Dynamic Editor Status Code](https://media.giphy.com/media/mCgoSYsr707bYW0ybB/giphy.gifhttps://media.giphy.com/media/mCgoSYsr707bYW0ybB/giphy.gif)
 
