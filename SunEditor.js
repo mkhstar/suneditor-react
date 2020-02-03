@@ -63,7 +63,13 @@ class SunEditor extends Component {
         imageInfo,
         remainingFilesCount
       ) =>
-        onImageUpload(targetImgElement, index, state, imageInfo, remainingFilesCount);
+        onImageUpload(
+          targetImgElement,
+          index,
+          state,
+          imageInfo,
+          remainingFilesCount
+        );
     if (onImageUploadError)
       editor.onImageUploadError = (errorMessage, result) =>
         onImageUploadError(errorMessage, result);
@@ -79,16 +85,17 @@ class SunEditor extends Component {
     else editor.toolbar.hide();
     if (enableToolbar === true) editor.toolbar.enabled();
     else editor.toolbar.disabled();
+
     this.editor = editor; // Contributed by https://github.com/AramRafeq
   }
 
   componentDidUpdate(prevProps) {
     // Props compared
     if (prevProps.setContents !== this.props.setContents) {
-      this.editor.setContents(this.props.setContents)
+      this.editor.setContents(this.props.setContents);
     }
     if (prevProps.appendContents !== this.props.appendContents) {
-      this.editor.appendContents(this.props.appendContents)
+      this.editor.appendContents(this.props.appendContents);
     }
     if (prevProps.enable !== this.props.enable) {
       if (this.props.enable === true) this.editor.enabled();
@@ -117,7 +124,7 @@ class SunEditor extends Component {
   }
 
   componentWillUnmount() {
-    this.editor.destroy(); // Contributed by https://github.com/AramRafeq
+    if (this.editor) this.editor.destroy(); // Contributed by https://github.com/AramRafeq
   }
 
   render() {
