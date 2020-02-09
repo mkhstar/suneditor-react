@@ -41,5 +41,5 @@ const flatten = (arr, result = []) => {
     return result
 }
 
-const isArray = obj => toString.call(obj) === "[object Array]";
+const isArray = obj => Object.prototype.toString.call(obj) === "[object Array]";
 export default getPlugins;
