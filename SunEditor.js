@@ -44,7 +44,9 @@ class SunEditor extends Component {
       onChange,
       onImageUpload,
       onImageUploadError,
-      onPaste
+      onPaste,
+      autoFocus,
+      placeholder
     } = this.props;
     if (onChange) editor.onChange = content => onChange(content);
     if (onScroll) editor.onScroll = e => onScroll(e);
@@ -73,6 +75,7 @@ class SunEditor extends Component {
     if (onImageUploadError)
       editor.onImageUploadError = (errorMessage, result) =>
         onImageUploadError(errorMessage, result);
+    if (placeholder) setOptions.placeholder = placeholder;
     if (setOptions) editor.setOptions(setOptions);
     if (setContents) editor.setContents(setContents);
     if (insertHTML) editor.insertHTML(insertHTML);
@@ -85,6 +88,11 @@ class SunEditor extends Component {
     else editor.toolbar.hide();
     if (enableToolbar === true) editor.toolbar.enabled();
     else editor.toolbar.disabled();
+
+    setTimeout(() => {
+      if (autoFocus === false) editor.core.context.element.wysiwyg.blur();
+      else if (autoFocus === true) editor.core.context.element.wysiwyg.focus();
+    }, 0);
 
     this.editor = editor; // Contributed by https://github.com/AramRafeq
   }
@@ -152,6 +160,7 @@ SunEditor.propTypes = {
   hide: PropTypes.bool,
   show: PropTypes.bool,
   autoFocus: PropTypes.bool,
+  placeholder: PropTypes.string,
   lang: PropTypes.oneOfType([PropTypes.object, PropTypes.string]),
   width: PropTypes.oneOfType([PropTypes.number, PropTypes.string])
 };

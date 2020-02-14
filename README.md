@@ -65,6 +65,30 @@ render() {
 }
 ```
 
+
+**placeholder**
+
+**_Set Editor's placeholder_**
+
+```javascript
+//...
+render() {
+	return <SunEditor placeholder="Please type here..." />
+}
+```
+
+
+**autoFocus**
+
+**_Should editor focus when initialized_**
+
+```javascript
+//...
+render() {
+	return <SunEditor autoFocus={true} />
+}
+```
+
 **setOptions**
 
 **_Set Options (Settings) for the editor_**
