@@ -276,7 +276,7 @@ handleKeyUp(event){
 	console.log(event); //Get the keyup event
 }
 render() {
-	return <SunEditor OnKeyUp={handleKeyUp} />
+	return <SunEditor onKeyUp={handleKeyUp} />
 }
 ```
 
@@ -289,7 +289,7 @@ handleKeyDown(event){
 	console.log(event); //Get the keydown event
 }
 render() {
-	return <SunEditor OnKeyDown={handleKeyDown} />
+	return <SunEditor onKeyDown={handleKeyDown} />
 }
 ```
 
