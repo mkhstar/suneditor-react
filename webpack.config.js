@@ -8,6 +8,9 @@ module.exports = {
     filename: "main.js",
     libraryTarget: "commonjs2"
   },
+  optimization: {
+    minimize: false
+  },
   module: {
     rules: [
       { test: /\.js$/, exclude: /node_modules/, loader: "babel-loader" },

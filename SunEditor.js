@@ -22,7 +22,6 @@ class SunEditor extends Component {
   componentDidMount() {
     const { lang, setOptions = {}, width = '100%' } = this.props;
     const editor = suneditor.create(this.state.id, {
-      plugins: getPlugins(setOptions),
       width,
       lang: getLanguage(lang)
     });
@@ -76,7 +75,8 @@ class SunEditor extends Component {
       editor.onImageUploadError = (errorMessage, result) =>
         onImageUploadError(errorMessage, result);
     if (placeholder) setOptions.placeholder = placeholder;
-    if (setOptions) editor.setOptions(setOptions);
+    if (!setOptions.plugins) setOptions.plugins = getPlugins(setOptions);
+    editor.setOptions(setOptions);
     if (setContents) editor.setContents(setContents);
     if (insertHTML) editor.insertHTML(insertHTML);
     if (appendContents) editor.appendContents(appendContents);
