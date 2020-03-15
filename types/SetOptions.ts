@@ -45,17 +45,17 @@ export default interface SetOptions {
     position?: string,
     katex?: any | {src: any, options: object}
     codeMirror?: any | {src: any, options: object},
-    iframeCSSFileName: boolean,
-    fullPage: boolean,
-    iframe: boolean,
-    stickyToolbar: number|string,
-    toolbarWidth: number|string,
-    mode: string,
-    lang: object,
-    attributesWhitelist: object,
-    pasteTagsWhitelist: string,
-    addTagsWhitelist: string,
-    plugins: Array<any>
+    iframeCSSFileName?: boolean,
+    fullPage?: boolean,
+    iframe?: boolean,
+    stickyToolbar?: number|string,
+    toolbarWidth?: number|string,
+    mode?: string,
+    lang?: object,
+    attributesWhitelist?: object,
+    pasteTagsWhitelist?: string,
+    addTagsWhitelist?: string,
+    plugins?: Array<any>
 }
 
 // const options: SetOptions = 
