@@ -278,7 +278,52 @@ handleKeyUp(event){
 render() {
 	return <SunEditor onKeyUp={handleKeyUp} />
 }
+
 ```
+
+
+**onFocus**
+
+**_Has the editor been focused?_**
+
+```javascript
+handleFocus(event){
+	console.log(event); //Get the focus event
+}
+render() {
+	return <SunEditor onFocus={handleFocus} />
+}
+```
+
+
+
+**onBlur**
+
+**_Has the editor been blurred?_**
+
+```javascript
+handleBlur(event){
+	console.log(event); //Get the blur event
+}
+render() {
+	return <SunEditor onBlur={handleBlur} />
+}
+```
+
+
+**onLoad**
+
+**_Has the editor been reloaded with setOptions?_**
+
+```javascript
+handleLoad(reload){
+	console.log(reload); //Boolean
+}
+render() {
+	return <SunEditor onBlur={handleLoad} />
+}
+```
+
 
 **onKeyDown**
 
@@ -305,6 +350,21 @@ render() {
 	return <SunEditor onDrop={handleDrop} />
 }
 ```
+
+
+**onImageUploadBefore**
+
+**_Has an image been uploaded into the editor?_**
+
+```javascript
+handleImageUploadBefore(files, info){
+	console.log(files, info)
+}
+render() {
+	return <SunEditor onImageUploadBefore={handleImageUploadBefore} />
+}
+```
+
 
 **onImageUpload**
 
