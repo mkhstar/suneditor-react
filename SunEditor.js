@@ -1,8 +1,8 @@
-import React, { Component } from 'react';
-import suneditor from 'suneditor';
-import getPlugins from './misc/getPlugins';
-import getLanguage from './misc/getLanguage';
-import PropTypes from 'prop-types';
+import React, { Component } from "react";
+import suneditor from "suneditor";
+import getPlugins from "./misc/getPlugins";
+import getLanguage from "./misc/getLanguage";
+import PropTypes from "prop-types";
 
 /**
  * @augments {Component<{  onChange:Function,  onScroll:Function,  onClick:Function,  onKeyUp:Function,  onKeyDown:Function,  onDrop:Function,  onImageUpload:Function,  onImageUploadError:Function,  setOptions:object,  setContents:string,  appendContents:string,  enable:boolean,  disable:boolean,  hide:boolean,  show:boolean,  lang:oneOfType(object,string])>}
@@ -12,7 +12,7 @@ class SunEditor extends Component {
     super(props);
     this.state = {
       id:
-        'editor' +
+        "editor" +
         +Date.now().toString() +
         Math.random()
           .toString(36)
@@ -20,7 +20,7 @@ class SunEditor extends Component {
     };
   }
   componentDidMount() {
-    const { lang, setOptions = {}, width = '100%' } = this.props;
+    const { lang, setOptions = {}, width = "100%" } = this.props;
     const editor = suneditor.create(this.state.id, {
       width,
       lang: getLanguage(lang)
@@ -45,6 +45,10 @@ class SunEditor extends Component {
       onImageUploadError,
       onPaste,
       autoFocus,
+      onBlur,
+      onFocus,
+      onLoad,
+      onImageUploadBefore,
       placeholder
     } = this.props;
     if (onChange) editor.onChange = content => onChange(content);
@@ -52,6 +56,12 @@ class SunEditor extends Component {
     if (onClick) editor.onClick = e => onClick(e);
     if (onKeyUp) editor.onKeyUp = e => onKeyUp(e);
     if (onKeyDown) editor.onKeyDown = e => onKeyDown(e);
+    if (onBlur) editor.onBlur = e => onBlur(e);
+    if (onFocus) editor.onFocus = e => onFocus(e);
+    if (onLoad) editor.onload = (c, reload) => onLoad(reload);
+    if (onImageUploadBefore)
+      editor.onImageUploadBefore = (files, info) =>
+        onImageUploadBefore(files, info);
     if (onDrop) editor.onDrop = e => onDrop(e);
     if (onPaste)
       editor.onPaste = (e, cleanData, maxCharCount) =>
@@ -136,7 +146,7 @@ class SunEditor extends Component {
   }
 
   render() {
-    return <textarea id={this.state.id} cols='30' rows='10' />;
+    return <textarea id={this.state.id} cols="30" rows="10" />;
   }
 }
 
@@ -147,7 +157,11 @@ SunEditor.propTypes = {
   onKeyUp: PropTypes.func,
   onKeyDown: PropTypes.func,
   onDrop: PropTypes.func,
+  onBlur: PropTypes.func,
+  onFocus: PropTypes.func,
+  onLoad: PropTypes.func,
   onPaste: PropTypes.func,
+  onImageUploadBefore: PropTypes.func,
   onImageUpload: PropTypes.func,
   onImageUploadError: PropTypes.func,
   setOptions: PropTypes.object,

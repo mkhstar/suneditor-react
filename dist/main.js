@@ -187,7 +187,8 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
         const context = core.context;
         context.dialog = {
             kind: '',
-            updateModal: false
+            updateModal: false,
+            _closeSignal: false
         };
 
         /** dialog */
@@ -210,6 +211,7 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
         context.dialog.modal = dialog_area;
 
         /** add event listeners */
+        context.dialog.modal.addEventListener('mousedown', this.onMouseDown_dialog.bind(core));
         context.dialog.modal.addEventListener('click', this.onClick_dialog.bind(core));
         
         /** append html */
@@ -219,10 +221,18 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
         dialog_div = null, dialog_back = null, dialog_area = null;
     },
 
+    onMouseDown_dialog: function (e) {
+        if (/se-dialog-inner/.test(e.target.className)) {
+            this.context.dialog._closeSignal = true;
+        } else {
+            this.context.dialog._closeSignal = false;
+        }
+    },
+
     onClick_dialog: function (e) {
         e.stopPropagation();
 
-        if (/se-dialog-inner/.test(e.target.className) || /close/.test(e.target.getAttribute('data-command'))) {
+        if (/close/.test(e.target.getAttribute('data-command')) || this.context.dialog._closeSignal) {
             this.plugins.dialog.close.call(this);
         }
     },
@@ -273,9 +283,9 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
         this.modalForm.style.display = 'none';
         this.context.dialog.back.style.display = 'none';
         this.context.dialog.modalArea.style.display = 'none';
-        this.context.dialog.kind = '';
         this.context.dialog.updateModal = false;
         this.plugins[kind].init.call(this);
+        this.context.dialog.kind = '';
         this.modalForm = null;
         this.focus();
     }
@@ -342,6 +352,7 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
             hr_dashed: 'Dashed',
             table: 'Table',
             link: 'Link',
+            math: 'Math',
             image: 'Image',
             video: 'Video',
             fullScreen: 'Full screen',
@@ -367,6 +378,12 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
                 url: 'URL to link',
                 text: 'Text to display',
                 newWindowCheck: 'Open in new window'
+            },
+            mathBox: {
+                title: 'Math',
+                inputLabel: 'Mathematical Notation',
+                fontSizeLabel: 'Font Size',
+                previewLabel: 'Preview'
             },
             imageBox: {
                 title: 'Insert image',
@@ -489,22 +506,25 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
 
         let colorArr = [];
         let list = '<div class="se-list-inner">';
-            for (let i = 0, len = colorList.length; i < len; i++) {
-                if (typeof colorList[i] === 'string') {
-                    colorArr.push(colorList[i]);
+            for (let i = 0, len = colorList.length, color; i < len; i++) {
+                color = colorList[i];
+                if (!color) continue;
+                
+                if (typeof color === 'string') {
+                    colorArr.push(color);
                     if (i < len - 1) continue;
                 }
                 if (colorArr.length > 0) {
                     list += '<div class="se-selector-color">' + makeColor(colorArr) + '</div>';
                     colorArr = [];
                 }
-                if (typeof colorList[i] === 'object') {
-                    list += '<div class="se-selector-color">' + makeColor(colorList[i]) + '</div>';
+                if (typeof color === 'object') {
+                    list += '<div class="se-selector-color">' + makeColor(color) + '</div>';
                 }
             }
             list += '' +
             '<form class="se-submenu-form-group">' +
-                '<input type="text" maxlength="7" class="_se_color_picker_input" />' +
+                '<input type="text" maxlength="7" class="_se_color_picker_input se-color-input"/>' +
                 '<button type="submit" class="se-btn-primary se-tooltip _se_color_picker_submit">' +
                     '<i class="se-icon-checked"></i>' +
                     '<span class="se-tooltip-inner"><span class="se-tooltip-text">' + lang.dialogBox.submitButton + '</span></span>' +
@@ -989,7 +1009,7 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
         }
 
         this._resizingName = plugin;
-        this.controllersOn(contextResizing.resizeContainer, contextResizing.resizeButton);
+        this.controllersOn(contextResizing.resizeContainer, contextResizing.resizeButton, plugin);
 
         // button group
         const overLeft = this.context.element.wysiwygFrame.offsetWidth - l - contextResizing.resizeButton.offsetWidth;
@@ -1058,7 +1078,7 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
 
     onClick_resizeButton: function (e) {
         e.stopPropagation();
-        // debugger;
+
         const target = e.target;
         const command = target.getAttribute('data-command') || target.parentNode.getAttribute('data-command');
 
@@ -1401,9 +1421,11 @@ __webpack_require__.r(__webpack_exports__);
 
 /* harmony default export */ __webpack_exports__["default"] = ({
     name: 'align',
+    display: 'submenu',
     add: function (core, targetElement) {
         const context = core.context;
         context.align = {
+            targetIcon: targetElement.querySelector('i'),
             _alignList: null,
             currentAlign: ''
         };
@@ -1442,10 +1464,28 @@ __webpack_require__.r(__webpack_exports__);
         return listDiv;
     },
 
+    active: function (element) {
+        const target = this.context.align.targetIcon;
+
+        if (!element) {
+            target.className = 'se-icon-align-left';
+            target.removeAttribute('data-focus');
+        } else if (this.util.isFormatElement(element)) {
+            const textAlign = element.style.textAlign;
+            if (textAlign) {
+                target.className = 'se-icon-align-' + textAlign;
+                target.setAttribute('data-focus', textAlign);
+            }
+            return true;
+        }
+
+        return false;
+    },
+
     on: function () {
         const alignContext = this.context.align;
         const alignList = alignContext._alignList;
-        const currentAlign = this.commandMap.ALIGN.getAttribute('data-focus') || 'left';
+        const currentAlign = alignContext.targetIcon.getAttribute('data-focus') || 'left';
 
         if (currentAlign !== alignContext.currentAlign) {
             for (let i = 0, len = alignList.length; i < len; i++) {
@@ -1476,11 +1516,14 @@ __webpack_require__.r(__webpack_exports__);
 
         const selectedFormsts = this.getSelectedElements();
         for (let i = 0, len = selectedFormsts.length; i < len; i++) {
-            selectedFormsts[i].style.textAlign = value;
+            this.util.setStyle(selectedFormsts[i], 'textAlign', (value === 'left' ? '' : value));
         }
 
         this.submenuOff();
         this.focus();
+        
+        // history stack
+        this.history.push(false);
     }
 });
 
@@ -1502,9 +1545,12 @@ __webpack_require__.r(__webpack_exports__);
 
 /* harmony default export */ __webpack_exports__["default"] = ({
     name: 'font',
+    display: 'submenu',
     add: function (core, targetElement) {
         const context = core.context;
         context.font = {
+            targetText: targetElement.querySelector('.txt'),
+            targetTooltip: targetElement.parentNode.querySelector('.se-tooltip-text'),
             _fontList: null,
             currentFont: ''
         };
@@ -1558,10 +1604,28 @@ __webpack_require__.r(__webpack_exports__);
         return listDiv;
     },
 
+    active: function (element) {
+        const target = this.context.font.targetText;
+        const tooltip = this.context.font.targetTooltip;
+
+        if (!element) {
+            const font = this.lang.toolbar.font;
+            this.util.changeTxt(target, font);
+            this.util.changeTxt(tooltip, font);
+        } else if (element.style && element.style.fontFamily.length > 0) {
+            const selectFont = element.style.fontFamily.replace(/["']/g,'');
+            this.util.changeTxt(target, selectFont);
+            this.util.changeTxt(tooltip, selectFont);
+            return true;
+        }
+
+        return false;
+    },
+
     on: function () {
         const fontContext = this.context.font;
         const fontList = fontContext._fontList;
-        const currentFont = this.commandMap.FONT.textContent;
+        const currentFont = fontContext.targetText.textContent;
 
         if (currentFont !== fontContext.currentFont) {
             for (let i = 0, len = fontList.length; i < len; i++) {
@@ -1617,6 +1681,7 @@ __webpack_require__.r(__webpack_exports__);
 
 /* harmony default export */ __webpack_exports__["default"] = ({
     name: 'fontColor',
+    display: 'submenu',
     add: function (core, targetElement) {
         core.addModule([_modules_colorPicker__WEBPACK_IMPORTED_MODULE_0__[/* default */ "a"]]);
 
@@ -1717,9 +1782,11 @@ __webpack_require__.r(__webpack_exports__);
 
 /* harmony default export */ __webpack_exports__["default"] = ({
     name: 'fontSize',
+    display: 'submenu',
     add: function (core, targetElement) {
         const context = core.context;
         context.fontSize = {
+            targetText: targetElement.querySelector('.txt'),
             _sizeList: null,
             currentSize: ''
         };
@@ -1763,10 +1830,21 @@ __webpack_require__.r(__webpack_exports__);
         return listDiv;
     },
 
+    active: function (element) {
+        if (!element) {
+            this.util.changeTxt(this.context.fontSize.targetText, this.lang.toolbar.fontSize);
+        } else if (element.style && element.style.fontSize.length > 0) {
+            this.util.changeTxt(this.context.fontSize.targetText, element.style.fontSize);
+            return true;
+        }
+
+        return false;
+    },
+
     on: function () {
         const fontSizeContext = this.context.fontSize;
         const sizeList = fontSizeContext._sizeList;
-        const currentSize = this.commandMap.SIZE.textContent;
+        const currentSize = fontSizeContext.targetText.textContent;
 
         if (currentSize !== fontSizeContext.currentSize) {
             for (let i = 0, len = sizeList.length; i < len; i++) {
@@ -1819,9 +1897,12 @@ __webpack_require__.r(__webpack_exports__);
 
 /* harmony default export */ __webpack_exports__["default"] = ({
     name: 'formatBlock',
+    display: 'submenu',
     add: function (core, targetElement) {
         const context = core.context;
         context.formatBlock = {
+            targetText: targetElement.querySelector('.txt'),
+            targetTooltip: targetElement.parentNode.querySelector('.se-tooltip-text'),
             _formatList: null,
             currentFormat: ''
         };
@@ -1851,24 +1932,26 @@ __webpack_require__.r(__webpack_exports__);
         const formatList = !option.formats || option.formats.length === 0 ? defaultFormats : option.formats;
 
         let list = '<div class="se-list-inner"><ul class="se-list-basic se-list-format">';
-        for (let i = 0, len = formatList.length, format, tagName, command, name, h, attrs; i < len; i++) {
+        for (let i = 0, len = formatList.length, format, tagName, command, name, h, attrs, className; i < len; i++) {
             format = formatList[i];
             
             if (typeof format === 'string' && defaultFormats.indexOf(format) > -1) {
                 tagName = format.toLowerCase();
-                command = tagName === 'pre' || tagName === 'blockquote' ? 'range' : 'replace';
+                command = tagName === 'blockquote' ? 'range' : tagName === 'pre' ? 'free' : 'replace';
                 h = /^h/.test(tagName) ? tagName.match(/\d+/)[0] : '';
                 name = lang_toolbar['tag_' + (h ? 'h' : tagName)] + h;
+                className = '';
                 attrs = '';
             } else {
                 tagName = format.tag.toLowerCase();
                 command = format.command;
                 name = format.name || tagName;
-                attrs = format.class ? ' class="' + format.class + '"' : '';
+                className = format.class;
+                attrs = className ? ' class="' + className + '"' : '';
             }
 
             list += '<li>' +
-                '<button type="button" class="se-btn-list" data-command="' + command + '" data-value="' + tagName + '" title="' + name + '">' +
+                '<button type="button" class="se-btn-list" data-command="' + command + '" data-value="' + tagName + '" data-class="' + className + '" title="' + name + '">' +
                     '<' + tagName + attrs + '>' + name + '</' + tagName + '>' +
                 '</button></li>';
         }
@@ -1879,17 +1962,52 @@ __webpack_require__.r(__webpack_exports__);
         return listDiv;
     },
 
+    active: function (element) {
+        let formatTitle = this.lang.toolbar.formats;
+        const target = this.context.formatBlock.targetText;
+        const tooltip = this.context.formatBlock.targetTooltip;
+
+        if (!element) {
+            this.util.changeTxt(target, formatTitle);
+            this.util.changeTxt(tooltip, formatTitle);
+        } else if (this.util.isFormatElement(element)) {
+            const formatContext = this.context.formatBlock;
+            const formatList = formatContext._formatList;
+            const nodeName = element.nodeName.toLowerCase();
+            const className = (element.className.match(/(\s|^)__se__format__[^\s]+/) || [''])[0].trim();
+
+            for (let i = 0, len = formatList.length, f; i < len; i++) {
+                f = formatList[i];
+                if (nodeName === f.getAttribute('data-value') && className === f.getAttribute('data-class')) {
+                    formatTitle = f.title;
+                    break;
+                }
+            }
+
+            this.util.changeTxt(target, formatTitle);
+            this.util.changeTxt(tooltip, formatTitle);
+            target.setAttribute('data-value', nodeName);
+            target.setAttribute('data-class', className);
+
+            return true;
+        }
+
+        return false;
+    },
+
     on: function () {
         const formatContext = this.context.formatBlock;
         const formatList = formatContext._formatList;
-        const currentFormat = (this.commandMap.FORMAT.getAttribute('data-focus') || 'P').toLowerCase();
+        const target = formatContext.targetText;
+        const currentFormat = (target.getAttribute('data-value') || '') + (target.getAttribute('data-class') || '');
 
         if (currentFormat !== formatContext.currentFormat) {
-            for (let i = 0, len = formatList.length; i < len; i++) {
-                if (currentFormat === formatList[i].getAttribute('data-value')) {
-                    this.util.addClass(formatList[i], 'active');
+            for (let i = 0, len = formatList.length, f; i < len; i++) {
+                f = formatList[i];
+                if (currentFormat === f.getAttribute('data-value') + f.getAttribute('data-class')) {
+                    this.util.addClass(f, 'active');
                 } else {
-                    this.util.removeClass(formatList[i], 'active');
+                    this.util.removeClass(f, 'active');
                 }
             }
 
@@ -1902,11 +2020,12 @@ __webpack_require__.r(__webpack_exports__);
         e.stopPropagation();
 
         let target = e.target;
-        let command = null, value = null, tag = null;
+        let command = null, value = null, tag = null, className = '';
         
         while (!command && !/UL/i.test(target.tagName)) {
             command = target.getAttribute('data-command');
             value = target.getAttribute('data-value');
+            className = target.getAttribute('data-class');
             if (command) {
                 tag = target.firstChild;
                 break;
@@ -1916,92 +2035,116 @@ __webpack_require__.r(__webpack_exports__);
 
         if (!command) return;
 
-        // blockquote, pre
+        // blockquote
         if (command === 'range') {
             const rangeElement = tag.cloneNode(false);
             this.applyRangeFormatElement(rangeElement);
         }
-        // others
+        // free, replace
         else {
             const range = this.getRange();
             const startOffset = range.startOffset;
             const endOffset = range.endOffset;
 
-            let selectedFormsts = this.getSelectedElementsAndComponents();
+            const util = this.util;
+            const selectedFormsts = this.getSelectedElementsAndComponents(false);
             if (selectedFormsts.length === 0) return;
 
             let first = selectedFormsts[0];
             let last = selectedFormsts[selectedFormsts.length - 1];
-            const firstPath = this.util.getNodePath(range.startContainer, first, null);
-            const lastPath = this.util.getNodePath(range.endContainer, last, null);
+            const firstPath = util.getNodePath(range.startContainer, first, null);
+            const lastPath = util.getNodePath(range.endContainer, last, null);
             
-            // remove list
-            let rangeArr = {};
-            let listFirst = false;
-            let listLast = false;
-            const passComponent = function (current) { return !this.isComponent(current); }.bind(this.util);
-
-            for (let i = 0, len = selectedFormsts.length, r, o, lastIndex, isList; i < len; i++) {
-                lastIndex = i === len - 1;
-                o = this.util.getRangeFormatElement(selectedFormsts[i], passComponent);
-                isList = this.util.isList(o);
-                if (!r && isList) {
-                    r = o;
-                    rangeArr = {r: r, f: [this.util.getParentElement(selectedFormsts[i], 'LI')]};
-                    if (i === 0) listFirst = true;
-                } else if (r && isList) {
-                    if (r !== o) {
-                        const edge = this.detachRangeFormatElement(rangeArr.r, rangeArr.f, null, false, true);
-                        if (listFirst) {
-                            first = edge.sc;
-                            listFirst = false;
-                        }
-                        if (lastIndex) last = edge.ec;
-
-                        if (isList) {
-                            r = o;
-                            rangeArr = {r: r, f: [this.util.getParentElement(selectedFormsts[i], 'LI')]};
-                            if (lastIndex) listLast = true;
-                        } else {
-                            r = null;
-                        }
-                    } else {
-                        rangeArr.f.push(this.util.getParentElement(selectedFormsts[i], 'LI'));
-                        if (lastIndex) listLast = true;
-                    }
-                }
-
-                if (lastIndex && this.util.isList(r)) {
-                    const edge = this.detachRangeFormatElement(rangeArr.r, rangeArr.f, null, false, true);
-                    if (listLast || len === 1) {
-                        last = edge.ec;
-                        if (listFirst) first = edge.sc || last;
-                    }
-                }
-            }
+            // remove selected list
+            const rlist = this.detachList(selectedFormsts, false);
+            if (rlist.sc) first = rlist.sc;
+            if (rlist.ec) last = rlist.ec;
 
             // change format tag
-            this.setRange(this.util.getNodeFromPath(firstPath, first), startOffset, this.util.getNodeFromPath(lastPath, last), endOffset);
-            selectedFormsts = this.getSelectedElementsAndComponents();
-            for (let i = 0, len = selectedFormsts.length, node, newFormat; i < len; i++) {
-                node = selectedFormsts[i];
-                
-                if (node.nodeName.toLowerCase() !== value.toLowerCase() && !this.util.isComponent(node)) {
-                    newFormat = tag.cloneNode(false);
-                    this.util.copyFormatAttributes(newFormat, node);
-                    newFormat.innerHTML = node.innerHTML;
+            this.setRange(util.getNodeFromPath(firstPath, first), startOffset, util.getNodeFromPath(lastPath, last), endOffset);
+            const modifiedFormsts = this.getSelectedElementsAndComponents(false);
 
-                    node.parentNode.insertBefore(newFormat, node);
-                    this.util.removeItem(node);
+            // free format
+            if (command === 'free') {
+                const len = modifiedFormsts.length - 1;
+                let parentNode = modifiedFormsts[len].parentNode;
+                let freeElement = tag.cloneNode(false);
+                const focusElement = freeElement;
+    
+                for (let i = len, f, html, before, next, inner, isComp, first = true; i >= 0; i--) {
+                    f = modifiedFormsts[i];
+                    if (f === (!modifiedFormsts[i + 1] ? null : modifiedFormsts[i + 1].parentNode)) continue;
+    
+                    isComp = util.isComponent(f);
+                    html = isComp ? '' : f.innerHTML.replace(/(?!>)\s+(?=<)|\n/g, ' ');
+                    before = util.getParentElement(f, function (current) {
+                        return current.parentNode === parentNode;
+                    });
+    
+                    if (parentNode !== f.parentNode || isComp) {
+                        if (util.isFormatElement(parentNode)) {
+                            parentNode.parentNode.insertBefore(freeElement, parentNode.nextSibling);
+                            parentNode = parentNode.parentNode;
+                        } else {
+                            parentNode.insertBefore(freeElement, before ? before.nextSibling : null);
+                            parentNode = f.parentNode;
+                        }
+
+                        next = freeElement.nextSibling;
+                        if (next && freeElement.nodeName === next.nodeName && util.isSameAttributes(freeElement, next)) {
+                            freeElement.innerHTML += '<BR>' + next.innerHTML;
+                            util.removeItem(next);
+                        }
+
+                        freeElement = tag.cloneNode(false);
+                        first = true;
+                    }
+    
+                    inner = freeElement.innerHTML;
+                    freeElement.innerHTML = ((first || !html || !inner || /<br>$/i.test(html)) ? html : html + '<BR>') + inner;
+
+                    if (i === 0) {
+                        parentNode.insertBefore(freeElement, f);
+                        next = f.nextSibling;
+                        if (next && freeElement.nodeName === next.nodeName && util.isSameAttributes(freeElement, next)) {
+                            freeElement.innerHTML += '<BR>' + next.innerHTML;
+                            util.removeItem(next);
+                        }
+
+                        const prev = freeElement.previousSibling;
+                        if (prev && freeElement.nodeName === prev.nodeName && util.isSameAttributes(freeElement, prev)) {
+                            prev.innerHTML += '<BR>' + freeElement.innerHTML;
+                            util.removeItem(freeElement);
+                        }
+                    }
+
+                    if (!isComp) util.removeItem(f);
+                    if (!!html) first = false;
                 }
-
-                if (i === 0) first = newFormat || node;
-                if (i === len - 1) last = newFormat || node;
-                newFormat = null;
+    
+                this.setRange(focusElement, 0, focusElement, 0);
+            }
+            // replace format
+            else {
+                for (let i = 0, len = modifiedFormsts.length, node, newFormat; i < len; i++) {
+                    node = modifiedFormsts[i];
+                    
+                    if ((node.nodeName.toLowerCase() !== value.toLowerCase() || (node.className.match(/(\s|^)__se__format__[^\s]+/) || [''])[0].trim() !== className) && !util.isComponent(node)) {
+                        newFormat = tag.cloneNode(false);
+                        util.copyFormatAttributes(newFormat, node);
+                        newFormat.innerHTML = node.innerHTML;
+    
+                        node.parentNode.replaceChild(newFormat, node);
+                    }
+    
+                    if (i === 0) first = newFormat || node;
+                    if (i === len - 1) last = newFormat || node;
+                    newFormat = null;
+                }
+    
+                this.setRange(util.getNodeFromPath(firstPath, first), startOffset, util.getNodeFromPath(lastPath, last), endOffset);
             }
 
-            this.setRange(this.util.getNodeFromPath(firstPath, first), startOffset, this.util.getNodeFromPath(lastPath, last), endOffset);
-            
             // history stack
             this.history.push(false);
         }
@@ -2031,6 +2174,7 @@ __webpack_require__.r(__webpack_exports__);
 
 /* harmony default export */ __webpack_exports__["default"] = ({
     name: 'hiliteColor',
+    display: 'submenu',
     add: function (core, targetElement) {
         core.addModule([_modules_colorPicker__WEBPACK_IMPORTED_MODULE_0__[/* default */ "a"]]);
 
@@ -2131,6 +2275,7 @@ __webpack_require__.r(__webpack_exports__);
 
 /* harmony default export */ __webpack_exports__["default"] = ({
     name: 'horizontalRule',
+    display: 'submenu',
     add: function (core, targetElement) {
         /** set submenu */
         let listDiv = this.setSubmenu.call(core);
@@ -2224,6 +2369,7 @@ __webpack_require__.r(__webpack_exports__);
 
 /* harmony default export */ __webpack_exports__["default"] = ({
     name: 'lineHeight',
+    display: 'submenu',
     add: function (core, targetElement) {
         const context = core.context;
         context.lineHeight = {
@@ -2331,9 +2477,12 @@ __webpack_require__.r(__webpack_exports__);
 
 /* harmony default export */ __webpack_exports__["default"] = ({
     name: 'list',
+    display: 'submenu',
     add: function (core, targetElement) {
         const context = core.context;
         context.list = {
+            targetButton: targetElement,
+            targetIcon: targetElement.querySelector('i'),
             _list: null,
             currentList: ''
         };
@@ -2376,10 +2525,38 @@ __webpack_require__.r(__webpack_exports__);
         return listDiv;
     },
 
+    active: function (element) {
+        const button = this.context.list.targetButton;
+        const icon = this.context.list.targetIcon;
+        const util = this.util;
+
+        if (!element) {
+            button.removeAttribute('data-focus');
+            util.removeClass(icon, 'se-icon-list-bullets');
+            util.addClass(icon, 'se-icon-list-number');
+            util.removeClass(button, 'active');
+        } else if (util.isList(element)) {
+            const nodeName = element.nodeName;
+            button.setAttribute('data-focus', nodeName);
+            util.addClass(button, 'active');
+            if (/UL/i.test(nodeName)) {
+                util.removeClass(icon, 'se-icon-list-number');
+                util.addClass(icon, 'se-icon-list-bullets');
+            } else {
+                util.removeClass(icon, 'se-icon-list-bullets');
+                util.addClass(icon, 'se-icon-list-number');
+            }
+            
+            return true;
+        }
+
+        return false;
+    },
+
     on: function () {
         const listContext = this.context.list;
         const list = listContext._list;
-        const currentList = this.commandMap.LI.getAttribute('data-focus') || '';
+        const currentList = listContext.targetButton.getAttribute('data-focus') || '';
 
         if (currentList !== listContext.currentList) {
             for (let i = 0, len = list.length; i < len; i++) {
@@ -2392,6 +2569,298 @@ __webpack_require__.r(__webpack_exports__);
 
             listContext.currentList = currentList;
         }
+    },
+
+    editList: function (command, selectedCells, detach) {
+        const selectedFormats = !selectedCells ? this.getSelectedElementsAndComponents(false) : selectedCells;
+        if (!selectedFormats || selectedFormats.length === 0) return;
+        
+        const util = this.util;
+        util.sortByDepth(selectedFormats, true);
+
+        let isRemove = true;
+        let edgeFirst = null;
+        let edgeLast = null;
+        
+        // merge
+        let firstSel = selectedFormats[0];
+        let lastSel = selectedFormats[selectedFormats.length - 1];
+        let topEl = (util.isListCell(firstSel) || util.isComponent(firstSel)) && !firstSel.previousElementSibling ? firstSel.parentNode.previousElementSibling : firstSel.previousElementSibling;
+        let bottomEl = (util.isListCell(lastSel) || util.isComponent(lastSel)) && !lastSel.nextElementSibling ? lastSel.parentNode.nextElementSibling : lastSel.nextElementSibling;
+
+        for (let i = 0, len = selectedFormats.length; i < len; i++) {
+            if (!util.isList(util.getRangeFormatElement(selectedFormats[i], function (current) {
+                return this.getRangeFormatElement(current) && current !== selectedFormats[i];
+            }.bind(util)))) {
+                isRemove = false;
+                break;
+            }
+        }
+
+        if (isRemove && (!topEl || (firstSel.tagName !== topEl.tagName || command !== topEl.tagName.toUpperCase())) && (!bottomEl || (lastSel.tagName !== bottomEl.tagName || command !== bottomEl.tagName.toUpperCase()))) {
+            if (detach) {
+                for (let i = 0, len = selectedFormats.length; i < len; i++) {
+                    for (let j = i - 1; j >= 0; j--) {
+                        if (selectedFormats[j].contains(selectedFormats[i])) {
+                            selectedFormats.splice(i, 1);
+                            i--; len--;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            const currentFormat = util.getRangeFormatElement(firstSel);
+            const cancel = currentFormat && currentFormat.tagName === command;
+            let rangeArr, tempList, edge;
+            const passComponent = function (current) {
+                return !this.isComponent(current);
+            }.bind(util);
+            
+            if (!cancel) tempList = util.createElement(command);
+
+            for (let i = 0, len = selectedFormats.length, r, o; i < len; i++) {
+                o = util.getRangeFormatElement(selectedFormats[i], passComponent);
+                if (!o || !util.isList(o)) continue;
+
+                if (!r) {
+                    r = o;
+                    rangeArr = {r: r, f: [util.getParentElement(selectedFormats[i], 'LI')]};
+                } else {
+                    if (r !== o) {
+                        if (detach && util.isListCell(o.parentNode)) {
+                            edge = this.plugins.list._detachNested.call(this, rangeArr.f);
+                        } else {
+                            edge = this.detachRangeFormatElement(rangeArr.f[0].parentNode, rangeArr.f, tempList, false, true);
+                        }
+                        
+                        o = selectedFormats[i].parentNode;
+                        if (!edgeFirst) edgeFirst = edge;
+                        if (!cancel) tempList = util.createElement(command);
+                        
+                        r = o;
+                        rangeArr = {r: r, f: [util.getParentElement(selectedFormats[i], 'LI')]};
+                    } else {
+                        rangeArr.f.push(util.getParentElement(selectedFormats[i], 'LI'));
+                    }
+                }
+                
+                if (i === len - 1) {
+                    if (detach && util.isListCell(o.parentNode)) {
+                        edgeLast = this.plugins.list._detachNested.call(this, rangeArr.f);
+                    } else {
+                        edgeLast = this.detachRangeFormatElement(rangeArr.f[0].parentNode, rangeArr.f, tempList, false, true);
+                    }
+                    if (!edgeFirst) edgeFirst = edgeLast;
+                }
+            }
+        } else {
+            const topElParent = topEl ? topEl.parentNode : topEl;
+            const bottomElParent = bottomEl ? bottomEl.parentNode : bottomEl;
+            topEl = topElParent && !util.isWysiwygDiv(topElParent) && topElParent.nodeName === command ? topElParent : topEl;
+            bottomEl = bottomElParent && !util.isWysiwygDiv(bottomElParent) && bottomElParent.nodeName === command ? bottomElParent : bottomEl;
+
+            const mergeTop = topEl && topEl.tagName === command;
+            const mergeBottom = bottomEl && bottomEl.tagName === command;
+            
+            let list = mergeTop ? topEl : util.createElement(command);
+            let firstList = null;
+            let lastList = null;
+            let topNumber = null;
+            let bottomNumber = null;
+
+            const passComponent = function (current) {
+                return !this.isComponent(current) && !this.isList(current);
+            }.bind(util);
+            
+            for (let i = 0, len = selectedFormats.length, newCell, fTag, isCell, next, originParent, nextParent, parentTag, siblingTag, rangeTag; i < len; i++) {
+                fTag = selectedFormats[i];
+                if (fTag.childNodes.length === 0 && !util._isIgnoreNodeChange(fTag)) {
+                    util.removeItem(fTag);
+                    continue;
+                }
+                next = selectedFormats[i + 1];
+                originParent = fTag.parentNode;
+                nextParent = next ? next.parentNode : null;
+                isCell = util.isListCell(fTag);
+                rangeTag = util.isRangeFormatElement(originParent) ? originParent : null;
+                parentTag = isCell && !util.isWysiwygDiv(originParent) ? originParent.parentNode : originParent;
+                siblingTag = isCell && !util.isWysiwygDiv(originParent) ? !next ? originParent : originParent.nextSibling : fTag.nextSibling;
+
+                newCell = util.createElement('LI');
+                util.copyFormatAttributes(newCell, fTag);
+                if (util.isComponent(fTag)) {
+                    const isHR = /^HR$/i.test(fTag.nodeName);
+                    if (!isHR) newCell.innerHTML = '<br>';
+                    newCell.innerHTML += fTag.outerHTML;
+                    if (isHR) newCell.innerHTML += '<br>';
+                } else {
+                    const fChildren = fTag.childNodes;
+                    while (fChildren[0]) {
+                        newCell.appendChild(fChildren[0]);
+                    }
+                    // newCell.innerHTML = fTag.innerHTML;
+                }
+                list.appendChild(newCell);
+
+                if (!next) lastList = list;
+                if (!next || parentTag !== nextParent || util.isRangeFormatElement(siblingTag)) {
+                    if (!firstList) firstList = list;
+                    if ((!mergeTop || !next || parentTag !== nextParent) && !(next && util.isList(nextParent) && nextParent === originParent)) {
+                        if (list.parentNode !== parentTag) parentTag.insertBefore(list, siblingTag);
+                    }
+                }
+
+                util.removeItem(fTag);
+                if (mergeTop && topNumber === null) topNumber = list.children.length - 1;
+                if (next && util.getRangeFormatElement(nextParent, passComponent) !== util.getRangeFormatElement(originParent, passComponent)) {
+                    list = util.createElement(command);
+                }
+
+                if (rangeTag && rangeTag.children.length === 0) util.removeItem(rangeTag);
+            }
+
+            if (topNumber) {
+                firstList = firstList.children[topNumber];
+            }
+
+            if (mergeBottom) {
+                bottomNumber = list.children.length - 1;
+                list.innerHTML += bottomEl.innerHTML;
+                lastList = list.children[bottomNumber];
+                util.removeItem(bottomEl);
+            }
+
+            edgeFirst = edgeLast = util.getEdgeChildNodes(firstList.firstChild, lastList.lastChild);
+        }
+        
+        return {
+            sc: edgeFirst.sc,
+            so: 0,
+            ec: edgeLast.ec,
+            eo: edgeLast.ec.textContent.length
+        };
+    },
+
+    _detachNested: function (cells) {
+        const first = cells[0];
+        const last = cells[cells.length - 1];
+        const next = last.nextElementSibling;
+        const originList = first.parentNode;
+        const sibling = originList.parentNode.nextElementSibling;
+        const parentNode = originList.parentNode.parentNode;
+
+        for (let c = 0, cLen = cells.length; c < cLen; c++) {
+            parentNode.insertBefore(cells[c], sibling);
+        }
+
+        if (next && originList.children.length > 0) {
+            const newList = originList.cloneNode(false);
+            const children = originList.childNodes;
+            const index = this.util.getPositionIndex(next);
+            while (children[index]) {
+                newList.appendChild(children[index]);
+            }
+            last.appendChild(newList);
+        }
+
+        if (originList.children.length === 0) this.util.removeItem(originList);
+
+        const edge = this.util.getEdgeChildNodes(first, last);
+
+        return {
+            cc: first.parentNode,
+            sc: edge.sc,
+            ec: edge.ec
+        };
+    },
+
+    editInsideList: function (remove, selectedCells) {
+        selectedCells = !selectedCells ? this.getSelectedElements().filter(function (el) { return this.isListCell(el); }.bind(this.util)) : selectedCells;
+        const cellsLen = selectedCells.length;
+        if (cellsLen === 0 || (!remove && (!this.util.isListCell(selectedCells[0].previousElementSibling) && !this.util.isListCell(selectedCells[cellsLen - 1].nextElementSibling)))) {
+            return {
+                sc: selectedCells[0],
+                so: 0,
+                ec: selectedCells[cellsLen - 1],
+                eo: 1
+            };
+        }
+
+        let originList = selectedCells[0].parentNode;
+        let lastCell = selectedCells[cellsLen - 1];
+        let range = null;
+
+        if (remove) {
+            if (originList !== lastCell.parentNode && this.util.isList(lastCell.parentNode.parentNode) && lastCell.nextElementSibling) {
+                lastCell = lastCell.nextElementSibling;
+                while (lastCell) {
+                    selectedCells.push(lastCell);
+                    lastCell = lastCell.nextElementSibling;
+                }
+            }
+            range = this.plugins.list.editList.call(this, originList.nodeName.toUpperCase(), selectedCells, true);
+        } else {
+            range = { sc: selectedCells[0], so: cellsLen > 1 || !this.getRange().collapsed ? 0 : 1, ec: lastCell, eo: 1 };
+            let innerList = this.util.createElement(originList.nodeName);
+            let prev = range.sc.previousElementSibling;
+            let next = range.sc.nextElementSibling;
+
+            for (let i = 0, len = cellsLen, c; i < len; i++) {
+                c = selectedCells[i];
+                if (c.parentNode !== originList) {
+                    this.plugins.list._insiedList.call(this, originList, innerList, prev, next);
+                    originList = c.parentNode;
+                    innerList = this.util.createElement(originList.nodeName);
+                }
+                
+                prev = c.previousElementSibling;
+                next = c.nextElementSibling;
+                innerList.appendChild(c);
+            }
+            
+            innerList = this.plugins.list._insiedList.call(this, originList, innerList, prev, next);
+        }
+
+        return range;
+    },
+
+    _insiedList: function (originList, innerList, prev, next) {
+        let insertPrev = false;
+
+        if (prev && innerList.tagName === prev.tagName) {
+            const children = innerList.children;
+            while (children[0]) {
+                prev.appendChild(children[0]);
+            }
+
+            innerList = prev;
+            insertPrev = true;
+        }
+
+        if (next && innerList.tagName === next.tagName) {
+            const children = next.children;
+            while (children[0]) {
+                innerList.appendChild(children[0]);
+            }
+
+            const temp = next.nextElementSibling;
+            next.parentNode.removeChild(next);
+            next = temp;
+        }
+
+        if (!insertPrev) {
+            if (this.util.isListCell(prev)) {
+                originList = prev;
+                next = null;
+            }
+
+            originList.insertBefore(innerList, next);
+            this.util.mergeSameTags(originList, null, null, false);
+            this.util.mergeNestedTags(originList);
+        }
+
+        return innerList;
     },
 
     pickup: function (e) {
@@ -2408,143 +2877,8 @@ __webpack_require__.r(__webpack_exports__);
 
         if (!command) return;
 
-        const selectedFormsts = this.getSelectedElementsAndComponents();
-        if (!selectedFormsts || selectedFormsts.length === 0) return;
-
-        let isRemove = true;
-        let edgeFirst = null;
-        let edgeLast = null;
-        
-        // merge
-        const firstSel = selectedFormsts[0];
-        const lastSel = selectedFormsts[selectedFormsts.length - 1];
-        let topEl = (this.util.isListCell(firstSel) || this.util.isComponent(firstSel)) && !firstSel.previousElementSibling ? firstSel.parentNode.previousElementSibling : firstSel.previousElementSibling;
-        let bottomEl = (this.util.isListCell(lastSel) || this.util.isComponent(lastSel)) && !lastSel.nextElementSibling ? lastSel.parentNode.nextElementSibling : lastSel.nextElementSibling;
-
-        for (let i = 0, len = selectedFormsts.length; i < len; i++) {
-            if (!this.util.isList(this.util.getRangeFormatElement(selectedFormsts[i], function (current) {
-                return this.getRangeFormatElement(current) && current !== selectedFormsts[i];
-            }.bind(this.util)))) {
-                isRemove = false;
-                break;
-            }
-        }
-
-        if (isRemove && (!topEl || command !== topEl.tagName) && (!bottomEl || command !== bottomEl.tagName)) {
-            const currentFormat = this.util.getRangeFormatElement(this.getSelectionNode());
-            const cancel = currentFormat && currentFormat.tagName === command;
-            let rangeArr, tempList;
-            const passComponent = function (current) {
-                return !this.isComponent(current);
-            }.bind(this.util);
-
-            if (!cancel) tempList = this.util.createElement(command);
-
-            for (let i = 0, len = selectedFormsts.length, r, o; i < len; i++) {
-                o = this.util.getRangeFormatElement(selectedFormsts[i], passComponent);
-                if (!o || !this.util.isList(o)) continue;
-
-                if (!r) {
-                    r = o;
-                    rangeArr = {r: r, f: [this.util.getParentElement(selectedFormsts[i], 'LI')]};
-                } else {
-                    if (r !== o) {
-                        const edge = this.detachRangeFormatElement(rangeArr.r, rangeArr.f, tempList, false, true);
-                        if (!edgeFirst) edgeFirst = edge;
-                        if (!cancel) tempList = this.util.createElement(command);
-                        r = o;
-                        rangeArr = {r: r, f: [this.util.getParentElement(selectedFormsts[i], 'LI')]};
-                    } else {
-                        rangeArr.f.push(this.util.getParentElement(selectedFormsts[i], 'LI'));
-                    }
-                }
-
-                if (i === len - 1) {
-                    edgeLast = this.detachRangeFormatElement(rangeArr.r, rangeArr.f, tempList, false, true);
-                    if (!edgeFirst) edgeFirst = edgeLast;
-                }
-            }
-        } else {
-            const topElParent = topEl ? topEl.parentNode : topEl;
-            const bottomElParent = bottomEl ? bottomEl.parentNode : bottomEl;
-            topEl = topElParent && !this.util.isWysiwygDiv(topElParent) && topElParent.nodeName === command ? topElParent : topEl;
-            bottomEl = bottomElParent && !this.util.isWysiwygDiv(bottomElParent) && bottomElParent.nodeName === command ? bottomElParent : bottomEl;
-
-            const mergeTop = topEl && topEl.tagName === command;
-            const mergeBottom = bottomEl && bottomEl.tagName === command;
-            
-            let list = mergeTop ? topEl : this.util.createElement(command);
-            let firstList = null;
-            let lastList = null;
-            let topNumber = null;
-            let bottomNumber = null;
-
-            const passComponent = function (current) {
-                return !this.isComponent(current) && !this.isList(current);
-            }.bind(this.util);
-            
-            for (let i = 0, len = selectedFormsts.length, newCell, fTag, isCell, next, originParent, nextParent, parentTag, siblingTag, rangeTag; i < len; i++) {
-                fTag = selectedFormsts[i];
-                if (fTag.childNodes.length === 0 && !this.util.isIgnoreNodeChange(fTag)) {
-                    this.util.removeItem(fTag);
-                    continue;
-                }
-                next = selectedFormsts[i + 1];
-                originParent = fTag.parentNode;
-                nextParent = next ? next.parentNode : null;
-                isCell = this.util.isListCell(fTag);
-                rangeTag = this.util.isRangeFormatElement(originParent) ? originParent : null;
-                parentTag = isCell && !this.util.isWysiwygDiv(originParent) ? originParent.parentNode : originParent;
-                siblingTag = isCell && !this.util.isWysiwygDiv(originParent) ? !next ? originParent : originParent.nextSibling : fTag.nextSibling;
-
-                newCell = this.util.createElement('LI');
-                this.util.copyFormatAttributes(newCell, fTag);
-                if (this.util.isComponent(fTag)) {
-                    const isHR = /^HR$/i.test(fTag.nodeName);
-                    if (!isHR) newCell.innerHTML = '<br>';
-                    newCell.innerHTML += fTag.outerHTML;
-                    if (isHR) newCell.innerHTML += '<br>';
-                } else {
-                    newCell.innerHTML = fTag.innerHTML;
-                }
-                list.appendChild(newCell);
-
-                if (!next) lastList = list;
-                if (!next || parentTag !== nextParent || this.util.isRangeFormatElement(siblingTag)) {
-                    if (!firstList) firstList = list;
-                    if ((!mergeTop || !next || parentTag !== nextParent) && !(next && this.util.isList(nextParent) && nextParent === originParent)) {
-                        if (list.parentNode !== parentTag) parentTag.insertBefore(list, siblingTag);
-                    }
-                }
-
-                this.util.removeItem(fTag);
-                if (mergeTop && topNumber === null) topNumber = list.children.length - 1;
-                if (next && this.util.getRangeFormatElement(nextParent, passComponent) !== this.util.getRangeFormatElement(originParent, passComponent)) {
-                    list = this.util.createElement(command);
-                }
-
-                if (rangeTag && rangeTag.children.length === 0) this.util.removeItem(rangeTag);
-            }
-
-            if (topNumber) {
-                firstList = firstList.children[topNumber];
-            }
-
-            if (mergeBottom) {
-                bottomNumber = list.children.length - 1;
-                list.innerHTML += bottomEl.innerHTML;
-                lastList = list.children[bottomNumber];
-                this.util.removeItem(bottomEl);
-            }
-
-            edgeFirst = edgeLast = this.util.getEdgeChildNodes(firstList.firstChild, lastList.lastChild);
-        }
-
-        if (selectedFormsts.length > 1) {
-            this.setRange(edgeFirst.sc, 0, edgeLast.ec, edgeLast.ec.textContent.length);
-        } else {
-            this.setRange(edgeFirst.ec, edgeFirst.ec.textContent.length, edgeLast.ec, edgeLast.ec.textContent.length);
-        }
+        const range = this.plugins.list.editList.call(this, command, null, false);
+        this.setRange(range.sc, range.so, range.ec, range.eo);
 
         this.submenuOff();
 
@@ -2571,6 +2905,7 @@ __webpack_require__.r(__webpack_exports__);
 
 /* harmony default export */ __webpack_exports__["default"] = ({
     name: 'paragraphStyle',
+    display: 'submenu',
     add: function (core, targetElement) {
         const context = core.context;
         context.paragraphStyle = {
@@ -2708,6 +3043,7 @@ __webpack_require__.r(__webpack_exports__);
 
 /* harmony default export */ __webpack_exports__["default"] = ({
     name: 'table',
+    display: 'submenu',
     add: function (core, targetElement) {
         const context = core.context;
         context.table = {
@@ -2989,6 +3325,12 @@ __webpack_require__.r(__webpack_exports__);
 
     /** table edit controller */
     call_controller_tableEdit: function (tdElement) {
+        if (!this.getSelection().isCollapsed) {
+            this.controllersOff();
+            this.util.removeClass(tdElement, 'se-table-selected-cell');
+            return;
+        }
+
         const contextTable = this.context.table;
         const tablePlugin = this.plugins.table;
         const tableController = contextTable.tableController;
@@ -3004,7 +3346,7 @@ __webpack_require__.r(__webpack_exports__);
         tableController.style.display = 'block';
         tableController.style.top = (offset.top - tableController.offsetHeight - 2) + 'px';
 
-        if (!tablePlugin._shift) this.controllersOn(contextTable.resizeDiv, tableController, tablePlugin.init.bind(this));
+        if (!tablePlugin._shift) this.controllersOn(contextTable.resizeDiv, tableController, tablePlugin.init.bind(this), 'table');
     },
 
     setPositionControllerDiv: function (tdElement, reset) {
@@ -4006,7 +4348,7 @@ __webpack_require__.r(__webpack_exports__);
             this._wd.addEventListener('mousemove', tablePlugin._bindOnSelect, false);
         } else {
             tablePlugin._bindOffShift = function () {
-                this.controllersOn(this.context.table.resizeDiv, this.context.table.tableController, this.plugins.table.init.bind(this), this.focus.bind(this));
+                this.controllersOn(this.context.table.resizeDiv, this.context.table.tableController, this.plugins.table.init.bind(this), this.focus.bind(this), 'table');
                 if (!tablePlugin._ref) this.controllersOff();
             }.bind(this);
 
@@ -4092,6 +4434,7 @@ __webpack_require__.r(__webpack_exports__);
 
 /* harmony default export */ __webpack_exports__["default"] = ({
     name: 'template',
+    display: 'submenu',
     add: function (core, targetElement) {
         const context = core.context;
         context.template = {};
@@ -4111,8 +4454,11 @@ __webpack_require__.r(__webpack_exports__);
 
     setSubmenu: function () {
         const templateList = this.context.option.templates;
-        const listDiv = this.util.createElement('DIV');
+        if (!templateList || templateList.length === 0) {
+            throw Error('[SUNEDITOR.plugins.template.fail] To use the "template" plugin, please define the "templates" option.');
+        }
 
+        const listDiv = this.util.createElement('DIV');
         listDiv.className = 'se-list-layer';
 
         let list = '<div class="se-submenu se-list-inner">' +
@@ -4164,6 +4510,7 @@ __webpack_require__.r(__webpack_exports__);
 
 /* harmony default export */ __webpack_exports__["default"] = ({
     name: 'textStyle',
+    display: 'submenu',
     add: function (core, targetElement) {
         const context = core.context;
         context.textStyle = {
@@ -4337,6 +4684,7 @@ __webpack_require__.r(__webpack_exports__);
 
 /* harmony default export */ __webpack_exports__["default"] = ({
     name: 'image',
+    display: 'dialog',
     add: function (core) {
         core.addModule([_modules_dialog__WEBPACK_IMPORTED_MODULE_0__[/* default */ "a"], _modules_resizing__WEBPACK_IMPORTED_MODULE_1__[/* default */ "a"], _modules_notice__WEBPACK_IMPORTED_MODULE_2__[/* default */ "a"]]);
         
@@ -4379,7 +4727,7 @@ __webpack_require__.r(__webpack_exports__);
         let image_dialog = this.setDialog.call(core);
         context.image.modal = image_dialog;
         context.image.imgUrlFile = image_dialog.querySelector('._se_image_url');
-        context.image.imgInputFile = context.image.focusElement = image_dialog.querySelector('._se_image_file');
+        context.image.imgInputFile = context.image.focusElement = (image_dialog.querySelector('._se_image_file') || image_dialog.querySelector('._se_image_url'));
         context.image.altText = image_dialog.querySelector('._se_image_alt');
         context.image.imgLink = image_dialog.querySelector('._se_image_link');
         context.image.imgLinkNewWindowCheck = image_dialog.querySelector('._se_image_link_check');
@@ -4426,7 +4774,7 @@ __webpack_require__.r(__webpack_exports__);
 
         let html = '' +
             '<div class="se-dialog-header">' +
-                '<button type="button" data-command="close" class="close" aria-label="Close" title="' + lang.dialogBox.close + '">' +
+                '<button type="button" data-command="close" class="se-btn se-dialog-close" class="close" aria-label="Close" title="' + lang.dialogBox.close + '">' +
                     '<i aria-hidden="true" data-command="close" class="se-icon-cancel"></i>' +
                 '</button>' +
                 '<span class="se-modal-title">' + lang.dialogBox.imageBox.title + '</span>' +
@@ -4517,6 +4865,10 @@ __webpack_require__.r(__webpack_exports__);
         return dialog;
     },
 
+    open: function () {
+        this.plugins.dialog.open.call(this, 'image', 'image' === this.currentControllerName);
+    },
+
     openTab: function (e) {
         const modal = this.context.image.modal;
         const targetElement = (e === 'init' ? modal.querySelector('._se_tab_link') : e.target);
@@ -4547,9 +4899,9 @@ __webpack_require__.r(__webpack_exports__);
         this.util.addClass(targetElement, 'active');
 
         // focus
-        if (tabName === 'image') {
-            this.context.image.imgInputFile.focus();
-        } else if (tabName === 'url') {
+        if (tabName === 'image' && this.context.image.focusElement) {
+            this.context.image.focusElement.focus();
+        } else if (tabName === 'url' && this.context.image.imgLink) {
             this.context.image.imgLink.focus();
         }
 
@@ -4595,6 +4947,18 @@ __webpack_require__.r(__webpack_exports__);
             const imageUploadHeader = this.context.option.imageUploadHeader;
             const filesLen = this.context.dialog.updateModal ? 1 : files.length;
 
+            const info = {
+                linkValue: this.context.image._linkValue,
+                linkNewWindow: this.context.image.imgLinkNewWindowCheck.checked,
+                inputWidth: this.context.image.inputX.value,
+                inputHeight: this.context.image.inputY.value,
+                align: this.context.image._align,
+                isUpdate: this.context.dialog.updateModal,
+                currentImage: this.context.image._element
+            };
+
+            if (!this._imageUploadBefore(files, info)) return;
+
             if (typeof imageUploadUrl === 'string' && imageUploadUrl.length > 0) {
                 const formData = new FormData();
 
@@ -4603,9 +4967,9 @@ __webpack_require__.r(__webpack_exports__);
                 }
 
                 this.context.image._xmlHttp = this.util.getXMLHttpRequest();
-                this.context.image._xmlHttp.onreadystatechange = this.plugins.image.callBack_imgUpload.bind(this, this.context.image._linkValue, this.context.image.imgLinkNewWindowCheck.checked, this.context.image.inputX.value, this.context.image.inputY.value, this.context.image._align, this.context.dialog.updateModal, this.context.image._element);
+                this.context.image._xmlHttp.onreadystatechange = this.plugins.image.callBack_imgUpload.bind(this, info);
                 this.context.image._xmlHttp.open('post', imageUploadUrl, true);
-                if(typeof imageUploadHeader === 'object' && Object.keys(imageUploadHeader).length > 0){
+                if(imageUploadHeader !== null && typeof imageUploadHeader === 'object' && Object.keys(imageUploadHeader).length > 0){
                     for(let key in imageUploadHeader){
                         this.context.image._xmlHttp.setRequestHeader(key, imageUploadHeader[key]);
                     }
@@ -4614,7 +4978,7 @@ __webpack_require__.r(__webpack_exports__);
             }
             else {
                 for (let i = 0; i < filesLen; i++) {
-                    this.plugins.image.setup_reader.call(this, files[i], this.context.image._linkValue, this.context.image.imgLinkNewWindowCheck.checked, this.context.image.inputX.value, this.context.image.inputY.value, this.context.image._align, i, filesLen - 1);
+                    this.plugins.image.setup_reader.call(this, files[i], info.linkValue, info.linkNewWindow, info.inputWidth, info.inputHeight, info.align, i, filesLen - 1);
                 }
             }
         }
@@ -4624,8 +4988,9 @@ __webpack_require__.r(__webpack_exports__);
         try {
             this.plugins.image.submitAction.call(this, this.context.image.imgInputFile.files);
         } catch (e) {
-            this.closeLoading();
             throw Error('[SUNEDITOR.imageUpload.fail] cause : "' + e.message + '"');
+        } finally {
+            this.closeLoading();
         }
     },
 
@@ -4654,22 +5019,24 @@ __webpack_require__.r(__webpack_exports__);
         reader.readAsDataURL(file);
     },
 
-    callBack_imgUpload: function (linkValue, linkNewWindow, width, height, align, update, updateElement) {
+    callBack_imgUpload: function (info) {
         if (this.context.image._xmlHttp.readyState === 4) {
             if (this.context.image._xmlHttp.status === 200) {
-                const response = JSON.parse(this.context.image._xmlHttp.responseText);
+                
+                if (!this._imageUploadHandler(this.context.image._xmlHttp, info, this)) {
+                    const response = JSON.parse(this.context.image._xmlHttp.responseText);
 
-                if (response.errorMessage) {
-                    this.closeLoading();
-                    if (this._imageUploadError(response.errorMessage, response.result)) {
-                        _modules_notice__WEBPACK_IMPORTED_MODULE_2__[/* default */ "a"].open.call(this, response.errorMessage);
-                    }
-                } else {
-                    const fileList = response.result;
-                    for (let i = 0, len = fileList.length, file; i < len; i++) {
-                        file = {name: fileList[i].name, size: fileList[i].size};
-                        if (update) this.plugins.image.update_src.call(this, fileList[i].url, updateElement, file);
-                        else this.plugins.image.create_image.call(this, fileList[i].url, linkValue, linkNewWindow, width, height, align, file);
+                    if (response.errorMessage) {
+                        if (this._imageUploadError(response.errorMessage, response.result)) {
+                            _modules_notice__WEBPACK_IMPORTED_MODULE_2__[/* default */ "a"].open.call(this, response.errorMessage);
+                        }
+                    } else {
+                        const fileList = response.result;
+                        for (let i = 0, len = fileList.length, file; i < len; i++) {
+                            file = {name: fileList[i].name, size: fileList[i].size};
+                            if (info.isUpdate) this.plugins.image.update_src.call(this, fileList[i].url, info.currentImage, file);
+                            else this.plugins.image.create_image.call(this, fileList[i].url, info.linkValue, info.linkNewWindow, info.inputWidth, info.inputHeight, info.align, file);
+                        }
                     }
                 }
 
@@ -4678,7 +5045,7 @@ __webpack_require__.r(__webpack_exports__);
             // error
             else {
                 this.closeLoading();
-                throw Error('[SUNEDITOR.imageUpload.fail] status: ' + this.context.image._xmlHttp.status + ', responseURL: ' + this.context.image._xmlHttp.responseURL);
+                throw Error('[SUNEDITOR.imageUpload.fail] status: ' + this.context.image._xmlHttp.status + ', responseText: ' + this.context.image._xmlHttp.responseText);
             }
         }
     },
@@ -4822,7 +5189,7 @@ __webpack_require__.r(__webpack_exports__);
             img.setAttribute('origin-size', img.naturalWidth + ',' + img.naturalHeight);
         }
         if (!img.getAttribute('data-origin')) {
-            const container = this.util.getParentElement(img, this.util.isComponent);
+            const container = this.util.getParentElement(img, this.util.isMediaComponent);
             const cover = this.util.getParentElement(img, 'FIGURE');
 
             const w = this.plugins.resizing._module_getSizeX.call(this, this.context.image, img, cover, container);
@@ -4861,10 +5228,10 @@ __webpack_require__.r(__webpack_exports__);
         for (let i = 0, len = imagesInfo.length; i < len; i++) {
             infoIndex[i] = imagesInfo[i].index;
         }
-
+        
         for (let i = 0, len = images.length, img; i < len; i++) {
             img = images[i];
-            if (!this.util.getParentElement(img, this.util.isComponent)) {
+            if (!this.util.getParentElement(img, this.util.isMediaComponent)) {
                 currentImages.push(this._variable._imageIndex);
                 imagePlugin.onModifyMode.call(this, img, null);
                 imagePlugin.openModify.call(this, true);
@@ -4936,7 +5303,7 @@ __webpack_require__.r(__webpack_exports__);
         contextImage._container = container;
 
         // set size
-        this.plugins.image.applySize.call(this);
+        this.plugins.image.applySize.call(this, width, height);
 
         // align
         this.plugins.image.setAlign.call(this, align, oImg, cover, container);
@@ -5022,8 +5389,7 @@ __webpack_require__.r(__webpack_exports__);
                 contextImage._element : 
                 /^A$/i.test(contextImage._element.parentNode.nodeName) ? contextImage._element.parentNode : this.util.getFormatElement(contextImage._element) || contextImage._element;
                 
-            existElement.parentNode.insertBefore(container, existElement);
-            this.util.removeItem(existElement);
+            existElement.parentNode.replaceChild(container, existElement);
             imageEl = container.querySelector('img');
 
             contextImage._element = imageEl;
@@ -5080,11 +5446,13 @@ __webpack_require__.r(__webpack_exports__);
     },
 
     onModifyMode: function (element, size) {
+        if (!element) return;
+        
         const contextImage = this.context.image;
         contextImage._linkElement = /^A$/i.test(element.parentNode.nodeName) ? element.parentNode : null;
         contextImage._element = element;
         contextImage._cover = this.util.getParentElement(element, 'FIGURE');
-        contextImage._container = this.util.getParentElement(element, this.util.isComponent);
+        contextImage._container = this.util.getParentElement(element, this.util.isMediaComponent);
         contextImage._caption = this.util.getChildElement(contextImage._cover, 'FIGCAPTION');
         contextImage._align = element.getAttribute('data-align') || 'none';
 
@@ -5289,7 +5657,7 @@ __webpack_require__.r(__webpack_exports__);
 
     destroy: function (element) {
         const imageEl = element || this.context.image._element;
-        const imageContainer = this.util.getParentElement(imageEl, this.util.isComponent) || imageEl;
+        const imageContainer = this.util.getParentElement(imageEl, this.util.isMediaComponent) || imageEl;
         const dataIndex = imageEl.getAttribute('data-index') * 1;
         let focusEl = (imageContainer.previousElementSibling || imageContainer.nextElementSibling);
         
@@ -5365,6 +5733,7 @@ __webpack_require__.r(__webpack_exports__);
 
 /* harmony default export */ __webpack_exports__["default"] = ({
     name: 'link',
+    display: 'dialog',
     add: function (core) {
         core.addModule([_modules_dialog__WEBPACK_IMPORTED_MODULE_0__[/* default */ "a"]]);
 
@@ -5411,7 +5780,7 @@ __webpack_require__.r(__webpack_exports__);
         dialog.innerHTML = '' +
             '<form class="editor_link">' +
                 '<div class="se-dialog-header">' +
-                    '<button type="button" data-command="close" class="close" aria-label="Close" title="' + lang.dialogBox.close + '">' +
+                    '<button type="button" data-command="close" class="se-btn se-dialog-close" aria-label="Close" title="' + lang.dialogBox.close + '">' +
                         '<i aria-hidden="true" data-command="close" class="se-icon-cancel"></i>' +
                     '</button>' +
                     '<span class="se-modal-title">' + lang.dialogBox.linkBox.title + '</span>' +
@@ -5462,6 +5831,10 @@ __webpack_require__.r(__webpack_exports__);
             '</div>';
 
         return link_btn;
+    },
+
+    open: function () {
+        this.plugins.dialog.open.call(this, 'link', 'link' === this.currentControllerName);
     },
 
     submit: function (e) {
@@ -5521,6 +5894,19 @@ __webpack_require__.r(__webpack_exports__);
         return false;
     },
 
+    active: function (element) {
+        if (!element) {
+            if (this.controllerArray[0] === this.context.link.linkBtn) this.controllersOff();
+        } else if (this.util.isAnchor(element) && element.getAttribute('data-image-link') === null) {
+            if (this.controllerArray[0] !== this.context.link.linkBtn) {
+                this.plugins.link.call_controller_linkButton.call(this, element);
+            }
+            return true;
+        }
+
+        return false;
+    },
+
     on: function (update) {
         if (!update) {
             this.context.link.linkAnchorText.value = this.getSelection().toString();
@@ -5557,7 +5943,7 @@ __webpack_require__.r(__webpack_exports__);
             linkBtn.firstElementChild.style.left = '20px';
         }
         
-        this.controllersOn(linkBtn, this.plugins.link.init.bind(this));
+        this.controllersOn(linkBtn, this.plugins.link.init.bind(this), 'link');
     },
 
     onClick_linkBtn: function (e) {
@@ -5628,6 +6014,7 @@ __webpack_require__.r(__webpack_exports__);
 
 /* harmony default export */ __webpack_exports__["default"] = ({
     name: 'video',
+    display: 'dialog',
     add: function (core) {
         core.addModule([_modules_dialog__WEBPACK_IMPORTED_MODULE_0__[/* default */ "a"], _modules_resizing__WEBPACK_IMPORTED_MODULE_1__[/* default */ "a"]]);
 
@@ -5709,7 +6096,7 @@ __webpack_require__.r(__webpack_exports__);
         let html = '' +
             '<form class="editor_video">' +
                 '<div class="se-dialog-header">' +
-                    '<button type="button" data-command="close" class="close" aria-label="Close" title="' + lang.dialogBox.close + '">' +
+                    '<button type="button" data-command="close" class="se-btn se-dialog-close" aria-label="Close" title="' + lang.dialogBox.close + '">' +
                         '<i aria-hidden="true" data-command="close" class="se-icon-cancel"></i>' +
                     '</button>' +
                     '<span class="se-modal-title">' + lang.dialogBox.videoBox.title + '</span>' +
@@ -5768,6 +6155,10 @@ __webpack_require__.r(__webpack_exports__);
         dialog.innerHTML = html;
 
         return dialog;
+    },
+
+    open: function () {
+        this.plugins.dialog.open.call(this, 'video', 'video' === this.currentControllerName);
     },
     
     setVideoRatio: function (e) {
@@ -5901,7 +6292,7 @@ __webpack_require__.r(__webpack_exports__);
 
     setVideosInfo: function (frame) {
         if (!frame.getAttribute('data-origin')) {
-            const container = this.util.getParentElement(frame, this.util.isComponent);
+            const container = this.util.getParentElement(frame, this.util.isMediaComponent);
             const cover = this.util.getParentElement(frame, 'FIGURE');
 
             const w = this.plugins.resizing._module_getSizeX.call(this, this.context.video, frame, cover, container);
@@ -5931,13 +6322,14 @@ __webpack_require__.r(__webpack_exports__);
     },
 
     _update_videoCover: function (oIframe) {
-        const contextVideo = this.context.video;
+        if (!oIframe) return;
 
+        const contextVideo = this.context.video;
         oIframe.frameBorder = '0';
         oIframe.allowFullscreen = true;
         oIframe.onload = oIframe.addEventListener('load', this.plugins.video._onload_video.bind(this, oIframe));
         
-        const existElement = this.util.getParentElement(oIframe, this.util.isComponent) || 
+        const existElement = this.util.getParentElement(oIframe, this.util.isMediaComponent) || 
             this.util.getParentElement(oIframe, function (current) {
                 return this.isWysiwygDiv(current.parentNode);
             }.bind(this.util));
@@ -5946,7 +6338,7 @@ __webpack_require__.r(__webpack_exports__);
         const cover = contextVideo._cover = this.plugins.resizing.set_cover.call(this, oIframe);
         const container = contextVideo._container = this.plugins.resizing.set_container.call(this, cover, 'se-video-container');
 
-        const figcaption = existElement.getElementsByTagName('FIGCAPTION')[0];
+        const figcaption = existElement.querySelector('figcaption');
         let caption = null;
         if (!!figcaption) {
             caption = this.util.createElement('DIV');
@@ -5957,16 +6349,15 @@ __webpack_require__.r(__webpack_exports__);
         const size = (oIframe.getAttribute('data-size') || oIframe.getAttribute('data-origin') || '').split(',');
         this.plugins.video.applySize.call(this, (size[0] || this.context.option.videoWidth), (size[1] || ''));
 
-        existElement.parentNode.insertBefore(container, existElement);
-        if (!!caption) existElement.parentNode.insertBefore(caption, existElement);
-        this.util.removeItem(existElement);
+        existElement.parentNode.replaceChild(container, existElement);
+        if (!!caption) existElement.parentNode.insertBefore(caption, container.nextElementSibling);
     },
 
     onModifyMode: function (element, size) {
         const contextVideo = this.context.video;
         contextVideo._element = element;
         contextVideo._cover = this.util.getParentElement(element, 'FIGURE');
-        contextVideo._container = this.util.getParentElement(element, this.util.isComponent);
+        contextVideo._container = this.util.getParentElement(element, this.util.isMediaComponent);
 
         contextVideo._align = element.getAttribute('data-align') || 'none';
 
@@ -6042,7 +6433,7 @@ __webpack_require__.r(__webpack_exports__);
 
         for (let i = 0, len = this._variable._videosCnt, video, container; i < len; i++) {
             video = videos[i];
-            container = this.util.getParentElement(video, this.util.isComponent);
+            container = this.util.getParentElement(video, this.util.isMediaComponent);
             if (!container || container.getElementsByTagName('figcaption').length > 0 || !video.style.width) {
                 videoPlugin._update_videoCover.call(this, video);
             }
@@ -6292,6 +6683,7 @@ __webpack_require__.r(__webpack_exports__);
             hr_dashed: 'Streget',
             table: 'Tabel',
             link: 'Link',
+            math: 'Math',
             image: 'Billede',
             video: 'Video',
             fullScreen: 'Fuld skærm',
@@ -6317,6 +6709,12 @@ __webpack_require__.r(__webpack_exports__);
                 url: 'URL til link',
                 text: 'Tekst for link',
                 newWindowCheck: 'Åben i nyt faneblad'
+            },
+            mathBox: {
+                title: 'Math',
+                inputLabel: 'Matematisk notation',
+                fontSizeLabel: 'Skriftstørrelse',
+                previewLabel: 'Preview'
             },
             imageBox: {
                 title: 'Indsæt billede',
@@ -6450,6 +6848,7 @@ __webpack_require__.r(__webpack_exports__);
             hr_dashed: 'Gestrichelt',
             table: 'Tabelle',
             link: 'Link',
+            math: 'Mathematik',
             image: 'Bild',
             video: 'Video',
             fullScreen: 'Vollbild',
@@ -6475,6 +6874,12 @@ __webpack_require__.r(__webpack_exports__);
                 url: 'Link-URL',
                 text: 'Link-Text',
                 newWindowCheck: 'In neuem Fenster anzeigen'
+            },
+            mathBox: {
+                title: 'Mathematik',
+                inputLabel: 'Mathematische Notation',
+                fontSizeLabel: 'Schriftgröße',
+                previewLabel: 'Vorschau'
             },
             imageBox: {
                 title: 'Bild einfügen',
@@ -6607,6 +7012,7 @@ __webpack_require__.r(__webpack_exports__);
 			hr_dashed: 'Línea horizontal discontinua',
 			table: 'Tabla',
 			link: 'Link',
+			math: 'Matemáticas',
 			image: 'Imagen',
 			video: 'Video',
 			fullScreen: 'Pantalla completa',
@@ -6633,6 +7039,12 @@ __webpack_require__.r(__webpack_exports__);
 				text: 'Texto para mostrar',
 				newWindowCheck: 'Abrir en una nueva ventana'
 			},
+			mathBox: {
+                title: 'Matemáticas',
+                inputLabel: 'Notación Matemática',
+                fontSizeLabel: 'Tamaño de fuente',
+                previewLabel: 'Vista previa'
+            },
 			imageBox: {
 				title: 'Insertar imagen',
 				file: 'Seleccionar desde los archivos',
@@ -6764,6 +7176,7 @@ __webpack_require__.r(__webpack_exports__);
             hr_dashed: 'Tirets',
             table: 'Table',
             link: 'Lien',
+            math: 'Math',
             image: 'Image',
             video: 'Video',
             fullScreen: 'Plein écran',
@@ -6789,6 +7202,12 @@ __webpack_require__.r(__webpack_exports__);
                 url: 'Adresse URL du lien',
                 text: 'Texte à afficher',
                 newWindowCheck: 'Ouvrir dans une nouvelle fenêtre'
+            },
+            mathBox: {
+                title: 'Math',
+                inputLabel: 'Notation mathématique',
+                fontSizeLabel: 'Taille',
+                previewLabel: 'Previsualiser'
             },
             imageBox: {
                 title: 'Insérer une image',
@@ -6922,6 +7341,7 @@ __webpack_require__.r(__webpack_exports__);
             hr_dashed: 'ダッシュ',
             table: 'テーブル',
             link: 'リンク',
+            math: '数学',
             image: '画像',
             video: '動画',
             fullScreen: 'フルスクリーン',
@@ -6947,6 +7367,12 @@ __webpack_require__.r(__webpack_exports__);
                 url: 'インターネットアドレス',
                 text: '画面のテキスト',
                 newWindowCheck: '別ウィンドウで開く'
+            },
+            mathBox: {
+                title: '数学',
+                inputLabel: '数学表記',
+                fontSizeLabel: 'サイズ',
+                previewLabel: 'プレビュー'
             },
             imageBox: {
                 title: '画像の挿入',
@@ -7079,6 +7505,7 @@ __webpack_require__.r(__webpack_exports__);
             hr_dashed: '대시',
             table: '테이블',
             link: '링크',
+            math: '수식',
             image: '이미지',
             video: '동영상',
             fullScreen: '전체 화면',
@@ -7104,6 +7531,12 @@ __webpack_require__.r(__webpack_exports__);
                 url: '인터넷 주소',
                 text: '화면 텍스트',
                 newWindowCheck: '새창으로 열기'
+            },
+            mathBox: {
+                title: '수식',
+                inputLabel: '수학적 표기법',
+                fontSizeLabel: '글자 크기',
+                previewLabel: '미리보기'
             },
             imageBox: {
                 title: '이미지 삽입',
@@ -7237,6 +7670,7 @@ __webpack_require__.r(__webpack_exports__);
             hr_dashed: 'tracejada',
             table: 'Tabela',
             link: 'Link',
+            math: 'Matemática',
             image: 'Imagem',
             video: 'Vídeo',
             fullScreen: 'Tela cheia',
@@ -7262,6 +7696,12 @@ __webpack_require__.r(__webpack_exports__);
                 url: 'URL para link',
                 text: 'Texto à mostrar',
                 newWindowCheck: 'Abrir em nova guia'
+            },
+            mathBox: {
+                title: 'Matemática',
+                inputLabel: 'Notação matemática',
+                fontSizeLabel: 'Tamanho',
+                previewLabel: 'Prever'
             },
             imageBox: {
                 title: 'Inserir imagens',
@@ -7394,6 +7834,7 @@ __webpack_require__.r(__webpack_exports__);
             hr_dashed: 'Штриховая',
             table: 'Таблица',
             link: 'Ссылка',
+            math: 'математический',
             image: 'Изображение',
             video: 'Видео',
             fullScreen: 'Полный экран',
@@ -7419,6 +7860,12 @@ __webpack_require__.r(__webpack_exports__);
                 url: 'Ссылка',
                 text: 'Текст',
                 newWindowCheck: 'Открывать в новом окне'
+            },
+            mathBox: {
+                title: 'математический',
+                inputLabel: 'Математическая запись',
+                fontSizeLabel: 'Кегль',
+                previewLabel: 'Предварительный просмотр'
             },
             imageBox: {
                 title: 'Вставить изображение',
@@ -7526,31 +7973,32 @@ __webpack_require__.r(__webpack_exports__);
             font: '字体',
             formats: '格式',
             fontSize: '字号',
-            bold: '胆大',
+            bold: '粗体',
             underline: '下划线',
             italic: '斜体',
             strike: '删除线',
             subscript: '下标',
             superscript: '上标',
             removeFormat: '清除格式',
-            fontColor: '字颜色',
+            fontColor: '字体颜色',
             hiliteColor: '背景颜色',
-            indent: '增加缩进量',
-            outdent: '减少缩进量',
+            indent: '增加缩进',
+            outdent: '减少缩进',
             align: '对齐方式',
             alignLeft: '左对齐',
             alignRight: '右对齐',
             alignCenter: '居中',
             alignJustify: '两端对齐',
-            list: '名单',
-            orderList: '编号',
-            unorderList: '项目符号',
-            horizontalRule: '插入水平线',
+            list: '列表',
+            orderList: '有序列表',
+            unorderList: '无序列表',
+            horizontalRule: '水平线',
             hr_solid: '实线',
-            hr_dotted: '点',
+            hr_dotted: '点线',
             hr_dashed: '虚线',
             table: '表格',
             link: '超链接',
+            math: '数学',
             image: '图片',
             video: '视频',
             fullScreen: '全屏',
@@ -7560,13 +8008,13 @@ __webpack_require__.r(__webpack_exports__);
             redo: '恢复',
             preview: '预览',
             print: '打印',
-            tag_p: '段落格式',
+            tag_p: '段落',
             tag_div: '正文 (DIV)',
             tag_h: '标题',
             tag_blockquote: '引用',
             tag_pre: '代码',
             template: '模板',
-            lineHeight: '线高',
+            lineHeight: '行高',
             paragraphStyle: '段落样式',
             textStyle: '文字样式'
         },
@@ -7577,6 +8025,12 @@ __webpack_require__.r(__webpack_exports__);
                 text: '字体',
                 newWindowCheck: '在新标签页中打开'
             },
+            mathBox: {
+                title: '数学',
+                inputLabel: '数学符号',
+                fontSizeLabel: '字号',
+                previewLabel: '预览'
+            },
             imageBox: {
                 title: '插入图片',
                 file: '上传图片',
@@ -7585,7 +8039,7 @@ __webpack_require__.r(__webpack_exports__);
             },
             videoBox: {
                 title: '插入视频',
-                url: '嵌入网址, YouTube'
+                url: '嵌入网址'
             },
             caption: '标题',
             close: '取消',
@@ -7621,18 +8075,18 @@ __webpack_require__.r(__webpack_exports__);
             rotateRight: '向右旋转',
             maxSize: '最大尺寸',
             minSize: '最小尺寸',
-            tableHeader: '表的标题',
+            tableHeader: '表格标题',
             mergeCells: '合并单元格',
-            splitCells: '分裂细胞',
+            splitCells: '分割单元格',
             HorizontalSplit: '水平分割',
-            VerticalSplit: '垂直分裂'
+            VerticalSplit: '垂直分割'
         },
         menu: {
             spaced: '间隔开',
             bordered: '边界线',
-            neon: '氖',
+            neon: '霓虹灯',
             translucent: '半透明',
-            shadow: '暗影'
+            shadow: '阴影'
         }
     };
 
@@ -7646,6 +8100,7 @@ __webpack_require__.r(__webpack_exports__);
 
     return lang;
 }));
+
 
 /***/ }),
 /* 32 */
@@ -7797,8 +8252,8 @@ const util_util = {
      * @private
      */
     _tagConvertor: function (text) {
-        const ec = {'b': 'strong', 'i': 'em', 'var': 'em', 'u': 'ins', 'strike': 'del', 's': 'del'};
-        return text.replace(/(<\/?)(b|strong|var|i|em|u|ins|s|strike|del)\b\s*(?:[^>^<]+)?\s*(?=>)/ig, function (m, t, n) {
+        const ec = {'b': 'strong', 'i': 'em', 'u': 'ins', 'strike': 'del', 's': 'del'};
+        return text.replace(/(<\/?)(b|strong|i|em|u|ins|s|strike|del)\b\s*(?:[^>^<]+)?\s*(?=>)/ig, function (m, t, n) {
             return t + ((typeof ec[n] === 'string') ? ec[n] : n);
         });
     },
@@ -7986,87 +8441,6 @@ const util_util = {
     },
 
     /**
-     * @description Converts contents into a format that can be placed in an editor
-     * @param {String} contents contents
-     * @returns {String}
-     */
-    convertContentsForEditor: function (contents) {
-        let returnHTML = '';
-        let tag = this._d.createRange().createContextualFragment(contents).childNodes;
-
-        for (let i = 0, len = tag.length, baseHtml; i < len; i++) {
-            baseHtml = tag[i].outerHTML || tag[i].textContent;
-
-            if (tag[i].nodeType === 3) {
-                const textArray = baseHtml.split(/\n/g);
-                let text = '';
-                for (let t = 0, tLen = textArray.length; t < tLen; t++) {
-                    text = textArray[t].trim();
-                    if (text.length > 0) returnHTML += '<p>' + text + '</p>';
-                }
-            } else {
-                returnHTML += baseHtml.replace(/(?!>)\s+(?=<)/g, ' ');
-            }
-        }
-
-        if (returnHTML.length === 0) {
-            contents = this._HTMLConvertor(contents);
-            returnHTML = '<p>' + (contents.length > 0 ? contents : '<br>') + '</p>';
-        }
-
-        return this._tagConvertor(returnHTML.replace(this._deleteExclusionTags, ''));
-    },
-
-    /**
-     * @description Converts wysiwyg area element into a format that can be placed in an editor of code view mode
-     * @param {Element|String} html WYSIWYG element (context.element.wysiwyg) or HTML string.
-     * @param {Number|null} indentSize The indent size of the tag (default: 0)
-     * @returns {String}
-     */
-    convertHTMLForCodeView: function (html, indentSize) {
-        let returnHTML = '';
-        const reg = this._w.RegExp;
-        const brReg = new reg('^(BLOCKQUOTE|PRE|TABLE|THEAD|TBODY|TR|TH|TD|OL|UL|IMG|IFRAME|VIDEO|AUDIO|FIGURE|FIGCAPTION|HR|BR)$', 'i');
-        const isFormatElement = this.isFormatElement.bind(this);
-        const wDoc = typeof html === 'string' ? this._d.createRange().createContextualFragment(html) : html;
-        const util = this;
-
-        indentSize *= 1;
-        indentSize = indentSize > 0 ? new this._w.Array(indentSize + 1).join(' ') : '';
-
-        (function recursionFunc (element, indent, lineBR) {
-            const children = element.childNodes;
-            const elementRegTest = brReg.test(element.nodeName);
-            const elementIndent = (elementRegTest ? indent : '');
-
-            for (let i = 0, len = children.length, node, br, nodeRegTest; i < len; i++) {
-                node = children[i];
-                nodeRegTest = brReg.test(node.nodeName);
-                br = nodeRegTest ? '\n' : '';
-                lineBR = isFormatElement(node) && !elementRegTest && !/^(TH|TD)$/i.test(element.nodeName) ? '\n' : '';
-
-                if (node.nodeType === 3) {
-                    returnHTML += util._HTMLConvertor((/^\n+$/.test(node.data) ? '' : node.data));
-                    continue;
-                }
-
-                if (node.childNodes.length === 0) {
-                    returnHTML += (/^(HR)$/i.test(node.nodeName) ? '\n' : '') + elementIndent + node.outerHTML + br;
-                    continue;
-                }
-                
-                node.innerHTML = node.innerHTML;
-                const tag = node.nodeName.toLowerCase();
-                returnHTML += (lineBR || (elementRegTest ? '' : br)) + (elementIndent || nodeRegTest ? indent : '') + node.outerHTML.match(reg('<' + tag + '[^>]*>', 'i'))[0] + br;
-                recursionFunc(node, indent + indentSize, '');
-                returnHTML += (nodeRegTest ? indent : '') + '</' + tag + '>' + (lineBR || br || elementRegTest ? '\n' :  false || /^(TH|TD)$/i.test(node.nodeName) ? '\n' : '');
-            }
-        }(wDoc, '', '\n'));
-
-        return returnHTML.trim() + '\n';
-    },
-
-    /**
      * @description It is judged whether it is the edit region top div element or iframe's body tag.
      * @param {Element} element The element to check
      * @returns {Boolean}
@@ -8077,28 +8451,41 @@ const util_util = {
     },
 
     /**
-     * @description It is judged whether it is the format element (P, DIV, H1-6, LI, TH, TD)
+     * @description It is judged whether it is the format element (P, DIV, H[1-6], PRE, LI)
+     * Format element also contain "free format Element"
      * @param {Element} element The element to check
      * @returns {Boolean}
      */
     isFormatElement: function (element) {
-        if (element && element.nodeType === 1 && /^(P|DIV|H[1-6]|LI|TH|TD)$/i.test(element.nodeName) && !this.isComponent(element) && !this.isWysiwygDiv(element)) return true;
+        if (element && element.nodeType === 1 && (/^(P|DIV|H[1-6]|PRE|LI)$/i.test(element.nodeName) || this.hasClass(element, '(\\s|^)__se__format__replace_.+(\\s|$)|(\\s|^)__se__format__free_.+(\\s|$)')) && !this.isComponent(element) && !this.isWysiwygDiv(element)) return true;
         return false;
     },
 
     /**
-     * @description It is judged whether it is the range format element. (BLOCKQUOTE, OL, UL, PRE, FIGCAPTION, TABLE, THEAD, TBODY, TR, TH, TD)
-     * * Range format element is wrap the format element  (P, DIV, H1-6, LI)
+     * @description It is judged whether it is the range format element. (BLOCKQUOTE, OL, UL, FIGCAPTION, TABLE, THEAD, TBODY, TR, TH, TD)
+     * * Range format element is wrap the format element  (util.isFormatElement)
      * @param {Element} element The element to check
      * @returns {Boolean}
      */
     isRangeFormatElement: function (element) {
-        if (element && element.nodeType === 1 && (/^(BLOCKQUOTE|OL|UL|PRE|FIGCAPTION|TABLE|THEAD|TBODY|TR|TH|TD)$/i.test(element.nodeName) || element.getAttribute('data-format') === 'range')) return true;
+        if (element && element.nodeType === 1 && (/^(BLOCKQUOTE|OL|UL|FIGCAPTION|TABLE|THEAD|TBODY|TR|TH|TD)$/i.test(element.nodeName) || this.hasClass(element, '(\\s|^)__se__format__range_.+(\\s|$)'))) return true;
         return false;
     },
 
     /**
-     * @description It is judged whether it is the component(img, iframe cover, table, hr) element - ".se-component"
+     * @description It is judged whether it is the free format element. (PRE)
+     * Free format elements's line break is "BR" tag.
+     * Free format elements is included in the format element.
+     * @param {Element} element 
+     * @returns {Boolean}
+     */
+    isFreeFormatElement: function (element) {
+        if (element && element.nodeType === 1 && (/^PRE$/i.test(element.nodeName) || this.hasClass(element, '(\\s|^)__se__format__free_.+(\\s|$)')) && !this.isComponent(element) && !this.isWysiwygDiv(element)) return true;
+        return false;
+    },
+
+    /**
+     * @description It is judged whether it is the component [img, iframe] cover(element className - ".se-component") and table, hr
      * @param {Element} element The element to check
      * @returns {Boolean}
      */
@@ -8107,7 +8494,16 @@ const util_util = {
     },
 
     /**
-     * @description If a parent node that contains an argument node finds a format node (P, DIV, H[1-6], LI), it returns that node.
+     * @description It is judged whether it is the component [img, iframe] cover(element className - ".se-component")
+     * @param {Element} element The element to check
+     * @returns {Boolean}
+     */
+    isMediaComponent: function (element) {
+        return element && /se-component/.test(element.className);
+    },
+
+    /**
+     * @description If a parent node that contains an argument node finds a format node (util.isFormatElement), it returns that node.
      * @param {Element} element Reference element if null or no value, it is relative to the current focus node.
      * @param {Function|null} validation Additional validation function.
      * @returns {Element}
@@ -8130,7 +8526,7 @@ const util_util = {
     },
 
     /**
-     * @description If a parent node that contains an argument node finds a format node (BLOCKQUOTE, TABLE, TH, TD, OL, UL, PRE), it returns that node.
+     * @description If a parent node that contains an argument node finds a format node (util.isRangeFormatElement), it returns that node.
      * @param {Element} element Reference element if null or no value, it is relative to the current focus node.
      * @param {Function|null} validation Additional validation function.
      * @returns {Element|null}
@@ -8147,6 +8543,28 @@ const util_util = {
             element = element.parentNode;
         }
 
+        return null;
+    },
+
+    /**
+     * @description If a parent node that contains an argument node finds a free format node (util.isFreeFormatElement), it returns that node.
+     * @param {Element} element Reference element if null or no value, it is relative to the current focus node.
+     * @param {Function|null} validation Additional validation function.
+     * @returns {Element}
+     */
+    getFreeFormatElement: function (element, validation) {
+        if (!element) return null;
+        if (!validation) {
+            validation = function () { return true; };
+        }
+
+        while (element) {
+            if (this.isWysiwygDiv(element)) return null;
+            if (this.isFreeFormatElement(element) && validation(element)) return element;
+
+            element = element.parentNode;
+        }
+        
         return null;
     },
 
@@ -8177,8 +8595,33 @@ const util_util = {
      */
     copyFormatAttributes: function (originEl, copyEl) {
         copyEl = copyEl.cloneNode(false);
-        copyEl.className = copyEl.className.replace(/(\s|^)__se__format__(\s|$)/g, '');
+        copyEl.className = copyEl.className.replace(/(\s|^)__se__format__[^\s]+/g, '');
         this.copyTagAttributes(originEl, copyEl);
+    },
+
+    /**
+     * @description Get the item from the array that matches the condition.
+     * @param {Array} array Array to get item
+     * @param {Function|null} validation Conditional function
+     * @param {Boolean} multi If true, returns all items that meet the criteria otherwise, returns an empty array.
+     * If false, returns only one item that meet the criteria otherwise return null.
+     * @returns {Array|Object}
+     */
+    getArrayItem: function (array, validation, multi) {
+        if (!array || array.length === 0) return null;
+
+        validation = validation || function () { return true; };
+        const arr = [];
+        
+        for (let i = 0, len = array.length, a; i < len; i++) {
+            a = array[i];
+            if (validation(a)) {
+                if (!multi) return a;
+                else arr.push(a);
+            }
+        }
+
+        return !multi ? null : arr;
     },
 
     /**
@@ -8230,7 +8673,7 @@ const util_util = {
      */
     getPositionIndex: function (node) {
         let idx = 0;
-        while (!!(node = node.previousSibling)) {
+        while ((node = node.previousSibling)) {
             idx += 1;
         }
         return idx;
@@ -8435,7 +8878,7 @@ const util_util = {
         validation = validation || function () { return true; };
 
         (function recursionFunc(current) {
-            if ((element !== current && validation(current)) || /^BR$/i.test(element.nodeName)) {
+            if (element !== current && validation(current)) {
                 children.push(current);
             }
 
@@ -8450,7 +8893,7 @@ const util_util = {
     /**
      * @description Get all child nodes of the argument value element (Include text nodes)
      * @param {Element} element element to get child node
-     * @param {(function|null)} validation Conditional function
+     * @param {function|null} validation Conditional function
      * @returns {Array}
      */
     getListChildNodes: function (element, validation) {
@@ -8460,7 +8903,7 @@ const util_util = {
         validation = validation || function () { return true; };
 
         (function recursionFunc(current) {
-            if ((element !== current && validation(current)) || /^BR$/i.test(element.nodeName)) {
+            if (element !== current && validation(current)) {
                 children.push(current);
             }
 
@@ -8475,10 +8918,13 @@ const util_util = {
     /**
      * @description Returns the number of parents nodes.
      * "0" when the parent node is the WYSIWYG area.
+     * "-1" when the element argument is the WYSIWYG area.
      * @param {Element} element The element to check
      * @returns {Number}
      */
     getElementDepth: function (element) {
+        if (!element || this.isWysiwygDiv(element)) return -1;
+
         let depth = 0;
         element = element.parentNode;
 
@@ -8566,7 +9012,7 @@ const util_util = {
                 query = '^' + query.split(':')[1] + '$';
             } else {
                 attr = 'nodeName';
-                query = '^' + query + '$';
+                query = '^' + (query === 'text' ? '#' + query : query) + '$';
             }
 
             const regExp = new this._w.RegExp(query, 'i');
@@ -8657,6 +9103,20 @@ const util_util = {
     },
 
     /**
+     * @description Set style, if all styles are deleted, the style properties are deleted.
+     * @param {Element} element Element to set style
+     * @param {String} styleName Style attribute name (marginLeft, textAlign...)
+     * @param {String|Number} value Style value
+     */
+    setStyle: function (element, styleName, value) {
+        element.style[styleName] = value;
+
+        if (!value && !element.style.cssText) {
+            element.removeAttribute('style');
+        }
+    },
+
+    /**
      * @description Determine whether any of the matched elements are assigned the given class
      * @param {Element} element Elements to search class name
      * @param {String} className Class name to search for
@@ -8665,7 +9125,7 @@ const util_util = {
     hasClass: function (element, className) {
         if (!element) return;
 
-        return element.classList.contains(className.trim());
+        return (new this._w.RegExp(className)).test(element.className);
     },
 
     /**
@@ -8692,6 +9152,8 @@ const util_util = {
 
         const check = new this._w.RegExp('(\\s|^)' + className + '(\\s|$)');
         element.className = element.className.replace(check, ' ').trim();
+
+        if (!element.className.trim()) element.removeAttribute('class');
     },
 
     /**
@@ -8709,6 +9171,8 @@ const util_util = {
         else {
             element.className += ' ' + className;
         }
+
+        if (!element.className.trim()) element.removeAttribute('class');
     },
 
     /**
@@ -8729,16 +9193,18 @@ const util_util = {
      * Returns an {sc: previousSibling, ec: nextSibling}(the deleted node reference) or null.
      * @param {Element} item Element to be remove
      * @param {Function|null} validation Validation function. default(Deleted if it only have breakLine and blanks)
+     * @param {Element|null} stopParent Stop when the parent node reaches stopParent
      * @returns {Object|null} {sc: previousSibling, ec: nextSibling}
      */
-    removeItemAllParents: function (item, validation) {
+    removeItemAllParents: function (item, validation, stopParent) {
         if (!item) return null;
         let cc = null;
         if (!validation) {
             validation = function (current) {
+                if (current === stopParent || this.isComponent(current)) return false;
                 const text = current.textContent.trim();
                 return text.length === 0 || /^(\n|\u200B)+$/.test(text);
-            };
+            }.bind(this);
         }
 
         (function recursionFunc (element) {
@@ -8759,15 +9225,309 @@ const util_util = {
     },
 
     /**
-     * @description Delete a empty child node of argument element
-     * @param {Element} element Element node
+     * @description Detach Nested all nested lists under the "baseNode".
+     * Returns a list with nested removed.
+     * @param {Element} baseNode Element on which to base.
+     * @param {Boolean} all If true, it also detach all nested lists of a returned list.
+     * @returns {Element}
      */
-    removeEmptyNode: function (element) {
+    detachNestedList: function (baseNode, all) {
+        const rNode = this.__deleteNestedList(baseNode);
+        let rangeElement, cNodes;
+
+        if (rNode) {
+            rangeElement = rNode.cloneNode(false);
+            cNodes = rNode.childNodes;
+            const index = this.getPositionIndex(baseNode);
+            while (cNodes[index]) {
+                rangeElement.appendChild(cNodes[index]);
+            }
+        } else {
+            rangeElement = baseNode;
+        }
+        
+        let rChildren;
+        if (!all) {
+            const depth = this.getElementDepth(baseNode) + 2;
+            rChildren = this.getListChildren(baseNode, function (current) { return this.isListCell(current) && !current.previousElementSibling && this.getElementDepth(current) === depth; }.bind(this));
+        } else {
+            rChildren = this.getListChildren(rangeElement, function (current) { return this.isListCell(current) && !current.previousElementSibling; }.bind(this));
+        }
+
+        for (let i = 0, len = rChildren.length; i < len; i++) {
+            this.__deleteNestedList(rChildren[i]);
+        }
+        
+        if (rNode) {
+            rNode.parentNode.insertBefore(rangeElement, rNode.nextSibling);
+            if (cNodes && cNodes.length === 0) this.removeItem(rNode);
+        }
+
+        return rangeElement === baseNode ? rangeElement.parentNode : rangeElement;
+    },
+
+    /**
+     * @description Sub function of util.detachNestedList method.
+     * @private
+     */
+    __deleteNestedList: function (baseNode) {
+        const baseParent = baseNode.parentNode;
+        let sibling = baseParent;
+        let parent = sibling.parentNode;
+        let liSibling, liParent, child, index, c;
+        
+        while (this.isListCell(parent)) {
+            index = this.getPositionIndex(baseNode);
+            liSibling = parent.nextElementSibling;
+            liParent = parent.parentNode;
+            child = sibling;
+            while(child) {
+                sibling = sibling.nextSibling;
+                if (this.isList(child)) {
+                    c = child.childNodes;
+                    while (c[index]) {
+                        liParent.insertBefore(c[index], liSibling);
+                    }
+                    if (c.length === 0) this.removeItem(child);
+                } else {
+                    liParent.appendChild(child);
+                }
+                child = sibling;
+            }
+            sibling = liParent;
+            parent = liParent.parentNode;
+        }
+
+        if (baseParent.children.length === 0) this.removeItem(baseParent);
+
+        return liParent;
+    },
+
+    /**
+     * @description Split all tags based on "baseNode"
+     * Returns the last element of the splited tag.
+     * @param {Node} baseNode Element or text node on which to base
+     * @param {Number|null} offset Text offset of "baseNode" (Only valid when "baseNode" is a text node)
+     * @param {Number} depth The nesting depth of the element being split. (default: 0)
+     * @returns {Element}
+     */
+    splitElement: function (baseNode, offset, depth) {
+        const bp = baseNode.parentNode;
+        let index = 0, newEl, children, temp;
+        let next = true;
+        if (!depth || depth < 0) depth = 0;
+
+        if (baseNode.nodeType === 3) {
+            index = this.getPositionIndex(baseNode);
+            if (offset >= 0) {
+                baseNode.splitText(offset);
+                const after = this.getNodeFromPath([index + 1], bp);
+                if (this.onlyZeroWidthSpace(after)) after.data = this.zeroWidthSpace;
+            }
+        } else if (baseNode.nodeType === 1) {
+            if (!baseNode.previousSibling) {
+                if (this.getElementDepth(baseNode) === depth) next = false;
+            } else {
+                baseNode = baseNode.previousSibling;
+            }
+        }
+
+        let depthEl = baseNode;
+        while (this.getElementDepth(depthEl) > depth) {
+            index = this.getPositionIndex(depthEl) + 1;
+            depthEl = depthEl.parentNode;
+
+            temp = newEl;
+            newEl = depthEl.cloneNode(false);
+            children = depthEl.childNodes;
+
+            if (temp) {
+                if (this.isListCell(newEl) && this.isList(temp) && temp.firstElementChild) {
+                    newEl.innerHTML = temp.firstElementChild.innerHTML;
+                    util_util.removeItem(temp.firstElementChild);
+                    if (temp.children.length > 0) newEl.appendChild(temp);
+                } else {
+                }
+                newEl.appendChild(temp);
+            }
+
+            while (children[index]) {
+                newEl.appendChild(children[index]);
+            }
+        }
+
+        const pElement = depthEl.parentNode;
+        if (next) depthEl = depthEl.nextSibling;
+        if (!newEl) return depthEl;
+
+        this.mergeSameTags(newEl, null, null, false);
+        this.mergeNestedTags(newEl, function (current) { return this.isList(current); }.bind(this));
+        
+        if (newEl.childNodes.length > 0) pElement.insertBefore(newEl, depthEl);
+        else newEl = depthEl;
+
+        if (bp.childNodes.length === 0) this.removeItem(bp);
+
+        return newEl;
+    },
+
+    /**
+     * @description Use with "npdePath (util.getNodePath)" to merge the same attributes and tags if they are present and modify the nodepath.
+     * If "offset" has been changed, it will return as much "offset" as it has been modified.
+     * "a", "b" You can send a maximum of two nodepaths.
+     * @param {Element} element Element object.
+     * @param {Object|null} nodePath_s Start NodePath object (util.getNodePath)
+     * @param {Object|null} nodePath_e End NodePath object (util.getNodePath)
+     * @param {Boolean} onlyText If true, non-text nodes(!util._isIgnoreNodeChange) like 'span', 'strong'.. are ignored.
+     * @returns {Object} {a: 0, b: 0}
+     */
+    mergeSameTags: function (element, nodePath_s, nodePath_e, onlyText) {
         const inst = this;
+        const offsets = {a: 0, b: 0};
+
+        (function recursionFunc(current, depth, depthIndex, includedPath_s, includedPath_e) {
+            const children = current.childNodes;
+            
+            for (let i = 0, len = children.length, child, next; i < len; i++) {
+                child = children[i];
+                next = children[i + 1];
+                if (!child) break;
+                if((onlyText && inst._isIgnoreNodeChange(child)) || (!onlyText && (inst.isTable(child) || inst.isListCell(child) || (inst.isFormatElement(child) && !inst.isFreeFormatElement(child))))) continue;
+                if (len === 1 && current.nodeName === child.nodeName && current.parentNode) {
+                    inst.copyTagAttributes(child, current);
+                    current.parentNode.insertBefore(child, current);
+                    inst.removeItem(current);
+
+                    // update nodePath
+                    if (nodePath_s && nodePath_s[depth] === i) {
+                        nodePath_s.splice(depth, 1);
+                        nodePath_s[depth] = i;
+                    }
+
+                    if (nodePath_e && nodePath_e[depth] === i) {
+                        nodePath_e.splice(depth, 1);
+                        nodePath_e[depth] = i;
+                    }
+                }
+                if (!next) {
+                    if (child.nodeType === 1) recursionFunc(child, depth + 1, i, includedPath_s, includedPath_e);
+                    break;
+                }
+
+                if (child.nodeName === next.nodeName && inst.isSameAttributes(child, next) && child.href === next.href) {
+                    const childs = child.childNodes;
+                    let childLength = 0;
+                    for (let n = 0, nLen = childs.length; n < nLen; n++) {
+                        if (childs[n].textContent.length > 0) childLength++;
+                    }
+
+                    const l = child.lastChild;
+                    const r = next.firstChild;
+                    if (l && r) {
+                        const textOffset = l.nodeType === 3 && r.nodeType === 3;
+                        let addOffset = l.textContent.length;
+                        let tempL = l.previousSibling;
+                        while(tempL && tempL.nodeType === 3) {
+                            addOffset += tempL.textContent.length;
+                            tempL = tempL.previousSibling;
+                        }
+
+                        if (childLength > 0 && l.nodeType === 3 && r.nodeType === 3 && (l.textContent.length > 0 || r.textContent.length > 0)) childLength--;
+
+                        // start
+                        if (includedPath_s && nodePath_s && nodePath_s[depth] > i) {
+                            if (depth > 0 && nodePath_s[depth - 1] !== depthIndex) {
+                                includedPath_s = false;
+                            } else {
+                                nodePath_s[depth] -= 1;
+                                if (nodePath_s[depth + 1] >= 0 && nodePath_s[depth] === i) {
+                                    nodePath_s[depth + 1] += childLength;
+                                    if (textOffset) {
+                                        if (l && l.nodeType === 3 && r && r.nodeType === 3) {
+                                            offsets.a += addOffset;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        // end
+                        if (includedPath_e && nodePath_e && nodePath_e[depth] > i) {
+                            if (depth > 0 && nodePath_e[depth - 1] !== depthIndex) {
+                                includedPath_e = false;
+                            } else {
+                                nodePath_e[depth] -= 1;
+                                if (nodePath_e[depth + 1] >= 0 && nodePath_e[depth] === i) {
+                                    nodePath_e[depth + 1] += childLength;
+                                    if (textOffset) {
+                                        if (l && l.nodeType === 3 && r && r.nodeType === 3) {
+                                            offsets.b += addOffset;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (child.nodeType === 3) child.textContent += next.textContent;
+                    else child.innerHTML += next.innerHTML;
+                    
+                    inst.removeItem(next);
+                    i--;
+                } else if (child.nodeType === 1) {
+                    recursionFunc(child, depth + 1, i, includedPath_s, includedPath_e);
+                }
+            }
+        })(element, 0, 0, true, true);
+
+        return offsets;
+    },
+
+    /**
+     * @description Remove nested tags without other child nodes.
+     * @param {Element} element Element object
+     * @param {Function|String|null} validation Validation function / String("tag1|tag2..") / If null, all tags are applicable.
+     */
+    mergeNestedTags: function (element, validation) {
+        if (typeof validation === 'string') {
+            validation = function (current) { return this.test(current.tagName); }.bind(new this._w.RegExp('^(' + (validation ? validation : '.+') + ')$', 'i'));
+        } else if (typeof validation !== 'function') {
+            validation = function () { return true; };
+        }
         
         (function recursionFunc(current) {
-            if (current !== element && inst.onlyZeroWidthSpace(current.textContent) && !/^BR$/i.test(current.nodeName) && 
-                    (!current.firstChild || !/^BR$/i.test(current.firstChild.nodeName)) && !inst.isComponent(current)) {
+            let children = current.children;
+            if (children.length === 1 && children[0].nodeName === current.nodeName && validation(current)) {
+                const temp = children[0];
+                children = temp.children;
+                while (children[0]) {
+                    current.appendChild(children[0]);
+                }
+                current.removeChild(temp);
+            }
+
+            for (let i = 0, len = current.children.length; i < len; i++) {
+                recursionFunc(current.children[i]);
+            }
+        })(element);
+    },
+
+    /**
+     * @description Delete a empty child node of argument element
+     * @param {Element} element Element node
+     * @param {Node|null} notRemoveNode Do not remove node
+     */
+    removeEmptyNode: function (element, notRemoveNode) {
+        const inst = this;
+
+        if (notRemoveNode) {
+            notRemoveNode = inst.getParentElement(notRemoveNode, function (current) {
+                return element === current.parentElement;
+            });
+        }
+        
+        (function recursionFunc(current) {
+            if (inst._notTextNode(current) || current === notRemoveNode || current.getAttribute('contenteditable') === 'false') return 0;
+            if (current !== element && inst.onlyZeroWidthSpace(current.textContent) && (!current.firstChild || !inst.isBreak(current.firstChild))) {
                 if (current.parentNode) {
                     current.parentNode.removeChild(current);
                     return -1;
@@ -8787,55 +9547,61 @@ const util_util = {
     },
 
     /**
-     * @description Nodes that need to be added without modification when changing text nodes !(span|font|b|strong|var|i|em|u|ins|s|strike|del|sub|sup|a)
+     * @description Sort a element array by depth of element.
+     * @param {Array} array Array object
+     * @param {Boolean} des true: descending order / false: ascending order
+     */
+    sortByDepth: function (array, des) {
+        const t = !des ? -1 : 1;
+        const f = t * -1;
+
+        array.sort(function (a, b) {
+            if (!this.isListCell(a) || !this.isListCell(b)) return 0;
+            a = this.getElementDepth(a);
+            b = this.getElementDepth(b);
+            return a > b ? t : a < b ? f : 0;
+        }.bind(this));
+    },
+
+    /**
+     * @description Nodes that need to be added without modification when changing text nodes
      * @param {Element} element Element to check
      * @returns {Boolean}
-     */
-    isIgnoreNodeChange: function (element) {
-        return element.nodeType !== 3 && !/^(span|font|b|strong|var|i|em|u|ins|s|strike|del|sub|sup|mark|a)$/i.test(element.nodeName);
-    },
-
-    /**
-     * @description Gets the clean HTML code for editor
-     * @param {String} html HTML string
-     * @returns {String}
-     */
-    cleanHTML: function (html) {
-        const tagsAllowed = new this._w.RegExp('^(meta|script|link|style|[a-z]+\:[a-z]+)$', 'i');
-        const domTree = this._d.createRange().createContextualFragment(html).childNodes;
-        let cleanHTML = '';
-
-        for (let i = 0, len = domTree.length; i < len; i++) {
-            if (!tagsAllowed.test(domTree[i].nodeName)) {
-                cleanHTML += domTree[i].nodeType === 1 ? domTree[i].outerHTML : domTree[i].nodeType === 3 ? domTree[i].textContent : '';
-            }
-        }
-
-        cleanHTML = cleanHTML
-            .replace(/<(script|style).*>(\n|.)*<\/(script|style)>/g, '')
-            .replace(/(<[a-zA-Z0-9]+)[^>]*(?=>)/g, function (m, t) {
-                const v = m.match(/((?:contenteditable|colspan|rowspan|target|href|src|class|data-format|data-size|data-file-size|data-file-name|data-origin|data-align|data-image-link|data-rotate|data-proportion|data-percentage|origin-size)\s*=\s*"[^"]*")/ig);
-                if (v) {
-                    for (let i = 0, len = v.length; i < len; i++) {
-                        if (/^class="(?!(__se__|se-))/.test(v[i])) continue;
-                        t += ' ' + v[i];
-                    }
-                }
-                return t;
-            })
-            .replace(/<\/?(span[^>^<]*)>/g, '')
-            .replace(this._deleteExclusionTags, '');
-
-        return this._tagConvertor(cleanHTML || html);
-    },
-
-    /**
-     * @description Delete Exclusion tags regexp object
-     * @returns {Object}
      * @private
      */
-    _deleteExclusionTags: (function () {
-        const exclusionTags = 'br|p|div|pre|blockquote|h[1-6]|ol|ul|dl|li|hr|figure|figcaption|img|iframe|audio|video|table|thead|tbody|tr|th|td|a|b|strong|var|i|em|u|ins|s|span|strike|del|sub|sup|mark'.split('|');
+    _isIgnoreNodeChange: function (element) {
+        return element.nodeType !== 3 && (element.getAttribute('contenteditable') === 'false' || !/^(span|font|b|strong|var|i|em|u|ins|s|strike|del|sub|sup|mark|a|label)$/i.test(typeof element === 'string' ? element : element.nodeName));
+    },
+
+    /**
+     * @description Nodes that must remain undetached when changing text nodes
+     * @param {Element} element Element to check
+     * @returns {Boolean}
+     * @private
+     */
+    _isMaintainedNode: function (element) {
+        return element.nodeType !== 3 && /^(a|label)$/i.test(typeof element === 'string' ? element : element.nodeName);
+    },
+
+    /**
+     * @description Nodes without text
+     * @param {Element} element Element to check
+     * @returns {Boolean}
+     * @private
+     */
+    _notTextNode: function (element) {
+        return element.nodeType !== 3 && (this.isComponent(element) || /^(br|input|select|canvas|img|iframe|audio|video)$/i.test(typeof element === 'string' ? element : element.nodeName));
+    },
+
+    /**
+     * @description Create whitelist RegExp object.
+     * Return RegExp format: new RegExp("<\\/?(" + (?!\\b list[i] \\b) + ")[^>^<])+>", "g")
+     * @param {String} list Tags list ("br|p|div|pre...")
+     * @returns {RegExp}
+     * @private
+     */
+    createTagsWhitelist: function (list) {
+        const exclusionTags = list.split('|');
         let regStr = '<\\/?(';
 
         for (let i = 0, len = exclusionTags.length; i < len; i++) {
@@ -8845,7 +9611,7 @@ const util_util = {
         regStr += '[^>^<])+>';
 
         return new RegExp(regStr, 'g');
-    })()
+    }
 };
 
 /* harmony default export */ var lib_util = (util_util);
@@ -8857,7 +9623,6 @@ const util_util = {
  * Copyright 2017 JiHong Lee.
  * MIT license.
  */
-
 
 
 
@@ -8889,6 +9654,7 @@ const util_util = {
     
         // toolbar
         const tool_bar = this._createToolBar(doc, options.buttonList, options.plugins, options.lang);
+        if (tool_bar.pluginCallButtons.math) this._checkKatexMath(options.katex);
         const arrow = doc.createElement('DIV');
         arrow.className = 'se-arrow';
 
@@ -8901,8 +9667,7 @@ const util_util = {
         editor_div.className = 'se-wrapper';
 
         /** --- init elements and create bottom bar --- */
-        const initHTML = lib_util.convertContentsForEditor(element.value);
-        const initElements = this._initElements(options, top_div, tool_bar.element, arrow, initHTML);
+        const initElements = this._initElements(options, top_div, tool_bar.element, arrow);
 
         const bottomBar = initElements.bottomBar;
         const wysiwyg_div = initElements.wysiwygFrame;
@@ -8966,7 +9731,7 @@ const util_util = {
      * @param {Element} textarea textarea element
      * @private
      */
-    _checkCodeMirror: function(options, textarea) {
+    _checkCodeMirror: function (options, textarea) {
         if (options.codeMirror) {
             const cmOptions = [{
                 mode: 'htmlmixed',
@@ -8974,9 +9739,9 @@ const util_util = {
                 lineNumbers: true,
                 lineWrapping: true
             }, (options.codeMirror.options || {})].reduce(function (init, option) {
-                Object.keys(option).forEach(function (key) {
+                for (let key in option) {
                     init[key] = option[key];
-                });
+                }
                 return init;
             }, {});
 
@@ -8994,6 +9759,26 @@ const util_util = {
         }
 
         return textarea;
+    },
+
+    /**
+     * @description Check for a katex object.
+     * @param {Object} katex katex object
+     * @private
+     */
+    _checkKatexMath: function (katex) {
+        if (!katex) throw Error('[SUNEDITOR.create.fail] To use the math button you need to add a "katex" object to the options.');
+
+        const katexOptions = [{
+            throwOnError: false,
+        }, (katex.options || {})].reduce(function (init, option) {
+            for (let key in option) {
+                init[key] = option[key];
+            }
+            return init;
+        }, {});
+
+        katex.options = katexOptions;
     },
 
     /**
@@ -9015,17 +9800,17 @@ const util_util = {
         const isNewPlugins = !!mergeOptions.plugins;
 
         const tool_bar = this._createToolBar(document, (isNewToolbar ? mergeOptions.buttonList : originOptions.buttonList), (isNewPlugins ? mergeOptions.plugins : plugins), mergeOptions.lang);
+        if (tool_bar.pluginCallButtons.math) this._checkKatexMath(mergeOptions.katex);
         const arrow = document.createElement('DIV');
         arrow.className = 'se-arrow';
 
         if (isNewToolbar) {
-            relative.insertBefore(tool_bar.element, el.toolbar);
-            relative.removeChild(el.toolbar);
+            relative.replaceChild(tool_bar.element, el.toolbar);
             el.toolbar = tool_bar.element;
             el._arrow = arrow;
         }
         
-        const initElements = this._initElements(mergeOptions, el.topArea, (isNewToolbar ? tool_bar.element : el.toolbar), arrow, el.wysiwyg.innerHTML);
+        const initElements = this._initElements(mergeOptions, el.topArea, (isNewToolbar ? tool_bar.element : el.toolbar), arrow);
 
         const bottomBar = initElements.bottomBar;
         const wysiwygFrame = initElements.wysiwygFrame;
@@ -9065,11 +9850,10 @@ const util_util = {
      * @param {Element} topDiv Suneditor top div
      * @param {Element} toolBar Tool bar
      * @param {Element} toolBarArrow Tool bar arrow (balloon editor)
-     * @param {Element} initValue Code view textarea
      * @returns {Object} Bottom bar elements (resizingBar, navigation, charCounter)
      * @private
      */
-    _initElements: function (options, topDiv, toolBar, toolBarArrow, initHTML) {
+    _initElements: function (options, topDiv, toolBar, toolBarArrow) {
         /** top div */
         topDiv.style.width = options.width;
         topDiv.style.minWidth = options.minWidth;
@@ -9097,7 +9881,6 @@ const util_util = {
             wysiwygDiv.setAttribute('contenteditable', true);
             wysiwygDiv.setAttribute('scrolling', 'auto');
             wysiwygDiv.className += ' sun-editor-editable';
-            wysiwygDiv.innerHTML = initHTML;
         } else {
             const cssTags = (function () {
                 const linkNames = options.iframeCSSFileName;
@@ -9138,7 +9921,6 @@ const util_util = {
                     cssTags;
                 this.contentDocument.body.className = 'sun-editor-editable';
                 this.contentDocument.body.setAttribute('contenteditable', true);
-                this.contentDocument.body.innerHTML = initHTML;
             });
         }
         
@@ -9217,8 +9999,13 @@ const util_util = {
     _initOptions: function (element, options) {
         /** user options */
         options.lang = options.lang || en_default.a;
+        /** Whitelist */
+        options._defaultTagsWhitelist = typeof options._defaultTagsWhitelist === 'string' ? options._defaultTagsWhitelist : 'br|p|div|pre|blockquote|h[1-6]|ol|ul|li|hr|figure|figcaption|img|iframe|audio|video|table|thead|tbody|tr|th|td|a|b|strong|var|i|em|u|ins|s|span|strike|del|sub|sup';
+        options._editorTagsWhitelist = options._defaultTagsWhitelist + (typeof options.addTagsWhitelist === 'string' && options.addTagsWhitelist.length > 0 ? '|' + options.addTagsWhitelist : '');
+        options.pasteTagsWhitelist = typeof options.pasteTagsWhitelist === 'string' ? options.pasteTagsWhitelist : options._editorTagsWhitelist;
+        options.attributesWhitelist = (!options.attributesWhitelist || typeof options.attributesWhitelist !== 'object') ? null : options.attributesWhitelist;
         /** Layout */
-        options.mode = options.mode || 'classic'; // classic, inline, balloon
+        options.mode = options.mode || 'classic'; // classic, inline, balloon, balloon-always
         options.toolbarWidth = options.toolbarWidth ? (lib_util.isNumber(options.toolbarWidth) ? options.toolbarWidth + 'px' : options.toolbarWidth) : 'auto';
         options.stickyToolbar = /balloon/i.test(options.mode) ? -1 : options.stickyToolbar === undefined ? 0 : (/^\d+/.test(options.stickyToolbar) ? lib_util.getNumber(options.stickyToolbar, 0) : -1);
         // options.fullPage = options.fullPage;
@@ -9280,6 +10067,8 @@ const util_util = {
         options.templates = !options.templates ? null : options.templates;
         /** ETC */
         options.placeholder = typeof options.placeholder === 'string' ? options.placeholder : null;
+        /** Math (katex) */
+        options.katex = options.katex ? options.katex.src ? options.katex : {src: options.katex} : null;
         /** Buttons */
         options.buttonList = options.buttonList || [
             ['undo', 'redo'],
@@ -9297,7 +10086,7 @@ const util_util = {
      */
     _defaultButtons: function (lang) {
         return {
-            /** command */
+            /** default command */
             bold: ['_se_command_bold', lang.toolbar.bold + ' (CTRL+B)', 'STRONG', '',
                 '<i class="se-icon-bold"></i>'
             ],
@@ -9326,7 +10115,7 @@ const util_util = {
                 '<i class="se-icon-erase"></i>'
             ],
 
-            indent: ['', lang.toolbar.indent + ' (CTRL+])', 'indent', '',
+            indent: ['_se_command_indent', lang.toolbar.indent + ' (CTRL+])', 'indent', '',
                 '<i class="se-icon-indent-right"></i>'
             ],
 
@@ -9366,17 +10155,22 @@ const util_util = {
                 '<i class="se-icon-save"></i>', true
             ],
 
+            /** plugins - command */
+            blockquote: ['', lang.toolbar.tag_blockquote, 'blockquote', 'command',
+                '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M14,17H17L19,13V7H13V13H16M6,17H9L11,13V7H5V13H8L6,17Z" /></svg>'
+            ],
+
             /** plugins - submenu */
-            font: ['se-btn-select se-btn-tool-font _se_command_font_family', lang.toolbar.font, 'font', 'submenu',
+            font: ['se-btn-select se-btn-tool-font', lang.toolbar.font, 'font', 'submenu',
                 '<span class="txt">' + lang.toolbar.font + '</span><i class="se-icon-arrow-down"></i>'
             ],
             
             formatBlock: ['se-btn-select se-btn-tool-format', lang.toolbar.formats, 'formatBlock', 'submenu',
-                '<span class="txt _se_command_format">' + lang.toolbar.formats + '</span><i class="se-icon-arrow-down"></i>'
+                '<span class="txt">' + lang.toolbar.formats + '</span><i class="se-icon-arrow-down"></i>'
             ],
 
             fontSize: ['se-btn-select se-btn-tool-size', lang.toolbar.fontSize, 'fontSize', 'submenu',
-                '<span class="txt _se_command_font_size">' + lang.toolbar.fontSize + '</span><i class="se-icon-arrow-down"></i>'
+                '<span class="txt">' + lang.toolbar.fontSize + '</span><i class="se-icon-arrow-down"></i>'
             ],
 
             fontColor: ['', lang.toolbar.fontColor, 'fontColor', 'submenu',
@@ -9388,10 +10182,10 @@ const util_util = {
             ],
 
             align: ['se-btn-align', lang.toolbar.align, 'align', 'submenu',
-                '<i class="se-icon-align-left _se_command_align"></i>'
+                '<i class="se-icon-align-left"></i>'
             ],
 
-            list: ['_se_command_list', lang.toolbar.list, 'list', 'submenu',
+            list: ['', lang.toolbar.list, 'list', 'submenu',
                 '<i class="se-icon-list-number"></i>'
             ],
 
@@ -9428,6 +10222,9 @@ const util_util = {
 
             video: ['', lang.toolbar.video, 'video', 'dialog',
                 '<i class="se-icon-video"></i>'
+            ],
+            math: ['', lang.toolbar.math, 'math', 'dialog',
+                '<i class="se-icon-math"></i>'
             ]
         };
     },
@@ -9456,7 +10253,7 @@ const util_util = {
      * @param {string} buttonClass className in button
      * @param {string} title Title in button
      * @param {string} dataCommand The data-command property of the button
-     * @param {string} dataDisplay The data-display property of the button ('dialog', 'submenu')
+     * @param {string} dataDisplay The data-display property of the button ('dialog', 'submenu', 'command')
      * @param {string} innerHTML Html in button
      * @param {string} _disabled Button disabled
      * @returns {Element}
@@ -9619,17 +10416,13 @@ const _Context = function (element, cons, options) {
             strike: cons._toolBar.querySelector('._se_command_strike'),
             subscript: cons._toolBar.querySelector('._se_command_subscript'),
             superscript: cons._toolBar.querySelector('._se_command_superscript'),
-            font: cons._toolBar.querySelector('._se_command_font_family .txt'),
-            fontTooltip: cons._toolBar.querySelector('._se_command_font_family .se-tooltip-text'),
-            format: cons._toolBar.querySelector('._se_command_format'),
-            fontSize: cons._toolBar.querySelector('._se_command_font_size'),
-            align: cons._toolBar.querySelector('._se_command_align'),
-            list: cons._toolBar.querySelector('._se_command_list'),
             undo: cons._toolBar.querySelector('._se_command_undo'),
             redo: cons._toolBar.querySelector('._se_command_redo'),
             save: cons._toolBar.querySelector('._se_command_save'),
-            outdent: cons._toolBar.querySelector('._se_command_outdent')
+            outdent: cons._toolBar.querySelector('._se_command_outdent'),
+            indent: cons._toolBar.querySelector('._se_command_indent')
         },
+        options: options,
         option: options
     };
 };
@@ -9740,7 +10533,7 @@ const _Context = function (element, cons, options) {
                 _w.clearTimeout(pushDelay);
                 pushDelay = null;
                 pushStack();
-            }, 500);
+            }, 350);
         },
 
         /**
@@ -9798,6 +10591,15 @@ const _Context = function (element, cons, options) {
             };
 
             if (!ignoreChangeEvent) change();
+        },
+
+        /**
+         * @description Remove all stacks and remove the timeout function.
+         * @private
+         */
+        _destroy: function () {
+            if (pushDelay) _w.clearTimeout(pushDelay);
+            stack = null;
         }
     };
 });
@@ -9827,10 +10629,10 @@ var notice = __webpack_require__(1);
  * @param context
  * @param plugins
  * @param lang
- * @param _options
+ * @param options
  * @returns {Object} UserFunction Object
  */
-/* harmony default export */ var lib_core = (function (context, pluginCallButtons, plugins, lang, _options) {
+/* harmony default export */ var lib_core = (function (context, pluginCallButtons, plugins, lang, options) {
     const _d = context.element.originElement.ownerDocument || document;
     const _w = _d.defaultView || window;
     const util = lib_util;
@@ -9842,6 +10644,38 @@ var notice = __webpack_require__(1);
     const core = {
         _d: _d,
         _w: _w,
+
+        /**
+         * @description Document object of the iframe if created as an iframe || _d
+         * @private
+         */
+        _wd: null,
+
+        /**
+         * @description Window object of the iframe if created as an iframe || _w
+         * @private
+         */
+        _ww: null,
+
+        /**
+         * @description Util object
+         */
+        util: util,
+
+        /**
+         * @description Functions object
+         */
+        functions: null,
+
+        /**
+         * @description Notice object
+         */
+        notice: notice["a" /* default */],
+
+        /**
+         * @description History object for undo, redo
+         */
+        history: null,
         
         /**
          * @description Elements and user options parameters of the suneditor
@@ -9859,11 +10693,6 @@ var notice = __webpack_require__(1);
         plugins: plugins || {},
 
         /**
-         * @description Util object
-         */
-        util: util,
-
-        /**
          * @description Whether the plugin is initialized
          */
         initPlugins: {},
@@ -9877,6 +10706,11 @@ var notice = __webpack_require__(1);
          * @description submenu element
          */
         submenu: null,
+
+        /**
+         * @description container element
+         */
+        container: null,
 
         /**
          * @description current resizing component name
@@ -9897,9 +10731,20 @@ var notice = __webpack_require__(1);
         _bindedSubmenuOff: null,
 
         /**
+         * @description binded containerOff method
+         * @private
+         */
+        _bindedContainerOff: null,
+
+        /**
          * @description active button element in submenu
          */
         submenuActiveButton: null,
+
+        /**
+         * @description active button element in container
+         */
+        containerActiveButton: null,
 
         /**
          * @description The elements array to be processed unvisible when the controllersOff function is executed (resizing, link modified button, table controller)
@@ -9907,14 +10752,43 @@ var notice = __webpack_require__(1);
         controllerArray: [],
 
         /**
+         * @description The name of the plugin that called the currently active controller
+         */
+        currentControllerName: '',
+
+        /**
          * @description An array of buttons whose class name is not "code-view-enabled"
          */
         codeViewDisabledButtons: null,
 
         /**
-         * @description History object for undo, redo
+         * @description Editor tags whitelist (RegExp object)
+         * util.createTagsWhitelist(options._editorTagsWhitelist)
          */
-        history: null,
+        editorTagsWhitelistRegExp: null,
+
+        /**
+         * @description Tag whitelist when pasting (RegExp object)
+         * util.createTagsWhitelist(options.pasteTagsWhitelist)
+         */
+        pasteTagsWhitelistRegExp: null,
+
+        /**
+         * @description Boolean value of whether the editor has focus
+         */
+        hasFocus: false,
+
+        /**
+         * @description Attributes whitelist used by the cleanHTML method
+         * @private
+         */
+        _attributesWhitelistRegExp: null,
+
+        /**
+         * @description Attributes of tags whitelist used by the cleanHTML method
+         * @private
+         */
+        _attributesTagsWhitelist: null,
 
         /**
          * @description binded controllersOff method
@@ -9923,16 +10797,28 @@ var notice = __webpack_require__(1);
         _bindControllersOff: null,
 
         /**
+         * @description The selection node (core.getSelectionNode()) to which the effect was last applied
+         * @private
+         */
+        _lastEffectNode: null,
+
+        /**
          * @description Is inline mode?
          * @private
          */
         _isInline: null,
 
         /**
-         * @description Is balloon mode?
+         * @description Is balloon|balloon-always mode?
          * @private
          */
         _isBalloon: null,
+
+        /**
+         * @description Is balloon-always mode?
+         * @private
+         */
+        _isBalloonAlways: null,
 
         /**
          * @description Required value when using inline mode to sticky toolbar
@@ -9960,11 +10846,20 @@ var notice = __webpack_require__(1);
         _imagesInfoReset: false,
 
         /**
+         * @description An user event function before image uploaded
+         * @private
+         */
+        _imageUploadBefore: function (files, info) {
+            if (typeof userFunction.onImageUploadBefore === 'function') return userFunction.onImageUploadBefore(files, info, core);
+            return true;
+        },
+
+        /**
          * @description An user event function when image uploaded success or remove image
          * @private
          */
         _imageUpload: function (targetImgElement, index, state, imageInfo, remainingFilesCount) {
-            if (typeof userFunction.onImageUpload === 'function') userFunction.onImageUpload(targetImgElement, index * 1, state, imageInfo, remainingFilesCount);
+            if (typeof userFunction.onImageUpload === 'function') userFunction.onImageUpload(targetImgElement, index * 1, state, imageInfo, remainingFilesCount, core);
         },
 
         /**
@@ -9972,18 +10867,32 @@ var notice = __webpack_require__(1);
          * @private
          */
         _imageUploadError: function (errorMessage, result) {
-            if (typeof userFunction.onImageUploadError === 'function') return userFunction.onImageUploadError(errorMessage, result);
+            if (typeof userFunction.onImageUploadError === 'function') return userFunction.onImageUploadError(errorMessage, result, core);
             return true;
         },
 
         /**
+         * @description An user callback function of the image upload
+         * @private
+         */
+        _imageUploadHandler: function (response, info, core) {
+            if (typeof userFunction.imageUploadHandler === 'function') {
+                userFunction.imageUploadHandler(response, info, core);
+                return true;
+            } else {
+                return false;
+            }
+        },
+
+        /**
+         * @description Plugins array with "active" method.
+         * "activePlugins" runs the "add" method when creating the editor.
+         */
+        activePlugins: null,
+
+        /**
          * @description Elements that need to change text or className for each selection change
-         * @property {Element} FORMAT format button > span.txt
-         * @property {Element} FONT font family button > span.txt
-         * @property {Element} FONT_TOOLTIP font family tooltip element
-         * @property {Element} SIZE font size button > span.txt
-         * @property {Element} ALIGN align button > div.icon
-         * @property {Element} LI list button
+         * After creating the editor, "activePlugins" are added.
          * @property {Element} STRONG bold button
          * @property {Element} INS underline button
          * @property {Element} EM italic button
@@ -9991,8 +10900,22 @@ var notice = __webpack_require__(1);
          * @property {Element} SUB subscript button
          * @property {Element} SUP superscript button
          * @property {Element} OUTDENT outdent button
+         * @property {Element} INDENT indent button
          */
         commandMap: null,
+
+        /**
+         * @description Map of default command
+         * @private
+         */
+        _defaultCommand: {
+            bold: 'STRONG',
+            underline: 'INS',
+            italic: 'EM',
+            strike: 'DEL',
+            subscript: 'SUB',
+            superscript: 'SUP'
+        },
 
         /**
          * @description Variables used internally in editor operation
@@ -10033,13 +10956,23 @@ var notice = __webpack_require__(1);
          * If the plugin is added call callBack function.
          * @param {String} pluginName The name of the plugin to call
          * @param {function} callBackFunction Function to be executed immediately after module call
+         * @param {Element|null} _target Plugin target button (This is not necessary if you have a button list when creating the editor)
          */
-        callPlugin: function (pluginName, callBackFunction) {
+        callPlugin: function (pluginName, callBackFunction, _target) {
+            _target = _target || pluginCallButtons[pluginName];
+
             if (!this.plugins[pluginName]) {
                 throw Error('[SUNEDITOR.core.callPlugin.fail] The called plugin does not exist or is in an invalid format. (pluginName:"' + pluginName + '")');
             } else if (!this.initPlugins[pluginName]){
-                this.plugins[pluginName].add(this, pluginCallButtons[pluginName]);
+                if(!_target) return false;
+                this.plugins[pluginName].add(this, _target);
                 this.initPlugins[pluginName] = true;
+            }
+
+            if (this.plugins[pluginName].active && !this.commandMap[pluginName]) {
+                if(!_target) return false;
+                this.commandMap[pluginName] = _target;
+                this.activePlugins.push(pluginName);
             }
                 
             if (typeof callBackFunction === 'function') callBackFunction();
@@ -10103,6 +11036,49 @@ var notice = __webpack_require__(1);
         },
 
         /**
+         * @description Enabled container
+         * @param {Element} element Container's button element to call
+         */
+        containerOn: function (element) {
+            if (this._bindedContainerOff) this._bindedContainerOff();
+
+            const containerName = this._containerName = element.getAttribute('data-command');
+
+            this.container = element.nextElementSibling;
+            this.container.style.display = 'block';
+            util.addClass(element, 'on');
+            this.containerActiveButton = element;
+
+            const overLeft = this.context.element.toolbar.offsetWidth - (element.parentElement.offsetLeft + this.container.offsetWidth);
+            if (overLeft < 0) this.container.style.left = overLeft + 'px';
+            else this.container.style.left = '1px';
+
+            this._bindedContainerOff = this.containerOff.bind(this);
+            this.addDocEvent('mousedown', this._bindedContainerOff, false);
+
+            if (this.plugins[containerName].on) this.plugins[containerName].on.call(this);
+        },
+
+        /**
+         * @description Disable container
+         */
+        containerOff: function () {
+            this.removeDocEvent('mousedown', this._bindedContainerOff);
+            this._bindedContainerOff = null;
+
+            if (this.container) {
+                this._containerName = '';
+                this.container.style.display = 'none';
+                this.container = null;
+                util.removeClass(this.containerActiveButton, 'on');
+                this.containerActiveButton = null;
+                this._notHideToolbar = false;
+            }
+            
+            this.focus();
+        },
+
+        /**
          * @description Show controller at editor area (link button, image resize button, init function, etc..)
          * @param {*} arguments controller elements, functions..
          */
@@ -10113,9 +11089,16 @@ var notice = __webpack_require__(1);
                 this._resizingName = tempName;
             }
 
-            for (let i = 0; i < arguments.length; i++) {
-                if (arguments[i].style) arguments[i].style.display = 'block';
-                this.controllerArray[i] = arguments[i];
+            for (let i = 0, arg; i < arguments.length; i++) {
+                arg = arguments[i];
+
+                if (typeof arg === 'string') {
+                    this.currentControllerName = arg;
+                    continue;
+                }
+
+                if (arg.style) arg.style.display = 'block';
+                this.controllerArray[i] = arg;
             }
 
             this._notHideToolbar = true;
@@ -10132,6 +11115,8 @@ var notice = __webpack_require__(1);
 
             this._notHideToolbar = false;
             this._resizingName = '';
+            this.currentControllerName = '';
+            this._lastEffectNode = null;
             if (!this._bindControllersOff) return;
 
             this.removeDocEvent('mousedown', this._bindControllersOff);
@@ -10162,26 +11147,39 @@ var notice = __webpack_require__(1);
         },
 
         /**
+         * @description Use focus method of document
+         * @private
+         */
+        _nativeFocus: function () {
+            const caption = util.getParentElement(this.getSelectionNode(), 'figcaption');
+            if (caption) {
+                caption.focus();
+            } else {
+                context.element.wysiwyg.focus();
+            }
+
+            this._editorRange();
+        },
+
+        /**
          * @description Focus to wysiwyg area
          */
         focus: function () {
             if (context.element.wysiwygFrame.style.display === 'none') return;
 
-            try {
-                const range = this.getRange();
-                this.setRange(range.startContainer, range.startOffset, range.endContainer, range.endOffset);
-            } catch (e) {
-                const caption = util.getParentElement(this.getSelectionNode(), 'figcaption');
-                if (caption) {
-                    caption.focus();
-                } else {
-                    context.element.wysiwyg.focus();
+            if (options.iframe) {
+                this._nativeFocus();
+            } else {
+                try {
+                    const range = this.getRange();
+                    this.setRange(range.startContainer, range.startOffset, range.endContainer, range.endOffset);
+                } catch (e) {
+                    this._nativeFocus();
                 }
-
-                this._editorRange();
             }
 
             event._applyTagEffects();
+            if (core._isBalloon) event._toggleToolbarBalloon();
         },
 
         /**
@@ -10237,13 +11235,6 @@ var notice = __webpack_require__(1);
             this.getSelection().removeAllRanges();
 
             const commandMap = this.commandMap;
-            util.changeTxt(commandMap.FORMAT, lang.toolbar.formats);
-            util.changeTxt(commandMap.FONT, lang.toolbar.font);
-            util.changeTxt(commandMap.FONT_TOOLTIP, lang.toolbar.font);
-            util.changeTxt(commandMap.SIZE, lang.toolbar.fontSize);
-            util.removeClass(commandMap.LI_ICON, 'se-icon-list-bullets');
-            util.addClass(commandMap.LI_ICON, 'se-icon-list-number');
-            util.removeClass(commandMap.LI, 'active');
             util.removeClass(commandMap.STRONG, 'active');
             util.removeClass(commandMap.INS, 'active');
             util.removeClass(commandMap.EM, 'active');
@@ -10252,11 +11243,7 @@ var notice = __webpack_require__(1);
             util.removeClass(commandMap.SUP, 'active');
 
             if (commandMap.OUTDENT) commandMap.OUTDENT.setAttribute('disabled', true);
-            if (commandMap.LI) commandMap.LI.removeAttribute('data-focus');
-            if (commandMap.ALIGN) {
-                commandMap.ALIGN.className = 'se-icon-align-left';
-                commandMap.ALIGN.removeAttribute('data-focus');
-            }
+            if (commandMap.INDENT) commandMap.INDENT.removeAttribute('disabled');
         },
 
         /**
@@ -10328,11 +11315,103 @@ var notice = __webpack_require__(1);
         },
 
         /**
-         * @description Returns a "formatElement"(P, DIV, H[1-6], LI) array from the currently selected range.
+         * @description Reset range object to text node selected status.
+         * @private
+         */
+        _resetRangeToTextNode: function () {
+            const range = this.getRange();
+            let startCon = range.startContainer;
+            let startOff = range.startOffset;
+            let endCon = range.endContainer;
+            let endOff = range.endOffset;
+            let tempCon, tempOffset, tempChild;
+
+            // startContainer
+            tempCon = util.isWysiwygDiv(startCon) ? context.element.wysiwyg.firstChild : startCon;
+            tempOffset = startOff;
+
+            if (util.isBreak(tempCon) || (tempCon.nodeType === 1 && tempCon.childNodes.length > 0)) {
+                const onlyBreak = util.isBreak(tempCon);
+                if (!onlyBreak) {
+                    while (tempCon && !util.isBreak(tempCon) && tempCon.nodeType === 1) {
+                        tempCon = tempCon.childNodes[tempOffset] || tempCon.nextElementSibling || tempCon.nextSibling;
+                        tempOffset = 0;
+                    }
+    
+                    let format = util.getFormatElement(tempCon);
+                    if (format === util.getRangeFormatElement(format)) {
+                        format = util.createElement(util.isCell(tempCon) ? 'DIV' : 'P');
+                        tempCon.parentNode.insertBefore(format, tempCon);
+                        format.appendChild(tempCon);
+                    }
+                }
+
+                if (util.isBreak(tempCon)) {
+                    const emptyText = util.createTextNode(util.zeroWidthSpace);
+                    tempCon.parentNode.insertBefore(emptyText, tempCon);
+                    tempCon = emptyText;
+                    if (onlyBreak) {
+                        if (startCon === endCon) {
+                            endCon = tempCon;
+                            endOff = 1;
+                        }
+                        util.removeItem(startCon);
+                    }
+                }
+            }
+
+            // set startContainer
+            startCon = tempCon;
+            startOff = tempOffset;
+
+            // endContainer
+            tempCon = util.isWysiwygDiv(endCon) ? context.element.wysiwyg.lastChild : endCon;
+            tempOffset = endOff;
+
+            if (util.isBreak(tempCon) || (tempCon.nodeType === 1 && tempCon.childNodes.length > 0)) {
+                const onlyBreak = util.isBreak(tempCon);
+                if (!onlyBreak) {
+                    while (tempCon && !util.isBreak(tempCon) && tempCon.nodeType === 1) {
+                        tempChild = tempCon.childNodes;
+                        if (tempChild.length === 0) break;
+                        tempCon = tempChild[tempOffset > 0 ? tempOffset - 1 : tempOffset] || !/FIGURE/i.test(tempChild[0].nodeName) ? tempChild[0] : (tempCon.previousElementSibling || tempCon.previousSibling || startCon);
+                        tempOffset = tempOffset > 0 ? tempCon.textContent.length : tempOffset;
+                    }
+    
+                    let format = util.getFormatElement(tempCon);
+                    if (format === util.getRangeFormatElement(format)) {
+                        format = util.createElement(util.isCell(format) ? 'DIV' : 'P');
+                        tempCon.parentNode.insertBefore(format, tempCon);
+                        format.appendChild(tempCon);
+                    }
+                }
+
+                if (util.isBreak(tempCon)) {
+                    const emptyText = util.createTextNode(util.zeroWidthSpace);
+                    tempCon.parentNode.insertBefore(emptyText, tempCon);
+                    tempCon = emptyText;
+                    tempOffset = 1;
+                    if (onlyBreak) {
+                        util.removeItem(endCon);
+                    }
+                }
+            }
+
+            // set endContainer
+            endCon = tempCon;
+            endOff = tempOffset;
+
+            // set Range
+            this.setRange(startCon, startOff, endCon, endOff);
+        },
+
+        /**
+         * @description Returns a "formatElement"(util.isFormatElement) array from the currently selected range.
          * @param {Function|null} validation The validation function. (Replaces the default validation function-util.isFormatElement(current))
          * @returns {Array}
          */
         getSelectedElements: function (validation) {
+            this._resetRangeToTextNode();
             let range = this.getRange();
 
             if (util.isWysiwygDiv(range.startContainer)) {
@@ -10363,10 +11442,13 @@ var notice = __webpack_require__(1);
             const onlyTable = function (current) {
                 return util.isTable(current) ? /^TABLE$/i.test(current.nodeName) : true;
             };
-            const startRangeEl = util.getRangeFormatElement(startLine, onlyTable);
-            const endRangeEl = util.getRangeFormatElement(endLine, onlyTable);
-            const sameRange = startRangeEl === endRangeEl;
+
+            let startRangeEl = util.getRangeFormatElement(startLine, onlyTable);
+            let endRangeEl = util.getRangeFormatElement(endLine, onlyTable);
+            if (util.isTable(startRangeEl) && util.isListCell(startRangeEl.parentNode)) startRangeEl = startRangeEl.parentNode;
+            if (util.isTable(endRangeEl) && util.isListCell(endRangeEl.parentNode)) endRangeEl = endRangeEl.parentNode;
             
+            const sameRange = startRangeEl === endRangeEl;
             for (let i = 0, len = lineNodes.length, line; i < len; i++) {
                 line = lineNodes[i];
 
@@ -10390,9 +11472,10 @@ var notice = __webpack_require__(1);
         /**
          * @description Get format elements and components from the selected area. (P, DIV, H[1-6], OL, UL, TABLE..)
          * If some of the component are included in the selection, get the entire that component.
+         * @param {Boolean} removeDuplicate If true, if there is a parent and child tag among the selected elements, the child tag is excluded.
          * @returns {Array}
          */
-        getSelectedElementsAndComponents: function () {
+        getSelectedElementsAndComponents: function (removeDuplicate) {
             const commonCon = this.getRange().commonAncestorContainer;
             const myComponent = util.getParentElement(commonCon, util.isComponent);
             const selectedLines = util.isTable(commonCon) ? 
@@ -10401,6 +11484,18 @@ var notice = __webpack_require__(1);
                     const component = this.getParentElement(current, this.isComponent);
                     return (this.isFormatElement(current) && (!component || component === myComponent)) || (this.isComponent(current) && !this.getFormatElement(current));
                 }.bind(util));
+            
+            if (removeDuplicate) {
+                for (let i = 0, len = selectedLines.length; i < len; i++) {
+                    for (let j = i - 1; j >= 0; j--) {
+                        if (selectedLines[j].contains(selectedLines[i])) {
+                            selectedLines.splice(i, 1);
+                            i--; len--;
+                            break;
+                        }
+                    }
+                }
+            }
 
             return selectedLines;
         },
@@ -10412,7 +11507,7 @@ var notice = __webpack_require__(1);
          * @returns {Boolean}
          */
         isEdgePoint: function (container, offset) {
-            return (offset === 0) || (offset === container.nodeValue.length);
+            return (offset === 0) || (!container.nodeValue && offset === 1) || (offset === container.nodeValue.length);
         },
 
         /**
@@ -10434,18 +11529,21 @@ var notice = __webpack_require__(1);
          * If the "formatNodeName" argument value is present, the tag of that argument value is inserted,
          * If not, the currently selected format tag is inserted.
          * @param {Element} element Insert as siblings of that element
-         * @param {String|null} formatNodeName Node name to be inserted
+         * @param {String|Element|null} formatNode Node name or node obejct to be inserted
          * @returns {Element}
          */
-        appendFormatTag: function (element, formatNodeName) {
-            const formatEl = element;
+        appendFormatTag: function (element, formatNode) {
             const currentFormatEl = util.getFormatElement(this.getSelectionNode());
-            const oFormatName = formatNodeName ? formatNodeName : util.isFormatElement(currentFormatEl) ? currentFormatEl.nodeName : 'P';
+            const oFormatName = formatNode ? (typeof formatNode === 'string' ? formatNode : formatNode.nodeName) : util.isFormatElement(currentFormatEl) ? currentFormatEl.nodeName : 'P';
             const oFormat = util.createElement(oFormatName);
             oFormat.innerHTML = '<br>';
 
-            if (util.isCell(formatEl)) formatEl.insertBefore(oFormat, element.nextElementSibling);
-            else formatEl.parentNode.insertBefore(oFormat, formatEl.nextElementSibling);
+            if ((formatNode && typeof formatNode !== 'string') || (!formatNode && util.isFormatElement(currentFormatEl))) {
+                util.copyTagAttributes(oFormat, formatNode || currentFormatEl);
+            }
+
+            if (util.isCell(element)) element.insertBefore(oFormat, element.nextElementSibling);
+            else element.parentNode.insertBefore(oFormat, element.nextElementSibling);
 
             return oFormat;
         },
@@ -10460,9 +11558,10 @@ var notice = __webpack_require__(1);
          * @returns {Element}
          */
         insertComponent: function (element, notHistoryPush) {
+            const r = this.removeNode();
             let oNode = null;
-            const selectionNode = this.getSelectionNode();
-            const formatEl = util.getFormatElement(selectionNode);
+            let selectionNode = this.getSelectionNode();
+            let formatEl = util.getFormatElement(selectionNode);
 
             if (util.isListCell(formatEl)) {
                 if (/^HR$/i.test(element.nodeName)) {
@@ -10473,14 +11572,23 @@ var notice = __webpack_require__(1);
                     formatEl.parentNode.insertBefore(newLi, formatEl.nextElementSibling);
                     this.setRange(textNode, 1, textNode, 1);
                 } else {
-                    this.insertNode(element, selectionNode === formatEl ? null : selectionNode);
+                    this.insertNode(element, selectionNode === formatEl ? null : r.container.nextSibling);
+                    if (!element.nextSibling) element.parentNode.appendChild(util.createElement('BR'));
                     oNode = util.createElement('LI');
                     formatEl.parentNode.insertBefore(oNode, formatEl.nextElementSibling);
                 }
             } else {
+                if (this.getRange().collapsed && (r.container.nodeType === 3 || util.isBreak(r.container))) {
+                    const depthFormat = util.getParentElement(r.container, function (current) { return this.isRangeFormatElement(current); }.bind(util));
+                    oNode = util.splitElement(r.container, r.offset, !depthFormat ? 0 : util.getElementDepth(depthFormat) + 1);
+                    if (oNode) formatEl = oNode.previousSibling;
+                }
+
                 this.insertNode(element, formatEl);
-                oNode = this.appendFormatTag(element);
+                if (!oNode) oNode = this.appendFormatTag(element, util.isFormatElement(formatEl) ? formatEl : null);
             }
+
+            this.setRange(oNode, 0, oNode, 0);
 
             // history stack
             if (!notHistoryPush) this.history.push(false);
@@ -10529,6 +11637,7 @@ var notice = __webpack_require__(1);
         insertNode: function (oNode, afterNode) {
             const range = this.getRange();
             let parentNode = null;
+            let originAfter = null;
 
             if (!afterNode) {
                 const startCon = range.startContainer;
@@ -10545,17 +11654,27 @@ var notice = __webpack_require__(1);
                 /** No Select range node */
                 if (range.collapsed) {
                     if (commonCon.nodeType === 3) {
-                        afterNode = commonCon.splitText(endOff);
-                    }
-                    else {
-                        if (parentNode.lastChild !== null && util.isBreak(parentNode.lastChild)) {
-                            parentNode.removeChild(parentNode.lastChild);
+                        if (commonCon.textContent.length > endOff) afterNode = commonCon.splitText(endOff);
+                        else afterNode = commonCon.nextSibling;
+                    } else {
+                        if (!util.isBreak(parentNode)) {
+                            const focusNode = parentNode.childNodes[startOff];
+                            if (focusNode) {
+                                if (!focusNode.nextSibling) {
+                                    parentNode.removeChild(focusNode);
+                                    afterNode = null;
+                                } else {
+                                    afterNode = util.isBreak(focusNode) ? focusNode : focusNode.nextSibling;
+                                }
+                            } else {
+                                afterNode = null;
+                            }
+                        } else {
+                            afterNode = parentNode;
+                            parentNode = parentNode.parentNode;
                         }
-                        afterNode = null;
                     }
-                }
-                /** Select range nodes */
-                else {
+                } else { /** Select range nodes */
                     const isSameContainer = startCon === endCon;
 
                     if (isSameContainer) {
@@ -10578,12 +11697,26 @@ var notice = __webpack_require__(1);
                     }
                 }
             }
+            // has afterNode
             else {
                 parentNode = afterNode.parentNode;
-                afterNode = afterNode.nextElementSibling;
+                afterNode = afterNode.nextSibling;
+                originAfter = true;
             }
 
+            // --- insert node ---
             try {
+                if (util.isFormatElement(oNode) || util.isRangeFormatElement(oNode) || (!util.isListCell(parentNode) && util.isComponent(oNode))) {
+                    if (util.isList(afterNode)) {
+                        parentNode = afterNode;
+                        afterNode = null;
+                    } else if (!originAfter && !afterNode) {
+                        const r = this.removeNode();
+                        const container = r.container.nodeType === 3 ? (util.isListCell(util.getFormatElement(r.container)) ? r.container : (util.getFormatElement(r.container) || r.container.parentNode)) : r.container;
+                        parentNode = container.parentNode;
+                        afterNode = container.nextSibling;
+                    }
+                }
                 parentNode.insertBefore(oNode, afterNode);
             } catch (e) {
                 parentNode.appendChild(oNode);
@@ -10591,15 +11724,15 @@ var notice = __webpack_require__(1);
                 if (oNode.nodeType === 3) {
                     const previous = oNode.previousSibling;
                     const next = oNode.nextSibling;
-                    const previousText = (!previous || util.onlyZeroWidthSpace(previous)) ? '' : previous.textContent;
-                    const nextText = (!next || util.onlyZeroWidthSpace(next)) ? '' : next.textContent;
+                    const previousText = (!previous ||  previous.nodeType !== 3 || util.onlyZeroWidthSpace(previous)) ? '' : previous.textContent;
+                    const nextText = (!next || next.nodeType !== 3 || util.onlyZeroWidthSpace(next)) ? '' : next.textContent;
     
-                    if (previous) {
+                    if (previous && previousText.length > 0) {
                         oNode.textContent = previousText + oNode.textContent;
                         util.removeItem(previous);
                     }
     
-                    if (next) {
+                    if (next && next.length > 0) {
                         oNode.textContent += nextText;
                         util.removeItem(next);
                     }
@@ -10610,28 +11743,24 @@ var notice = __webpack_require__(1);
                     };
                 }
 
+                this.setRange(oNode, 1, oNode, 1);
+
                 // history stack
                 this.history.push(true);
             }
         },
 
         /**
-         * @description Delete the currently selected node
+         * @description Delete the currently selected nodes and reset selection range
+         * Returns {container: "the last element after deletion", offset: "offset"}
+         * @returns {Object}
          */
         removeNode: function () {
             const range = this.getRange();
-
-            if (range.deleteContents) {
-                range.deleteContents();
-
-                // history stack
-                this.history.push(false);
-                return;
-            }
-
-            const startCon = range.startContainer;
+            let container, offset = 0;
+            let startCon = range.startContainer;
+            let endCon = range.endContainer;
             const startOff = range.startOffset;
-            const endCon = range.endContainer;
             const endOff = range.endOffset;
             const commonCon = range.commonAncestorContainer;
 
@@ -10642,18 +11771,52 @@ var notice = __webpack_require__(1);
             let startIndex = util.getArrayIndex(childNodes, startCon);
             let endIndex = util.getArrayIndex(childNodes, endCon);
 
-            for (let i = startIndex + 1, startNode = startCon; i >= 0; i--) {
-                if (childNodes[i] === startNode.parentNode && childNodes[i].firstChild === startNode && startOff === 0) {
-                    startIndex = i;
-                    startNode = startNode.parentNode;
+            if (childNodes.length > 0 && startIndex > -1 && endIndex > -1) {
+                for (let i = startIndex + 1, startNode = startCon; i >= 0; i--) {
+                    if (childNodes[i] === startNode.parentNode && childNodes[i].firstChild === startNode && startOff === 0) {
+                        startIndex = i;
+                        startNode = startNode.parentNode;
+                    }
                 }
+    
+                for (let i = endIndex - 1, endNode = endCon; i > startIndex; i--) {
+                    if (childNodes[i] === endNode.parentNode && childNodes[i].nodeType === 1) {
+                        childNodes.splice(i, 1);
+                        endNode = endNode.parentNode;
+                        --endIndex;
+                    }
+                }
+            } else {
+                if (childNodes.length === 0) {
+                    childNodes.push(commonCon);
+                    startCon = endCon = commonCon;
+                } else {
+                    startCon = endCon = childNodes[0];
+                    if (util.isBreak(startCon)) {
+                        return {
+                            container: startCon,
+                            offset: 0
+                        };
+                    }
+                }
+
+                startIndex = endIndex = 0;
             }
 
-            for (let i = endIndex - 1, endNode = endCon; i > startIndex; i--) {
-                if (childNodes[i] === endNode.parentNode && childNodes[i].nodeType === 1) {
-                    childNodes.splice(i, 1);
-                    endNode = endNode.parentNode;
-                    --endIndex;
+            function remove (item) {
+                const format = util.getFormatElement(item);
+                util.removeItem(item);
+
+                if(util.isListCell(format)) {
+                    const list = util.getArrayItem(format.children, util.isList, false);
+                    if (list) {
+                        const child = list.firstElementChild;
+                        const children = child.childNodes;
+                        while (children[0]) {
+                            format.insertBefore(children[0], list);
+                        }
+                        util.removeItemAllParents(child);
+                    }
                 }
             }
 
@@ -10661,7 +11824,7 @@ var notice = __webpack_require__(1);
                 const item = childNodes[i];
 
                 if (item.length === 0 || (item.nodeType === 3 && item.data === undefined)) {
-                    util.removeItem(item);
+                    remove(item);
                     continue;
                 }
 
@@ -10669,15 +11832,21 @@ var notice = __webpack_require__(1);
                     if (startCon.nodeType === 1) {
                         beforeNode = util.createTextNode(startCon.textContent);
                     } else {
-                        beforeNode = util.createTextNode(startCon.substringData(0, startOff));
+                        if (item === endCon) {
+                            beforeNode = util.createTextNode(startCon.substringData(0, startOff) + endCon.substringData(endOff, (endCon.length - endOff)));
+                            offset = startOff;
+                        } else {
+                            beforeNode = util.createTextNode(startCon.substringData(0, startOff));
+                        }
                     }
 
                     if (beforeNode.length > 0) {
                         startCon.data = beforeNode.data;
                     } else {
-                        util.removeItem(startCon);
+                        remove(startCon);
                     }
 
+                    if (item === endCon) break;
                     continue;
                 }
 
@@ -10691,26 +11860,65 @@ var notice = __webpack_require__(1);
                     if (afterNode.length > 0) {
                         endCon.data = afterNode.data;
                     } else {
-                        util.removeItem(endCon);
+                        remove(endCon);
                     }
 
                     continue;
                 }
 
-                util.removeItem(item);
-
-                // history stack
-                this.history.push(false);
+                remove(item);
             }
+
+            container = endCon && endCon.parentNode ? endCon : startCon && startCon.parentNode ? startCon : (range.endContainer || range.startContainer);
+
+            // set range
+            this.setRange(container, offset, container, offset);
+            // history stack
+            this.history.push(true);
+
+            return {
+                container: container,
+                offset: offset
+            };
         },
 
         /**
          * @description Appended all selected format Element to the argument element and insert
-         * @param {Element} rangeElement Element of wrap the arguments (PRE, BLOCKQUOTE...)
+         * @param {Element} rangeElement Element of wrap the arguments (BLOCKQUOTE...)
          */
         applyRangeFormatElement: function (rangeElement) {
-            const rangeLines = this.getSelectedElementsAndComponents();
+            const rangeLines = this.getSelectedElementsAndComponents(false);
             if (!rangeLines || rangeLines.length === 0) return;
+
+            linesLoop:
+            for (let i = 0, len = rangeLines.length, line, nested, fEl, lEl, f, l; i < len; i++) {
+                line = rangeLines[i];
+                if (!util.isListCell(line)) continue;
+
+                nested = line.lastElementChild;
+                if (nested && util.isListCell(line.nextElementSibling) && rangeLines.indexOf(line.nextElementSibling) > -1) {
+                    lEl = nested.lastElementChild;
+                    if (rangeLines.indexOf(lEl) > -1) {
+                        let list = null;
+                        while ((list = lEl.lastElementChild)) {
+                            if (util.isList(list)) {
+                                if (rangeLines.indexOf(list.lastElementChild) > -1) {
+                                    lEl = list.lastElementChild;
+                                } else {
+                                    continue linesLoop;
+                                }
+                            }
+                        }
+
+                        fEl = nested.firstElementChild;
+                        f = rangeLines.indexOf(fEl);
+                        l = rangeLines.indexOf(lEl);
+                        rangeLines.splice(f, (l - f) + 1);
+                        len = rangeLines.length;
+                        continue;
+                    }
+                }
+            }
 
             let last  = rangeLines[rangeLines.length - 1];
             let standTag, beforeTag, pElement;
@@ -10728,31 +11936,55 @@ var notice = __webpack_require__(1);
                 beforeTag = standTag.nextSibling;
                 pElement = standTag.parentNode;
             }
-
+            
             let parentDepth = util.getElementDepth(standTag);
             let listParent = null;
             const lineArr = [];
             const removeItems = function (parent, origin, before) {
                 let cc = null;
                 if (parent !== origin && !util.isTable(origin)) {
-                   cc = util.removeItemAllParents(origin);
+                    if (origin && util.getElementDepth(parent) === util.getElementDepth(origin)) return before;
+                    cc = util.removeItemAllParents(origin, null, parent);
                 }
 
                 return cc ? cc.ec : before;
             };
             
-            for (let i = 0, len = rangeLines.length, line, originParent, depth, before; i < len; i++) {
+            for (let i = 0, len = rangeLines.length, line, originParent, depth, before, nextLine, nextList, nested; i < len; i++) {
                 line = rangeLines[i];
                 originParent = line.parentNode;
+                if (!originParent || rangeElement.contains(originParent)) continue;
+
                 depth = util.getElementDepth(line);
 
                 if (util.isList(originParent)) {
-                    if (listParent === null) listParent = util.createElement(originParent.nodeName);
+                    if (listParent === null) {
+                        if (nextList) {
+                            listParent = nextList;
+                            nested = true;
+                            nextList = null;
+                        } else {
+                            listParent = originParent.cloneNode(false);
+                        }
+                    }
 
-                    listParent.innerHTML += line.outerHTML;
                     lineArr.push(line);
+                    nextLine = rangeLines[i + 1];
 
-                    if (i === len - 1 || !util.getParentElement(rangeLines[i + 1], function (current) { return current === originParent; })) {
+                    if (i === len - 1 || (nextLine && nextLine.parentNode !== originParent)) {
+                        // nested list
+                        if (nextLine && line.contains(nextLine.parentNode)) {
+                            nextList = nextLine.parentNode.cloneNode(false);
+                        }
+
+                        let list = originParent.parentNode, p;
+                        while (util.isList(list)) {
+                            p = util.createElement(list.nodeName);
+                            p.appendChild(listParent);
+                            listParent = p;
+                            list = list.parentNode;
+                        }
+
                         const edge = this.detachRangeFormatElement(originParent, lineArr, null, true, true);
 
                         if (parentDepth >= depth) {
@@ -10765,12 +11997,19 @@ var notice = __webpack_require__(1);
                         }
 
                         if (pElement !== edge.cc) {
-                            before = removeItems(pElement, edge.cc);
+                            before = removeItems(pElement, edge.cc, before);
                             if (before !== undefined) beforeTag = before;
+                            else beforeTag = edge.cc;
                         }
 
-                        rangeElement.appendChild(listParent);
+                        for (let c = 0, cLen = edge.removeArray.length; c < cLen; c++) {
+                            listParent.appendChild(edge.removeArray[c]);
+                        }
+
+                        if (!nested) rangeElement.appendChild(listParent);
+                        if (nextList) edge.removeArray[edge.removeArray.length - 1].appendChild(nextList);
                         listParent = null;
+                        nested = false;
                     }
                 }
                 else {
@@ -10789,11 +12028,21 @@ var notice = __webpack_require__(1);
                 }
             }
 
-            pElement.insertBefore(rangeElement, beforeTag);
-            removeItems(rangeElement, beforeTag);
+            this._lastEffectNode = null;
+            util.mergeSameTags(rangeElement, null, null, false);
+            util.mergeNestedTags(rangeElement, function (current) { return this.isList(current); }.bind(util));
 
-            // history stack
-            this.history.push(false);
+            // Nested list
+            if (beforeTag && util.getElementDepth(beforeTag) > 0 && (util.isList(beforeTag.parentNode) || util.isList(beforeTag.parentNode.parentNode))) {
+                const depthFormat = util.getParentElement(beforeTag, function (current) { return this.isRangeFormatElement(current) && !this.isList(current); }.bind(util));
+                const splitRange = util.splitElement(beforeTag, null, !depthFormat ? 0 : util.getElementDepth(depthFormat) + 1);
+                splitRange.parentNode.insertBefore(rangeElement, splitRange);
+            }
+            // basic
+            else {
+                pElement.insertBefore(rangeElement, beforeTag);
+                removeItems(rangeElement, beforeTag);
+            }
 
             const edge = util.getEdgeChildNodes(rangeElement.firstElementChild, rangeElement.lastElementChild);
             if (rangeLines.length > 1) {
@@ -10801,33 +12050,40 @@ var notice = __webpack_require__(1);
             } else {
                 this.setRange(edge.ec, edge.ec.textContent.length, edge.ec, edge.ec.textContent.length);
             }
+
+            // history stack
+            this.history.push(false);
         },
 
         /**
          * @description The elements of the "selectedFormats" array are detached from the "rangeElement" element. ("LI" tags are converted to "P" tags)
-         * When "selectedFormats" is null, all elements are detached and return {cc: parentNode, sc: nextSibling, ec: previousSibling}.
+         * When "selectedFormats" is null, all elements are detached and return {cc: parentNode, sc: nextSibling, ec: previousSibling, removeArray: [Array of removed elements]}.
          * @param {Element} rangeElement Range format element (PRE, BLOCKQUOTE, OL, UL...)
          * @param {Array|null} selectedFormats Array of format elements (P, DIV, LI...) to remove.
          * If null, Applies to all elements and return {cc: parentNode, sc: nextSibling, ec: previousSibling}
          * @param {Element|null} newRangeElement The node(rangeElement) to replace the currently wrapped node.
-         * @param {Boolean} remove Delete without detached.
+         * @param {Boolean} remove If true, deleted without detached.
          * @param {Boolean} notHistoryPush When true, it does not update the history stack and the selection object and return EdgeNodes (util.getEdgeChildNodes)
+         * @returns {Object}
          */
         detachRangeFormatElement: function (rangeElement, selectedFormats, newRangeElement, remove, notHistoryPush) {
             const range = this.getRange();
             const so = range.startOffset;
             const eo = range.endOffset;
 
-            const children = rangeElement.childNodes;
-            const parent = rangeElement.parentNode;
+            let children = util.getListChildNodes(rangeElement, function (current) { return current.parentNode === rangeElement; });
+            let parent = rangeElement.parentNode;
             let firstNode = null;
             let lastNode = null;
             let rangeEl = rangeElement.cloneNode(false);
             
+            const removeArray = [];
             const newList = util.isList(newRangeElement);
             let insertedNew = false;
+            let reset = false;
+            let moveComplete = false;
 
-            function appendNode (parent, insNode, sibling) {
+            function appendNode (parent, insNode, sibling, originNode) {
                 if (util.onlyZeroWidthSpace(insNode)) insNode.innerHTML = util.zeroWidthSpace;
 
                 if (insNode.nodeType === 3) {
@@ -10835,14 +12091,14 @@ var notice = __webpack_require__(1);
                     return insNode;
                 }
                 
-                const children = insNode.childNodes;
+                const insChildren = (moveComplete ? insNode : originNode).childNodes;
                 let format = insNode.cloneNode(false);
                 let first = null;
                 let c = null;
 
-                while (children[0]) {
-                    c = children[0];
-                    if (util.isIgnoreNodeChange(c) && !util.isListCell(format)) {
+                while (insChildren[0]) {
+                    c = insChildren[0];
+                    if (util._notTextNode(c) && !util.isBreak(c) && !util.isListCell(format)) {
                         if (format.childNodes.length > 0) {
                             if (!first) first = format;
                             parent.insertBefore(format, sibling);
@@ -10856,15 +12112,36 @@ var notice = __webpack_require__(1);
                 }
 
                 if (format.childNodes.length > 0) {
-                    parent.insertBefore(format, sibling);
+                    if (util.isListCell(parent) && util.isListCell(format) && util.isList(sibling)) {
+                        if (newList) {
+                            first = sibling;
+                            while(sibling) {
+                                format.appendChild(sibling);
+                                sibling = sibling.nextSibling;
+                            }
+                            parent.parentNode.insertBefore(format, parent.nextElementSibling);
+                        } else {
+                            const originNext = originNode.nextElementSibling;
+                            const detachRange = util.detachNestedList(originNode, false);
+                            if ((rangeElement !== detachRange) || (originNext !== originNode.nextElementSibling)) {
+                                rangeElement = detachRange;
+                                reset = true;
+                            }
+                        }
+                    } else {
+                        parent.insertBefore(format, sibling);
+                    }
+
                     if (!first) first = format;
                 }
 
                 return first;
             }
 
-            for (let i = 0, len = children.length, insNode; i < len; i++) {
+            // detach loop
+            for (let i = 0, len = children.length, insNode, lineIndex, next; i < len; i++) {
                 insNode = children[i];
+                moveComplete = false;
                 if (remove && i === 0) {
                     if (!selectedFormats || selectedFormats.length === len || selectedFormats[0] === insNode) {
                         firstNode = rangeElement.previousSibling;
@@ -10873,64 +12150,106 @@ var notice = __webpack_require__(1);
                     }
                 }
 
-                if (selectedFormats && selectedFormats.indexOf(insNode) === -1) {
+                if (selectedFormats) lineIndex = selectedFormats.indexOf(insNode);
+                if (selectedFormats && lineIndex === -1) {
                     if (!rangeEl) rangeEl = rangeElement.cloneNode(false);
-                    insNode = insNode.cloneNode(true);
                     rangeEl.appendChild(insNode);
                 }
                 else {
+                    if (selectedFormats) next = selectedFormats[lineIndex + 1];
                     if (rangeEl && rangeEl.children.length > 0) {
                         parent.insertBefore(rangeEl, rangeElement);
                         rangeEl = null;
                     }
 
                     if (!newList && util.isListCell(insNode)) {
-                        const inner = insNode;
-                        insNode = util.isCell(rangeElement.parentNode) ? util.createElement('DIV') : util.createElement('P');
-                        insNode.innerHTML = inner.innerHTML;
-                        util.copyFormatAttributes(insNode, inner);
+                        if (util.getElementDepth(insNode) !== util.getElementDepth(next) && (util.isListCell(parent) || util.getArrayItem(insNode.children, util.isList, false))) {
+                            const insNext = insNode.nextElementSibling;
+                            const detachRange = util.detachNestedList(insNode, false);
+                            if ((rangeElement !== detachRange) || insNext !== insNode.nextElementSibling) {
+                                rangeElement = detachRange;
+                                reset = true;
+                            }
+                        } else {
+                            const inner = insNode;
+                            insNode = util.createElement(remove ? inner.nodeName : (util.isList(rangeElement.parentNode) || util.isListCell(rangeElement.parentNode)) ? 'LI' : util.isCell(rangeElement.parentNode) ? 'DIV' : 'P');
+                            const innerChildren = inner.childNodes;
+                            while (innerChildren[0]) {
+                                insNode.appendChild(innerChildren[0]);
+                            }
+                            util.copyFormatAttributes(insNode, inner);
+                            moveComplete = true;
+                        }
                     } else {
-                        insNode = insNode.cloneNode(true);
+                        insNode = insNode.cloneNode(false);
                     }
 
-                    if (!remove) {
-                        if (newRangeElement) {
-                            if (!insertedNew) {
-                                parent.insertBefore(newRangeElement, rangeElement);
-                                insertedNew = true;
+                    if (!reset) {
+                        if (!remove) {
+                            if (newRangeElement) {
+                                if (!insertedNew) {
+                                    parent.insertBefore(newRangeElement, rangeElement);
+                                    insertedNew = true;
+                                }
+                                insNode = appendNode(newRangeElement, insNode, null, children[i]);
+                            } else {
+                                insNode = appendNode(parent, insNode, rangeElement, children[i]);
                             }
-                            insNode = appendNode(newRangeElement, insNode, null);
+    
+                            if (selectedFormats) {
+                                lastNode = insNode;
+                                if (!firstNode) {
+                                    firstNode = insNode;
+                                }
+                            } else if (!firstNode) {
+                                firstNode = lastNode = insNode;
+                            }
                         } else {
-                            insNode = appendNode(parent, insNode, rangeElement);
+                            removeArray.push(insNode);
+                            util.removeItem(children[i]);
                         }
-                        
-                        if (selectedFormats) {
-                            lastNode = insNode;
-                            if (!firstNode) {
-                                firstNode = insNode;
-                            }
-                        } else if (!firstNode) {
-                            firstNode = lastNode = insNode;
-                        }
+                    } else {
+                        reset = moveComplete = false;
+                        children = util.getListChildNodes(rangeElement, function (current) { return current.parentNode === rangeElement; });
+                        rangeEl = rangeElement.cloneNode(false);
+                        parent = rangeElement.parentNode;
+                        i = -1;
+                        len = children.length;
+                        continue;
                     }
-                    
                 }
             }
 
             const rangeParent = rangeElement.parentNode;
-            const rangeRight = rangeElement.nextSibling;
+            let rangeRight = rangeElement.nextSibling;
             if (rangeEl && rangeEl.children.length > 0) {
                 rangeParent.insertBefore(rangeEl, rangeRight);
             }
+            
+            if (newRangeElement) firstNode = newRangeElement.previousSibling;
+            else if (!firstNode) firstNode = rangeElement.previousSibling;
+            rangeRight = rangeElement.nextSibling;
 
             util.removeItem(rangeElement);
 
-            const edge = remove ? {
-                cc: rangeParent,
-                sc: firstNode,
-                ec: firstNode && firstNode.parentNode ? firstNode.nextSibling : rangeEl && rangeEl.children.length > 0 ? rangeEl : rangeRight ? rangeRight : null
-            } : util.getEdgeChildNodes(firstNode, lastNode);
+            let edge = null;
+            if (remove) {
+                edge = {
+                    cc: rangeParent,
+                    sc: firstNode,
+                    ec: rangeRight,
+                    removeArray: removeArray
+                };
+            } else {
+                const childEdge = util.getEdgeChildNodes(firstNode, ((!lastNode || !lastNode.parentNode) ? firstNode : lastNode));
+                edge = {
+                    cc: (childEdge.sc || childEdge.ec).parentNode,
+                    sc: childEdge.sc,
+                    ec: childEdge.ec
+                };
+            }
 
+            this._lastEffectNode = null;
             if (notHistoryPush) return edge;
             
             if (!remove && edge) {
@@ -10943,8 +12262,65 @@ var notice = __webpack_require__(1);
 
             // history stack
             this.history.push(false);
-            
-            event._applyTagEffects();
+        },
+
+        /**
+         * @description "selectedFormats" array are detached from the list element.
+         * The return value is applied when the first and last lines of "selectedFormats" are "LI" respectively.
+         * @param {Array} selectedFormats Array of format elements (LI, P...) to remove.
+         * @param {Boolean} remove If true, deleted without detached.
+         * @returns {Object} {sc: <LI>, ec: <LI>}.
+         */
+        detachList: function (selectedFormats, remove) {
+            let rangeArr = {};
+            let listFirst = false;
+            let listLast = false;
+            let first = null;
+            let last = null;
+            const passComponent = function (current) { return !this.isComponent(current); }.bind(util);
+
+            for (let i = 0, len = selectedFormats.length, r, o, lastIndex, isList; i < len; i++) {
+                lastIndex = i === len - 1;
+                o = util.getRangeFormatElement(selectedFormats[i], passComponent);
+                isList = util.isList(o);
+                if (!r && isList) {
+                    r = o;
+                    rangeArr = {r: r, f: [util.getParentElement(selectedFormats[i], 'LI')]};
+                    if (i === 0) listFirst = true;
+                } else if (r && isList) {
+                    if (r !== o) {
+                        const edge = this.detachRangeFormatElement(rangeArr.f[0].parentNode, rangeArr.f, null, remove, true);
+                        o = selectedFormats[i].parentNode;
+                        if (listFirst) {
+                            first = edge.sc;
+                            listFirst = false;
+                        }
+                        if (lastIndex) last = edge.ec;
+
+                        if (isList) {
+                            r = o;
+                            rangeArr = {r: r, f: [util.getParentElement(selectedFormats[i], 'LI')]};
+                            if (lastIndex) listLast = true;
+                        } else {
+                            r = null;
+                        }
+                    } else {
+                        rangeArr.f.push(util.getParentElement(selectedFormats[i], 'LI'));
+                        if (lastIndex) listLast = true;
+                    }
+                }
+
+                if (lastIndex && util.isList(r)) {
+                    const edge = this.detachRangeFormatElement(rangeArr.f[0].parentNode, rangeArr.f, null, remove, true);
+                    if (listLast || len === 1) last = edge.ec;
+                    if (listFirst) first = edge.sc || last;
+                }
+            }
+
+            return {
+                sc: first,
+                ec: last
+            };
         },
 
         /**
@@ -10968,7 +12344,7 @@ var notice = __webpack_require__(1);
          * @param {Boolean|null} strictRemove If true, only nodes with all styles and classes removed from the nodes of "removeNodeArray" are removed.
          */
         nodeChange: function (appendNode, styleArray, removeNodeArray, strictRemove) {
-            const range = this.getRange();
+            let range = this.getRange();
             styleArray = styleArray && styleArray.length > 0 ? styleArray : false;
             removeNodeArray = removeNodeArray && removeNodeArray.length > 0 ? removeNodeArray : false;
 
@@ -10978,10 +12354,44 @@ var notice = __webpack_require__(1);
             let startOff = range.startOffset;
             let endCon = range.endContainer;
             let endOff = range.endOffset;
-            let tempCon, tempOffset, tempChild;
 
-            if (isRemoveFormat && range.collapsed && util.isFormatElement(startCon.parentNode) && util.isFormatElement(endCon.parentNode)) {
+            if ((isRemoveFormat && range.collapsed && util.isFormatElement(startCon.parentNode) && util.isFormatElement(endCon.parentNode)) || (startCon === endCon && startCon.nodeType === 1 && startCon.getAttribute('contenteditable') === 'false')) {
                 return;
+            }
+
+            if (range.collapsed && !isRemoveFormat) {
+                if (startCon.nodeType === 1 && !util.isBreak(startCon)) {
+                    let afterNode = null;
+                    const focusNode = startCon.childNodes[startOff];
+
+                    if (focusNode) {
+                        if (!focusNode.nextSibling) {
+                            startCon.removeChild(focusNode);
+                            afterNode = null;
+                        } else {
+                            afterNode = util.isBreak(focusNode) ? focusNode : focusNode.nextSibling;
+                        }
+                    }
+
+                    const zeroWidth = util.createTextNode(util.zeroWidthSpace);
+                    startCon.insertBefore(zeroWidth, afterNode);
+                    this.setRange(zeroWidth, 1, zeroWidth, 1);
+
+                    range = this.getRange();
+                    startCon = range.startContainer;
+                    startOff = range.startOffset;
+                    endCon = range.endContainer;
+                    endOff = range.endOffset;
+                }
+            }
+
+            if (util.isFormatElement(startCon)) {
+                startCon = startCon.childNodes[startOff];
+                startOff = 0;
+            }
+            if (util.isFormatElement(endCon)) {
+                endCon = endCon.childNodes[endOff];
+                endOff = endCon.textContent.length;
             }
 
             if (isRemoveNode) {
@@ -11026,84 +12436,6 @@ var notice = __webpack_require__(1);
                     if (checkCnt >= checkAttrs.length) return;
                 }
             }
-
-            /* find text node */
-            // startContainer
-            tempCon = util.isWysiwygDiv(startCon) ? context.element.wysiwyg.firstChild : startCon;
-            tempOffset = startOff;
-
-            if (util.isBreak(tempCon) || (tempCon.nodeType === 1 && tempCon.childNodes.length > 0)) {
-                const onlyBreak = util.isBreak(tempCon);
-                if (!onlyBreak) {
-                    while (tempCon && !util.isBreak(tempCon) && tempCon.nodeType === 1) {
-                        tempCon = tempCon.childNodes[tempOffset] || tempCon.nextElementSibling || tempCon.nextSibling;
-                        tempOffset = 0;
-                    }
-    
-                    let format = util.getFormatElement(tempCon);
-                    if (format === util.getRangeFormatElement(format)) {
-                        format = util.createElement(util.isCell(tempCon) ? 'DIV' : 'P');
-                        tempCon.parentNode.insertBefore(format, tempCon);
-                        format.appendChild(tempCon);
-                    }
-                }
-
-                if (util.isBreak(tempCon)) {
-                    const emptyText = util.createTextNode(util.zeroWidthSpace);
-                    tempCon.parentNode.insertBefore(emptyText, tempCon);
-                    tempCon = emptyText;
-                    if (onlyBreak) {
-                        if (startCon === endCon) {
-                            endCon = tempCon;
-                            endOff = 1;
-                        }
-                        util.removeItem(startCon);
-                    }
-                }
-            }
-
-            // set startContainer
-            startCon = tempCon;
-            startOff = tempOffset;
-
-            // endContainer
-            tempCon = util.isWysiwygDiv(endCon) ? context.element.wysiwyg.lastChild : endCon;
-            tempOffset = endOff;
-
-            if (util.isBreak(tempCon) || (tempCon.nodeType === 1 && tempCon.childNodes.length > 0)) {
-                const onlyBreak = util.isBreak(tempCon);
-                if (!onlyBreak) {
-                    while (tempCon && !util.isBreak(tempCon) && tempCon.nodeType === 1) {
-                        tempChild = tempCon.childNodes;
-                        tempCon = tempChild[tempOffset > 0 ? tempOffset - 1 : tempOffset] || !/FIGURE/i.test(tempChild[0].nodeName) ? tempChild[0] : (tempCon.previousElementSibling || tempCon.previousSibling || startCon);
-                        tempOffset = tempOffset > 0 ? tempCon.textContent.length : tempOffset;
-                    }
-    
-                    let format = util.getFormatElement(tempCon);
-                    if (format === util.getRangeFormatElement(format)) {
-                        format = util.createElement(util.isCell(format) ? 'DIV' : 'P');
-                        tempCon.parentNode.insertBefore(format, tempCon);
-                        format.appendChild(tempCon);
-                    }
-                }
-
-                if (util.isBreak(tempCon)) {
-                    const emptyText = util.createTextNode(util.zeroWidthSpace);
-                    tempCon.parentNode.insertBefore(emptyText, tempCon);
-                    tempCon = emptyText;
-                    tempOffset = 1;
-                    if (onlyBreak) {
-                        util.removeItem(endCon);
-                    }
-                }
-            }
-
-            // set endContainer
-            endCon = tempCon;
-            endOff = tempOffset;
-
-            // set Range
-            this.setRange(startCon, startOff, endCon, endOff);
 
             let start = {}, end = {};
             let newNode, styleRegExp = '', classRegExp = '', removeNodeRegExp = '';
@@ -11225,19 +12557,19 @@ var notice = __webpack_require__(1);
             // node Changes
             newNode = appendNode.cloneNode(false);
 
-            const isRemoveAnchor = isRemoveFormat || (isRemoveNode && (function (arr, isAnchor) {
+            const isRemoveAnchor = isRemoveFormat || (isRemoveNode && (function (arr, _isMaintainedNode) {
                 for (let n = 0, len = arr.length; n < len; n++) {
-                    if (isAnchor(arr[n])) return true;
+                    if (_isMaintainedNode(arr[n])) return true;
                 }
                 return false;
-            })(removeNodeArray, util.isAnchor));
+            })(removeNodeArray, util._isMaintainedNode));
 
-            const _getAnchor = this._util_getAnchor.bind(util, isRemoveAnchor);
-            const _isAnchor = this._util_isAnchor.bind(util, isRemoveAnchor);
+            const _getMaintainedNode = this._util_getMaintainedNode.bind(util, isRemoveAnchor);
+            const _isMaintainedNode = this._util_isMaintainedNode.bind(util, isRemoveAnchor);
 
             // one line
             if (oneLine) {
-                const newRange = this._nodeChange_oneLine(lineNodes[0], newNode, validation, startCon, startOff, endCon, endOff, isRemoveFormat, isRemoveNode, range.collapsed, _removeCheck, _getAnchor, _isAnchor);
+                const newRange = this._nodeChange_oneLine(lineNodes[0], newNode, validation, startCon, startOff, endCon, endOff, isRemoveFormat, isRemoveNode, range.collapsed, _removeCheck, _getMaintainedNode, _isMaintainedNode);
                 start.container = newRange.startContainer;
                 start.offset = newRange.startOffset;
                 end.container = newRange.endContainer;
@@ -11245,18 +12577,23 @@ var notice = __webpack_require__(1);
             }
             // multi line 
             else {
-                // start
-                start = this._nodeChange_startLine(lineNodes[0], newNode, validation, startCon, startOff, isRemoveFormat, isRemoveNode, _removeCheck, _getAnchor, _isAnchor);
-                // mid
-                for (let i = 1; i < endLength; i++) {
-                    newNode = appendNode.cloneNode(false);
-                    this._nodeChange_middleLine(lineNodes[i], newNode, validation, isRemoveFormat, isRemoveNode, _removeCheck);
-                }
                 // end
                 if (endLength > 0) {
                     newNode = appendNode.cloneNode(false);
-                    end = this._nodeChange_endLine(lineNodes[endLength], newNode, validation, endCon, endOff, isRemoveFormat, isRemoveNode, _removeCheck, _getAnchor, _isAnchor);
-                } else {
+                    end = this._nodeChange_endLine(lineNodes[endLength], newNode, validation, endCon, endOff, isRemoveFormat, isRemoveNode, _removeCheck, _getMaintainedNode, _isMaintainedNode);
+                }
+
+                // mid
+                for (let i = endLength - 1; i > 0; i--) {
+                    newNode = appendNode.cloneNode(false);
+                    this._nodeChange_middleLine(lineNodes[i], newNode, validation, isRemoveFormat, isRemoveNode, _removeCheck);
+                }
+
+                // start
+                newNode = appendNode.cloneNode(false);
+                start = this._nodeChange_startLine(lineNodes[0], newNode, validation, startCon, startOff, isRemoveFormat, isRemoveNode, _removeCheck, _getMaintainedNode, _isMaintainedNode);
+
+                if (endLength <= 0) {
                     end = start;
                 }
             }
@@ -11287,145 +12624,25 @@ var notice = __webpack_require__(1);
         },
 
         /**
-         * @description Delete a empty child node of argument element
-         * @param {Element} formatNode The format node
-         * @param {Element} notRemoveNode Do not remove node
-         * @private
-         */
-        _removeEmptyNode: function (formatNode, notRemoveNode) {
-            const preventDelete = util.onlyZeroWidthSpace(notRemoveNode.textContent);
-            if (preventDelete) notRemoveNode.textContent = ' ';
-            util.removeEmptyNode(formatNode);
-            if (preventDelete) notRemoveNode.textContent = util.zeroWidthSpace;
-        },
-
-        /**
-         * @description Use with "npdePath (util.getNodePath)" to merge the same attributes and tags if they are present and modify the nodepath.
-         * If "offset" has been changed, it will return as much "offset" as it has been modified.
-         * "a", "b" You can send a maximum of two nodepaths.
-         * @param {Object} nodePath_s Start NodePath object (util.getNodePath)
-         * @param {Object|null} nodePath_e End NodePath object (util.getNodePath)
-         * @returns {Object} {a: 0, b: 0}
-         * @private
-         */
-        _mergeSameTags: function (element, nodePath_s, nodePath_e) {
-            const inst = this;
-            const offsets = {a: 0, b: 0};
-
-            (function recursionFunc(current, depth, depthIndex, includedPath_s, includedPath_e) {
-                const children = current.childNodes;
-                
-                for (let i = 0, len = children.length, child, next; i < len; i++) {
-                    child = children[i];
-                    next = children[i + 1];
-                    if (!child) break;
-                    if (len === 1 && current.nodeName === child.nodeName) {
-                        inst.util.copyTagAttributes(child, current);
-                        current.parentNode.insertBefore(child, current);
-                        inst.util.removeItem(current);
-
-                        // update nodePath
-                        if (nodePath_s && nodePath_s[depth] === i) {
-                            nodePath_s.splice(depth, 1);
-                            nodePath_s[depth] = i;
-                        }
-
-                        if (nodePath_e && nodePath_e[depth] === i) {
-                            nodePath_e.splice(depth, 1);
-                            nodePath_e[depth] = i;
-                        }
-                    }
-                    if (!next) {
-                        if (child.nodeType === 1) recursionFunc(child, depth + 1, i, includedPath_s, includedPath_e);
-                        break;
-                    }
-
-                    if (child.nodeName === next.nodeName && inst.util.isSameAttributes(child, next) && child.href === next.href) {
-                        const childs = child.childNodes;
-                        let childLength = 0;
-                        for (let n = 0, nLen = childs.length; n < nLen; n++) {
-                            if (childs[n].textContent.length > 0) childLength++;
-                        }
-                        
-                        const l = child.lastChild;
-                        const r = next.firstChild;
-                        const textOffset = l && r && l.nodeType === 3 && r.nodeType === 3;
-                        let addOffset = l.textContent.length;
-                        let tempL = l.previousSibling;
-                        while(tempL && tempL.nodeType === 3) {
-                            addOffset += tempL.textContent.length;
-                            tempL = tempL.previousSibling;
-                        }
-
-                        if (childLength > 0 && l && r && l.nodeType === 3 && r.nodeType === 3 && (l.textContent.length > 0 || r.textContent.length > 0)) childLength--;
-
-                        // start
-                        if (includedPath_s && nodePath_s && nodePath_s[depth] > i) {
-                            if (depth > 0 && nodePath_s[depth - 1] !== depthIndex) {
-                                includedPath_s = false;
-                            } else {
-                                nodePath_s[depth] -= 1;
-                                if (nodePath_s[depth + 1] >= 0 && nodePath_s[depth] === i) {
-                                    nodePath_s[depth + 1] += childLength;
-                                    if (textOffset) {
-                                        if (l && l.nodeType === 3 && r && r.nodeType === 3) {
-                                            offsets.a += addOffset;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        // end
-                        if (includedPath_e && nodePath_e && nodePath_e[depth] > i) {
-                            if (depth > 0 && nodePath_e[depth - 1] !== depthIndex) {
-                                includedPath_e = false;
-                            } else {
-                                nodePath_e[depth] -= 1;
-                                if (nodePath_e[depth + 1] >= 0 && nodePath_e[depth] === i) {
-                                    nodePath_e[depth + 1] += childLength;
-                                    if (textOffset) {
-                                        if (l && l.nodeType === 3 && r && r.nodeType === 3) {
-                                            offsets.b += addOffset;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        if (child.nodeType === 3) child.textContent += next.textContent;
-                        else child.innerHTML += next.innerHTML;
-                        
-                        inst.util.removeItem(next);
-                        i--;
-                    } else if (child.nodeType === 1) {
-                        recursionFunc(child, depth + 1, i, includedPath_s, includedPath_e);
-                    }
-                }
-            })(element, 0, 0, true, true);
-
-            return offsets;
-        },
-
-        /**
-         * @description Return the parent anchor tag. (bind and use a util object)
-         * @param {Boolean} isRemove Delete anchor tag
+         * @description Return the parent maintained tag. (bind and use a util object)
+         * @param {Boolean} isRemove Delete maintained tag
          * @param {Element} element Element
          * @returns {Element}
          * @private
          */
-        _util_getAnchor: function (isRemove, element) {
-            return element && !isRemove ? this.getParentElement(element, function (current) {return this.isAnchor(current);}.bind(this)) : null;
+        _util_getMaintainedNode: function (isRemove, element) {
+            return element && !isRemove ? this.getParentElement(element, function (current) {return this._isMaintainedNode(current);}.bind(this)) : null;
         },
 
         /**
-         * @description Checks if the element is an anchor tag. (bind and use a util object)
-         * @param {Boolean} isRemove Delete anchor tag
+         * @description Check if element is a tag that should be persisted. (bind and use a util object)
+         * @param {Boolean} isRemove Delete maintained tag
          * @param {Element} element Element
          * @returns {Element}
          * @private
          */
-        _util_isAnchor: function (isRemove, element) {
-            return element && !isRemove && element.nodeType !== 3 && this.isAnchor(element);
+        _util_isMaintainedNode: function (isRemove, element) {
+            return element && !isRemove && element.nodeType !== 3 && this._isMaintainedNode(element);
         },
 
         /**
@@ -11443,7 +12660,7 @@ var notice = __webpack_require__(1);
          * @returns {{startContainer: *, startOffset: *, endContainer: *, endOffset: *}}
          * @private
          */
-        _nodeChange_oneLine: function (element, newInnerNode, validation, startCon, startOff, endCon, endOff, isRemoveFormat, isRemoveNode, collapsed, _removeCheck, _getAnchor, _isAnchor) {
+        _nodeChange_oneLine: function (element, newInnerNode, validation, startCon, startOff, endCon, endOff, isRemoveFormat, isRemoveNode, collapsed, _removeCheck, _getMaintainedNode, _isMaintainedNode) {
             // not add tag
             let parentCon = startCon.parentNode;
             while (!parentCon.nextSibling && !parentCon.previousSibling && !util.isFormatElement(parentCon.parentNode) && !util.isWysiwygDiv(parentCon.parentNode)) {
@@ -11523,7 +12740,7 @@ var notice = __webpack_require__(1);
                     // startContainer
                     if (!startPass && child === startContainer) {
                         let line = pNode;
-                        anchorNode = _getAnchor(child);
+                        anchorNode = _getMaintainedNode(child);
                         const prevNode = util.createTextNode(startContainer.nodeType === 1 ? '' : startContainer.substringData(0, startOffset));
                         const textNode = util.createTextNode(startContainer.nodeType === 1 ? '' : startContainer.substringData(startOffset, 
                                 isSameNode ? 
@@ -11532,7 +12749,7 @@ var notice = __webpack_require__(1);
                             );
 
                         if (anchorNode) {
-                            const a = _getAnchor(ancestor);
+                            const a = _getMaintainedNode(ancestor);
                             if (a && a.parentNode !== line) {
                                 let m = a;
                                 let p = null;
@@ -11549,11 +12766,11 @@ var notice = __webpack_require__(1);
                             anchorNode = anchorNode.cloneNode(false);
                         }
                         
-                        if (prevNode.data.length > 0) {
+                        if (!util.onlyZeroWidthSpace(prevNode)) {
                             ancestor.appendChild(prevNode);
                         }
 
-                        const prevAnchorNode = _getAnchor(ancestor);
+                        const prevAnchorNode = _getMaintainedNode(ancestor);
                         if (!!prevAnchorNode) anchorNode = prevAnchorNode;
                         if (anchorNode) line = anchorNode;
 
@@ -11561,7 +12778,7 @@ var notice = __webpack_require__(1);
                         pCurrent = [];
                         cssText = '';
                         while (newNode !== line && newNode !== el && newNode !== null) {
-                            vNode = _isAnchor(newNode) ? null : validation(newNode);
+                            vNode = _isMaintainedNode(newNode) ? null : validation(newNode);
                             if (vNode && newNode.nodeType === 1 && checkCss(newNode)) {
                                 pCurrent.push(vNode);
                                 cssText += newNode.style.cssText.substr(0, newNode.style.cssText.indexOf(':')) + '|';
@@ -11580,7 +12797,7 @@ var notice = __webpack_require__(1);
                         newInnerNode.appendChild(childNode);
                         line.appendChild(newInnerNode);
 
-                        if (anchorNode && !_getAnchor(endContainer)) {
+                        if (anchorNode && !_getMaintainedNode(endContainer)) {
                             newInnerNode = newInnerNode.cloneNode(false);
                             pNode.appendChild(newInnerNode);
                             nNodeArray.push(newInnerNode);
@@ -11596,26 +12813,26 @@ var notice = __webpack_require__(1);
 
                     // endContainer
                     if (!endPass && child === endContainer) {
-                        anchorNode = _getAnchor(child);
+                        anchorNode = _getMaintainedNode(child);
                         const afterNode = util.createTextNode(endContainer.nodeType === 1 ? '' : endContainer.substringData(endOffset, (endContainer.length - endOffset)));
                         const textNode = util.createTextNode(isSameNode || endContainer.nodeType === 1 ? '' : endContainer.substringData(0, endOffset));
 
                         if (anchorNode) {
                             anchorNode = anchorNode.cloneNode(false);
-                        } else if (_isAnchor(newInnerNode.parentNode) && !anchorNode) {
+                        } else if (_isMaintainedNode(newInnerNode.parentNode) && !anchorNode) {
                             newInnerNode = newInnerNode.cloneNode(false);
                             pNode.appendChild(newInnerNode);
                             nNodeArray.push(newInnerNode);
                         }
 
-                        if (afterNode.data.length > 0) {
+                        if (!util.onlyZeroWidthSpace(afterNode)) {
                             newNode = child;
                             cssText = '';
                             pCurrent = [];
                             const anchors = [];
                             while (newNode !== pNode && newNode !== el && newNode !== null) {
                                 if (newNode.nodeType === 1 && checkCss(newNode)) {
-                                    if (_isAnchor(newNode)) anchors.push(newNode.cloneNode(false));
+                                    if (_isMaintainedNode(newNode)) anchors.push(newNode.cloneNode(false));
                                     else pCurrent.push(newNode.cloneNode(false));
                                     cssText += newNode.style.cssText.substr(0, newNode.style.cssText.indexOf(':')) + '|';
                                 }
@@ -11635,7 +12852,7 @@ var notice = __webpack_require__(1);
                         }
 
                         if (anchorNode && cloneNode) {
-                            const afterAnchorNode = _getAnchor(cloneNode);
+                            const afterAnchorNode = _getMaintainedNode(cloneNode);
                             if (afterAnchorNode) {
                                 anchorNode = afterAnchorNode;
                             }
@@ -11645,7 +12862,7 @@ var notice = __webpack_require__(1);
                         pCurrent = [];
                         cssText = '';
                         while (newNode !== pNode && newNode !== el && newNode !== null) {
-                            vNode = _isAnchor(newNode) ? null : validation(newNode);
+                            vNode = _isMaintainedNode(newNode) ? null : validation(newNode);
                             if (vNode && newNode.nodeType === 1 && checkCss(newNode)) {
                                 pCurrent.push(vNode);
                                 cssText += newNode.style.cssText.substr(0, newNode.style.cssText.indexOf(':')) + '|';
@@ -11688,12 +12905,14 @@ var notice = __webpack_require__(1);
                     // other
                     if (startPass) {
                         if (child.nodeType === 1 && !util.isBreak(child)) {
-                            if (!collapsed && util.isIgnoreNodeChange(child)) {
-                                newInnerNode = newInnerNode.cloneNode(false);
+                            if (util._isIgnoreNodeChange(child)) {
                                 pNode.appendChild(child);
-                                pNode.appendChild(newInnerNode);
-                                nNodeArray.push(newInnerNode);
-                                i--;
+                                i--; len--;
+                                if (!collapsed) {
+                                    newInnerNode = newInnerNode.cloneNode(false);
+                                    pNode.appendChild(newInnerNode);
+                                    nNodeArray.push(newInnerNode);
+                                }
                             } else {
                                 recursionFunc(child, child);
                             }
@@ -11708,7 +12927,7 @@ var notice = __webpack_require__(1);
                             vNode = endPass ? newNode.cloneNode(false) : validation(newNode);
                             if (newNode.nodeType === 1 && !util.isBreak(child) && vNode && checkCss(newNode)) {
                                 if (vNode) {
-                                    if (_isAnchor(vNode)) {
+                                    if (_isMaintainedNode(vNode)) {
                                         if (!anchorNode) anchors.push(vNode);
                                     } else {
                                         pCurrent.push(vNode);
@@ -11728,13 +12947,13 @@ var notice = __webpack_require__(1);
                             appendNode = newNode;
                         }
                         
-                        if (_isAnchor(newInnerNode.parentNode) && !_isAnchor(childNode)) {
+                        if (_isMaintainedNode(newInnerNode.parentNode) && !_isMaintainedNode(childNode)) {
                             newInnerNode = newInnerNode.cloneNode(false);
                             pNode.appendChild(newInnerNode);
                             nNodeArray.push(newInnerNode);
                         }
                         
-                        if (!endPass && !anchorNode && _isAnchor(childNode)) {
+                        if (!endPass && !anchorNode && _isMaintainedNode(childNode)) {
                             newInnerNode = newInnerNode.cloneNode(false);
                             const aChildren = childNode.childNodes;
                             for (let a = 0, aLen = aChildren.length; a < aLen; a++) {
@@ -11757,8 +12976,8 @@ var notice = __webpack_require__(1);
                         }
 
                         if (anchorNode && child.nodeType === 3) {
-                            if (_getAnchor(child)) {
-                                const ancestorAnchorNode = util.getParentElement(ancestor, function (current) {return this.isAnchor(current.parentNode) || current.parentNode === pNode;}.bind(util));
+                            if (_getMaintainedNode(child)) {
+                                const ancestorAnchorNode = util.getParentElement(ancestor, function (current) {return this._isMaintainedNode(current.parentNode) || current.parentNode === pNode;}.bind(util));
                                 anchorNode.appendChild(ancestorAnchorNode);
                                 newInnerNode = ancestorAnchorNode.cloneNode(false);
                                 nNodeArray.push(newInnerNode);
@@ -11792,9 +13011,18 @@ var notice = __webpack_require__(1);
             if (isRemoveFormat) {
                 for (let i = 0; i < nNodeArray.length; i++) {
                     let removeNode = nNodeArray[i];
-                    let textNode = util.createTextNode(collapsed ? util.zeroWidthSpace : removeNode.textContent);
-                    pNode.insertBefore(textNode, removeNode);
-                    pNode.removeChild(removeNode);
+                    let textNode = util.createTextNode(util.zeroWidthSpace);
+                    
+                    if (collapsed) {
+                        pNode.replaceChild(textNode, removeNode);
+                    } else {
+                        const rChildren = removeNode.childNodes;
+                        while (rChildren[0]) {
+                            textNode = rChildren[0];
+                            pNode.insertBefore(textNode, removeNode);
+                        }
+                        util.removeItem(removeNode);
+                    }
 
                     if (i === 0) startContainer = endContainer = textNode;
                 }
@@ -11810,7 +13038,7 @@ var notice = __webpack_require__(1);
                 }
             }
 
-            this._removeEmptyNode(pNode, newInnerNode);
+            util.removeEmptyNode(pNode, newInnerNode);
 
             if (collapsed) {
                 startOffset = startContainer.textContent.length;
@@ -11839,12 +13067,12 @@ var notice = __webpack_require__(1);
             endOffset = (collapsed ? startOffset : mergeEndCon ? startContainer.textContent.length : endConReset ? endOffset + newStartOffset.s : endOffset + newEndOffset.s);
 
             // tag merge
-            const newOffsets = this._mergeSameTags(pNode, startPath, endPath);
+            const newOffsets = util.mergeSameTags(pNode, startPath, endPath, true);
 
-            element.innerHTML = pNode.innerHTML;
+            element.parentNode.replaceChild(pNode, element);
 
-            startContainer = util.getNodeFromPath(startPath, element);
-            endContainer = util.getNodeFromPath(endPath, element);
+            startContainer = util.getNodeFromPath(startPath, pNode);
+            endContainer = util.getNodeFromPath(endPath, pNode);
 
             return {
                 startContainer: startContainer,
@@ -11866,7 +13094,7 @@ var notice = __webpack_require__(1);
          * @returns {{container: *, offset: *}}
          * @private
          */
-        _nodeChange_startLine: function (element, newInnerNode, validation, startCon, startOff, isRemoveFormat, isRemoveNode, _removeCheck, _getAnchor, _isAnchor) {
+        _nodeChange_startLine: function (element, newInnerNode, validation, startCon, startOff, isRemoveFormat, isRemoveNode, _removeCheck, _getMaintainedNode, _isMaintainedNode) {
             // not add tag
             let parentCon = startCon.parentNode;
             while (!parentCon.nextSibling && !parentCon.previousSibling && !util.isFormatElement(parentCon.parentNode) && !util.isWysiwygDiv(parentCon.parentNode)) {
@@ -11916,12 +13144,12 @@ var notice = __webpack_require__(1);
 
                     if (passNode && !util.isBreak(child)) {
                         if (child.nodeType === 1) {
-                            if (util.isIgnoreNodeChange(child)) {
+                            if (util._isIgnoreNodeChange(child)) {
                                 newInnerNode = newInnerNode.cloneNode(false);
                                 pNode.appendChild(child);
                                 pNode.appendChild(newInnerNode);
                                 nNodeArray.push(newInnerNode);
-                                i--;
+                                i--; len--;
                             } else {
                                 recursionFunc(child, child);
                             }
@@ -11934,7 +13162,7 @@ var notice = __webpack_require__(1);
                         while (newNode.parentNode !== null && newNode !== el && newNode !== newInnerNode) {
                             vNode = validation(newNode);
                             if (newNode.nodeType === 1 && vNode) {
-                                if (_isAnchor(vNode)) {
+                                if (_isMaintainedNode(vNode)) {
                                     if (!anchorNode) anchors.push(vNode);
                                 } else {
                                     pCurrent.push(vNode);
@@ -11953,13 +13181,13 @@ var notice = __webpack_require__(1);
                             appendNode = newNode;
                         }
 
-                        if (_isAnchor(newInnerNode.parentNode) && !_isAnchor(childNode)) {
+                        if (_isMaintainedNode(newInnerNode.parentNode) && !_isMaintainedNode(childNode)) {
                             newInnerNode = newInnerNode.cloneNode(false);
                             pNode.appendChild(newInnerNode);
                             nNodeArray.push(newInnerNode);
                         }
                         
-                        if (!anchorNode && _isAnchor(childNode)) {
+                        if (!anchorNode && _isMaintainedNode(childNode)) {
                             newInnerNode = newInnerNode.cloneNode(false);
                             const aChildren = childNode.childNodes;
                             for (let a = 0, aLen = aChildren.length; a < aLen; a++) {
@@ -11967,7 +13195,7 @@ var notice = __webpack_require__(1);
                             }
                             childNode.appendChild(newInnerNode);
                             pNode.appendChild(childNode);
-                            ancestor = !_isAnchor(newNode) ? newNode : newInnerNode;
+                            ancestor = !_isMaintainedNode(newNode) ? newNode : newInnerNode;
                             nNodeArray.push(newInnerNode);
                         } else if (isTopNode) {
                             newInnerNode.appendChild(childNode);
@@ -11977,8 +13205,8 @@ var notice = __webpack_require__(1);
                         }
 
                         if (anchorNode && child.nodeType === 3) {
-                            if (_getAnchor(child)) {
-                                const ancestorAnchorNode = util.getParentElement(ancestor, function (current) {return this.isAnchor(current.parentNode) || current.parentNode === pNode;}.bind(util));
+                            if (_getMaintainedNode(child)) {
+                                const ancestorAnchorNode = util.getParentElement(ancestor, function (current) {return this._isMaintainedNode(current.parentNode) || current.parentNode === pNode;}.bind(util));
                                 anchorNode.appendChild(ancestorAnchorNode);
                                 newInnerNode = ancestorAnchorNode.cloneNode(false);
                                 nNodeArray.push(newInnerNode);
@@ -11992,12 +13220,12 @@ var notice = __webpack_require__(1);
                     // startContainer
                     if (!passNode && child === container) {
                         let line = pNode;
-                        anchorNode = _getAnchor(child);
+                        anchorNode = _getMaintainedNode(child);
                         const prevNode = util.createTextNode(container.nodeType === 1 ? '' : container.substringData(0, offset));
                         const textNode = util.createTextNode(container.nodeType === 1 ? '' : container.substringData(offset, (container.length - offset)));
 
                         if (anchorNode) {
-                            const a = _getAnchor(ancestor);
+                            const a = _getMaintainedNode(ancestor);
                             if (a && a.parentNode !== line) {
                                 let m = a;
                                 let p = null;
@@ -12014,11 +13242,11 @@ var notice = __webpack_require__(1);
                             anchorNode = anchorNode.cloneNode(false);
                         }
 
-                        if (prevNode.data.length > 0) {
+                        if (!util.onlyZeroWidthSpace(prevNode)) {
                             ancestor.appendChild(prevNode);
                         }
 
-                        const prevAnchorNode = _getAnchor(ancestor);
+                        const prevAnchorNode = _getMaintainedNode(ancestor);
                         if (!!prevAnchorNode) anchorNode = prevAnchorNode;
                         if (anchorNode) line = anchorNode;
 
@@ -12081,9 +13309,14 @@ var notice = __webpack_require__(1);
             if (isRemoveFormat) {
                 for (let i = 0; i < nNodeArray.length; i++) {
                     let removeNode = nNodeArray[i];
-                    let textNode = util.createTextNode(removeNode.textContent);
-                    pNode.insertBefore(textNode, removeNode);
-                    pNode.removeChild(removeNode);
+
+                    const rChildren = removeNode.childNodes;
+                    const textNode = rChildren[0];
+                    while (rChildren[0]) {
+                        pNode.insertBefore(rChildren[0], removeNode);
+                    }
+                    util.removeItem(removeNode);
+
                     if (i === 0) container = textNode;
                 }
             } else if (isRemoveNode) {
@@ -12100,7 +13333,7 @@ var notice = __webpack_require__(1);
                     element.appendChild(container);
                 }
             } else {
-                this._removeEmptyNode(pNode, newInnerNode);
+                util.removeEmptyNode(pNode, newInnerNode);
 
                 if (util.onlyZeroWidthSpace(pNode.textContent)) {
                     container = pNode.firstChild;
@@ -12113,11 +13346,11 @@ var notice = __webpack_require__(1);
                 offset += offsets.s;
 
                 // tag merge
-                const newOffsets = this._mergeSameTags(pNode, path, null);
+                const newOffsets = util.mergeSameTags(pNode, path, null, true);
 
-                element.innerHTML = pNode.innerHTML;
+                element.parentNode.replaceChild(pNode, element);
 
-                container = util.getNodeFromPath(path, element);
+                container = util.getNodeFromPath(path, pNode);
                 offset += newOffsets.a;
             }
 
@@ -12146,13 +13379,14 @@ var notice = __webpack_require__(1);
 
                 let children = tempNode.childNodes;
                 let i = 0, len = children.length;
-
                 for (let child; i < len; i++) {
                     child = children[i];
                     if (child.nodeType === 3) break;
                     if (child.nodeName === newNodeName) {
                         child.style.cssText += newCssText;
                         util.addClass(child, newClass);
+                    } else if (!util.isBreak(child) && util._isIgnoreNodeChange(child)) {
+                        continue;
                     } else if (len === 1) {
                         children = child.childNodes;
                         len = children.length;
@@ -12183,27 +13417,29 @@ var notice = __webpack_require__(1);
                     if (!child) continue;
                     let coverNode = ancestor;
 
-                    if (util.isIgnoreNodeChange(child)) {
-                        pNode.appendChild(newInnerNode);
-                        newInnerNode = newInnerNode.cloneNode(false);
+                    if (!util.isBreak(child) && util._isIgnoreNodeChange(child)) {
+                        if (newInnerNode.childNodes.length > 0) {
+                            pNode.appendChild(newInnerNode);
+                            newInnerNode = newInnerNode.cloneNode(false);
+                        }
                         pNode.appendChild(child);
                         pNode.appendChild(newInnerNode);
                         nNodeArray.push(newInnerNode);
                         ancestor = newInnerNode;
-                        i--;
+                        i--; len--;
                         continue;
                     } else {
                         vNode = validation(child);
                         if (vNode) {
                             noneChange = false;
                             ancestor.appendChild(vNode);
-                            if (child.nodeType === 1 && !util.isBreak(child)) coverNode = vNode;
+                            if (child.nodeType === 1) coverNode = vNode;
                         }
                     }
 
-                    recursionFunc(child, coverNode);
+                    if (!util.isBreak(child)) recursionFunc(child, coverNode);
                 }
-            })(element.cloneNode(true), newInnerNode);
+            })(element, newInnerNode);
 
             // not remove tag
             if (noneChange || (isRemoveNode && !isRemoveFormat && !_removeCheck.v)) return;
@@ -12213,9 +13449,12 @@ var notice = __webpack_require__(1);
             if (isRemoveFormat && isRemoveNode) {
                 for (let i = 0; i < nNodeArray.length; i++) {
                     let removeNode = nNodeArray[i];
-                    let textNode = util.createTextNode(removeNode.textContent);
-                    pNode.insertBefore(textNode, removeNode);
-                    pNode.removeChild(removeNode);
+                    
+                    const rChildren = removeNode.childNodes;
+                    while (rChildren[0]) {
+                        pNode.insertBefore(rChildren[0], removeNode);
+                    }
+                    util.removeItem(removeNode);
                 }
             } else if (isRemoveNode) {
                 for (let i = 0; i < nNodeArray.length; i++) {
@@ -12223,11 +13462,11 @@ var notice = __webpack_require__(1);
                 }
             }
 
-            this._removeEmptyNode(pNode, newInnerNode);
-            this._mergeSameTags(pNode, null, null);
+            util.removeEmptyNode(pNode, newInnerNode);
+            util.mergeSameTags(pNode, null, null, true);
 
             // node change
-            element.innerHTML = pNode.innerHTML;
+            element.parentNode.replaceChild(pNode, element);
         },
 
         /**
@@ -12242,7 +13481,7 @@ var notice = __webpack_require__(1);
          * @returns {{container: *, offset: *}}
          * @private
          */
-        _nodeChange_endLine: function (element, newInnerNode, validation, endCon, endOff, isRemoveFormat, isRemoveNode, _removeCheck, _getAnchor, _isAnchor) {
+        _nodeChange_endLine: function (element, newInnerNode, validation, endCon, endOff, isRemoveFormat, isRemoveNode, _removeCheck, _getMaintainedNode, _isMaintainedNode) {
             // not add tag
             let parentCon = endCon.parentNode;
             while (!parentCon.nextSibling && !parentCon.previousSibling && !util.isFormatElement(parentCon.parentNode) && !util.isWysiwygDiv(parentCon.parentNode)) {
@@ -12292,12 +13531,12 @@ var notice = __webpack_require__(1);
 
                     if (passNode && !util.isBreak(child)) {
                         if (child.nodeType === 1) {
-                            if (util.isIgnoreNodeChange(child)) {
+                            if (util._isIgnoreNodeChange(child)) {
                                 newInnerNode = newInnerNode.cloneNode(false);
                                 pNode.insertBefore(child, ancestor);
                                 pNode.insertBefore(newInnerNode, child);
                                 nNodeArray.push(newInnerNode);
-                                i--;
+                                i++;
                             } else {
                                 recursionFunc(child, child);
                             }
@@ -12310,7 +13549,7 @@ var notice = __webpack_require__(1);
                         while (newNode.parentNode !== null && newNode !== el && newNode !== newInnerNode) {
                             vNode = validation(newNode);
                             if (vNode && newNode.nodeType === 1) {
-                                if (_isAnchor(vNode)) {
+                                if (_isMaintainedNode(vNode)) {
                                     if (!anchorNode) anchors.push(vNode);
                                 } else {
                                     pCurrent.push(vNode);
@@ -12329,13 +13568,13 @@ var notice = __webpack_require__(1);
                             appendNode = newNode;
                         }
 
-                        if (_isAnchor(newInnerNode.parentNode) && !_isAnchor(childNode)) {
+                        if (_isMaintainedNode(newInnerNode.parentNode) && !_isMaintainedNode(childNode)) {
                             newInnerNode = newInnerNode.cloneNode(false);
                             pNode.insertBefore(newInnerNode, pNode.firstChild);
                             nNodeArray.push(newInnerNode);
                         }
 
-                        if (!anchorNode && _isAnchor(childNode)) {
+                        if (!anchorNode && _isMaintainedNode(childNode)) {
                             newInnerNode = newInnerNode.cloneNode(false);
                             const aChildren = childNode.childNodes;
                             for (let a = 0, aLen = aChildren.length; a < aLen; a++) {
@@ -12354,8 +13593,8 @@ var notice = __webpack_require__(1);
                         }
 
                         if (anchorNode && child.nodeType === 3) {
-                            if (_getAnchor(child)) {
-                                const ancestorAnchorNode = util.getParentElement(ancestor, function (current) {return this.isAnchor(current.parentNode) || current.parentNode === pNode;}.bind(util));
+                            if (_getMaintainedNode(child)) {
+                                const ancestorAnchorNode = util.getParentElement(ancestor, function (current) {return this._isMaintainedNode(current.parentNode) || current.parentNode === pNode;}.bind(util));
                                 anchorNode.appendChild(ancestorAnchorNode);
                                 newInnerNode = ancestorAnchorNode.cloneNode(false);
                                 nNodeArray.push(newInnerNode);
@@ -12368,13 +13607,13 @@ var notice = __webpack_require__(1);
 
                     // endContainer
                     if (!passNode && child === container) {
-                        anchorNode = _getAnchor(child);
+                        anchorNode = _getMaintainedNode(child);
                         const afterNode = util.createTextNode(container.nodeType === 1 ? '' : container.substringData(offset, (container.length - offset)));
                         const textNode = util.createTextNode(container.nodeType === 1 ? '' : container.substringData(0, offset));
 
                         if (anchorNode) {
                             anchorNode = anchorNode.cloneNode(false);
-                            const a = _getAnchor(ancestor);
+                            const a = _getMaintainedNode(ancestor);
                             if (a && a.parentNode !== pNode) {
                                 let m = a;
                                 let p = null;
@@ -12389,20 +13628,20 @@ var notice = __webpack_require__(1);
                                 m.parentNode.insertBefore(a, m.parentNode.firstChild);
                             }
                             anchorNode = anchorNode.cloneNode(false);
-                        } else if (_isAnchor(newInnerNode.parentNode) && !anchorNode) {
+                        } else if (_isMaintainedNode(newInnerNode.parentNode) && !anchorNode) {
                             newInnerNode = newInnerNode.cloneNode(false);
                             pNode.appendChild(newInnerNode);
                             nNodeArray.push(newInnerNode);
                         }
 
-                        if (afterNode.data.length > 0) {
+                        if (!util.onlyZeroWidthSpace(afterNode)) {
                             ancestor.insertBefore(afterNode, ancestor.firstChild);
                         }
 
                         newNode = ancestor;
                         pCurrent = [];
                         while (newNode !== pNode && newNode !== null) {
-                            vNode = _isAnchor(newNode) ? null : validation(newNode);
+                            vNode = _isMaintainedNode(newNode) ? null : validation(newNode);
                             if (vNode && newNode.nodeType === 1) {
                                 pCurrent.push(vNode);
                             }
@@ -12465,9 +13704,14 @@ var notice = __webpack_require__(1);
             if (isRemoveFormat) {
                 for (let i = 0; i < nNodeArray.length; i++) {
                     let removeNode = nNodeArray[i];
-                    let textNode = util.createTextNode(removeNode.textContent);
-                    pNode.insertBefore(textNode, removeNode);
-                    pNode.removeChild(removeNode);
+                    
+                    const rChildren = removeNode.childNodes;
+                    let textNode = null;
+                    while (rChildren[0]) {
+                        textNode = rChildren[0];
+                        pNode.insertBefore(textNode, removeNode);
+                    }
+                    util.removeItem(removeNode);
 
                     if (i === nNodeArray.length - 1) {
                         container = textNode;
@@ -12488,7 +13732,7 @@ var notice = __webpack_require__(1);
                     element.appendChild(container);
                 }
             } else {
-                this._removeEmptyNode(pNode, newInnerNode);
+                util.removeEmptyNode(pNode, newInnerNode);
 
                 if (util.onlyZeroWidthSpace(pNode.textContent)) {
                     container = pNode.firstChild;
@@ -12504,11 +13748,11 @@ var notice = __webpack_require__(1);
                 offset += offsets.s;
 
                 // tag merge
-                const newOffsets = this._mergeSameTags(pNode, path, null);
+                const newOffsets = util.mergeSameTags(pNode, path, null, true);
 
-                element.innerHTML = pNode.innerHTML;
+                element.parentNode.replaceChild(pNode, element);
 
-                container = util.getNodeFromPath(path, element);
+                container = util.getNodeFromPath(path, pNode);
                 offset += newOffsets.a;
             }
 
@@ -12516,6 +13760,40 @@ var notice = __webpack_require__(1);
                 container: container,
                 offset: offset
             };
+        },
+
+        /**
+         * @description Run plugin calls and basic commands.
+         * @param {String} command Command string
+         * @param {String} display Display type string ('command', 'submenu', 'dialog', 'container')
+         * @param {Element} target The element of command button
+         */
+        actionCall: function (command, display, target) {
+            // call plugins
+            if (display) {
+                if (/submenu/.test(display) && (target.nextElementSibling === null || target !== this.submenuActiveButton)) {
+                    this.callPlugin(command, this.submenuOn.bind(this, target), target);
+                    return;
+                } else if (/dialog/.test(display)) {
+                    this.callPlugin(command, this.plugins[command].open.bind(this), target);
+                    return;
+                } else if (/command/.test(display)) {
+                    this.callPlugin(command, this.plugins[command].action.bind(this), target);
+                } else if (/container/.test(display) && (target.nextElementSibling === null || target !== this.containerActiveButton)) {
+                    this.callPlugin(command, this.containerOn.bind(this, target), target);
+                    return;
+                }                
+            } // default command
+            else if (command) {
+                this.commandHandler(target, command);
+            }
+
+            if (/submenu/.test(display)) {
+                this.submenuOff();
+            } else {
+                this.submenuOff();
+                this.containerOff();
+            }
         },
 
         /**
@@ -12566,8 +13844,8 @@ var notice = __webpack_require__(1);
                     util.toggleClass(target, 'active');
                     break;
                 case 'save':
-                    if (typeof context.option.callBackSave === 'function') {
-                        context.option.callBackSave(this.getContents(false));
+                    if (typeof options.callBackSave === 'function') {
+                        options.callBackSave(this.getContents(false));
                     } else if (typeof userFunction.save === 'function') {
                         userFunction.save();
                     } else {
@@ -12577,12 +13855,15 @@ var notice = __webpack_require__(1);
                     if (context.tool.save) context.tool.save.setAttribute('disabled', true);
                     break;
                 default : // 'STRONG', 'INS', 'EM', 'DEL', 'SUB', 'SUP'
+                    command = this._defaultCommand[command.toLowerCase()] || command;
+                    if (!this.commandMap[command]) this.commandMap[command] = target;
+
                     const btn = util.hasClass(this.commandMap[command], 'active') ? null : util.createElement(command);
                     let removeNode = command;
 
-                    if (command === 'SUB' && util.hasClass(this.commandMap.SUP, 'active')) {
+                    if (/^SUB$/i.test(command) && util.hasClass(this.commandMap.SUP, 'active')) {
                         removeNode = 'SUP';
-                    } else if (command === 'SUP' && util.hasClass(this.commandMap.SUB, 'active')) {
+                    } else if (/^SUP$/i.test(command) && util.hasClass(this.commandMap.SUB, 'active')) {
                         removeNode = 'SUB';
                     }
 
@@ -12604,23 +13885,41 @@ var notice = __webpack_require__(1);
          * @param {String} command Separator ("indent" or "outdent")
          */
         indent: function (command) {
+            const range = this.getRange();
             const rangeLines = this.getSelectedElements();
-            let p, margin;
+            const cells = [];
+            const shift = 'indent' !== command;
+            let sc = range.startContainer;
+            let ec = range.endContainer;
+            let so = range.startOffset;
+            let eo = range.endOffset;
 
-            for (let i = 0, len = rangeLines.length; i < len; i++) {
-                p = rangeLines[i];
-                margin = /\d+/.test(p.style.marginLeft) ? util.getNumber(p.style.marginLeft, 0) : 0;
+            for (let i = 0, len = rangeLines.length, f, margin; i < len; i++) {
+                f = rangeLines[i];
 
-                if ('indent' === command) {
-                    margin += 25;
+                if (!util.isListCell(f) || !this.plugins.list) {
+                    margin = /\d+/.test(f.style.marginLeft) ? util.getNumber(f.style.marginLeft, 0) : 0;
+                    if (shift) {
+                        margin -= 25;
+                    } else {
+                        margin += 25;
+                    }
+                    util.setStyle(f, 'marginLeft', (margin <= 0 ? '' : margin + 'px'));
                 } else {
-                    margin -= 25;
+                    if (shift || f.previousElementSibling) {
+                        cells.push(f);
+                    }
                 }
-    
-                p.style.marginLeft = (margin < 0 ? 0 : margin) + 'px';
             }
 
-            event._applyTagEffects();
+            // list cells
+            if (cells.length > 0) {
+                this.plugins.list.editInsideList.call(this, shift, cells);
+            }
+
+            this._lastEffectNode = null;
+            this.setRange(sc, so, ec, eo);
+
             // history stack
             this.history.push(false);
         },
@@ -12654,13 +13953,13 @@ var notice = __webpack_require__(1);
                 this._variable._codeOriginCssText = this._variable._codeOriginCssText.replace(/(\s?display(\s+)?:(\s+)?)[a-zA-Z]+(?=;)/, 'display: none');
                 this._variable._wysiwygOriginCssText = this._variable._wysiwygOriginCssText.replace(/(\s?display(\s+)?:(\s+)?)[a-zA-Z]+(?=;)/, 'display: block');
 
-                if (context.option.height === 'auto' && !context.option.codeMirrorEditor) context.element.code.style.height = '0px';
+                if (options.height === 'auto' && !options.codeMirrorEditor) context.element.code.style.height = '0px';
                 
                 this._variable.isCodeView = false;
                 
                 if (!this._variable.isFullScreen) {
                     this._notHideToolbar = false;
-                    if (/balloon/i.test(context.option.mode)) {
+                    if (/balloon|balloon-always/i.test(options.mode)) {
                         context.element._arrow.style.display = '';
                         this._isInline = false;
                         this._isBalloon = true;
@@ -12679,8 +13978,8 @@ var notice = __webpack_require__(1);
                 this._variable._codeOriginCssText = this._variable._codeOriginCssText.replace(/(\s?display(\s+)?:(\s+)?)[a-zA-Z]+(?=;)/, 'display: block');
                 this._variable._wysiwygOriginCssText = this._variable._wysiwygOriginCssText.replace(/(\s?display(\s+)?:(\s+)?)[a-zA-Z]+(?=;)/, 'display: none');
 
-                if (context.option.height === 'auto' && !context.option.codeMirrorEditor) context.element.code.style.height = context.element.code.scrollHeight > 0 ? (context.element.code.scrollHeight + 'px') : 'auto';
-                if (context.option.codeMirrorEditor) context.option.codeMirrorEditor.refresh();
+                if (options.height === 'auto' && !options.codeMirrorEditor) context.element.code.style.height = context.element.code.scrollHeight > 0 ? (context.element.code.scrollHeight + 'px') : 'auto';
+                if (options.codeMirrorEditor) options.codeMirrorEditor.refresh();
                 
                 this._variable.isCodeView = true;
 
@@ -12709,26 +14008,28 @@ var notice = __webpack_require__(1);
         _setCodeDataToEditor: function () {
             const code_html = this._getCodeView();
 
-            if (context.option.fullPage) {
+            if (options.fullPage) {
                 const parseDocument = (new this._w.DOMParser()).parseFromString(code_html, 'text/html');
                 const headChildren = parseDocument.head.children;
 
                 for (let i = 0, len = headChildren.length; i < len; i++) {
                     if (/script/i.test(headChildren[i].tagName)) {
                         parseDocument.head.removeChild(headChildren[i]);
+                        i--, len--;
                     }
                 }
 
                 this._wd.head.innerHTML = parseDocument.head.innerHTML;
-                this._wd.body.innerHTML = util.convertContentsForEditor(parseDocument.body.innerHTML);
+                this._wd.body.innerHTML = this.convertContentsForEditor(parseDocument.body.innerHTML);
 
                 const attrs = parseDocument.body.attributes;
                 for (let i = 0, len = attrs.length; i < len; i++) {
                     if (attrs[i].name === 'contenteditable') continue;
                     this._wd.body.setAttribute(attrs[i].name, attrs[i].value);
                 }
+                if (!util.hasClass(this._wd.body, 'sun-editor-editable')) util.addClass(this._wd.body, 'sun-editor-editable');
             } else {
-                context.element.wysiwyg.innerHTML = code_html.length > 0 ? util.convertContentsForEditor(code_html) : '<p><br></p>';
+                context.element.wysiwyg.innerHTML = code_html.length > 0 ? this.convertContentsForEditor(code_html) : '<p><br></p>';
             }
         },
 
@@ -12737,10 +14038,10 @@ var notice = __webpack_require__(1);
          * @private
          */
         _setEditorDataToCodeView: function () {
-            const codeContents = util.convertHTMLForCodeView(context.element.wysiwyg, this._variable.codeIndent);
+            const codeContents = this.convertHTMLForCodeView(context.element.wysiwyg);
             let codeValue = '';
 
-            if (context.option.fullPage) {
+            if (options.fullPage) {
                 const attrs = util.getAttributesToString(this._wd.body, null);
                 codeValue = '<!DOCTYPE html>\n<html>\n' + this._wd.head.outerHTML.replace(/>(?!\n)/g, '>\n') + '<body ' + attrs + '>\n' + codeContents + '</body>\n</html>';
             } else {
@@ -12809,7 +14110,7 @@ var notice = __webpack_require__(1);
                 util.removeClass(element.firstElementChild, 'se-icon-expansion');
                 util.addClass(element.firstElementChild, 'se-icon-reduction');
 
-                if (context.option.iframe && context.option.height === 'auto') {
+                if (options.iframe && options.height === 'auto') {
                     editorArea.style.overflow = 'auto';
                     this._iframeAutoHeight();
                 }
@@ -12824,7 +14125,7 @@ var notice = __webpack_require__(1);
                 topArea.style.cssText = _var._originCssText;
                 _d.body.style.overflow = _var._bodyOverflow;
 
-                if (context.option.stickyToolbar > -1) {
+                if (options.stickyToolbar > -1) {
                     util.removeClass(toolbar, 'se-toolbar-sticky');
                 }
 
@@ -12856,9 +14157,9 @@ var notice = __webpack_require__(1);
             const printDocument = util.getIframeDocument(iframe);
             const contentsHTML = this.getContents(true);
 
-            if (context.option.iframe) {
+            if (options.iframe) {
                 const wDocument = util.getIframeDocument(context.element.wysiwygFrame);
-                const arrts = context.option.fullPage ? util.getAttributesToString(wDocument.body, ['contenteditable']) : 'class="sun-editor-editable"';
+                const arrts = options.fullPage ? util.getAttributesToString(wDocument.body, ['contenteditable']) : 'class="sun-editor-editable"';
 
                 printDocument.write('' +
                     '<!DOCTYPE html><html>' +
@@ -12909,9 +14210,9 @@ var notice = __webpack_require__(1);
             const windowObject = _w.open('', '_blank');
             windowObject.mimeType = 'text/html';
 
-            if (context.option.iframe) {
+            if (options.iframe) {
                 const wDocument = util.getIframeDocument(context.element.wysiwygFrame);
-                const arrts = context.option.fullPage ? util.getAttributesToString(wDocument.body, ['contenteditable']) : 'class="sun-editor-editable"';
+                const arrts = options.fullPage ? util.getAttributesToString(wDocument.body, ['contenteditable']) : 'class="sun-editor-editable"';
 
                 windowObject.document.write('' +
                     '<!DOCTYPE html><html>' +
@@ -12942,13 +14243,15 @@ var notice = __webpack_require__(1);
          * @param {String} html HTML string
          */
         setContents: function (html) {
-            const convertValue = util.convertContentsForEditor(html);
+            const convertValue = this.convertContentsForEditor(html);
+            this._resetComponents();
+
             if (!core._variable.isCodeView) {
                 context.element.wysiwyg.innerHTML = convertValue;
                 // history stack
                 core.history.push(false);
             } else {
-                const value = util.convertHTMLForCodeView(convertValue, core._variable.codeIndent);
+                const value = this.convertHTMLForCodeView(convertValue);
                 core._setCodeView(value);
             }
         },
@@ -12971,12 +14274,52 @@ var notice = __webpack_require__(1);
                 figcaptions[i].removeAttribute('contenteditable');
             }
 
-            if (context.option.fullPage && !onlyContents) {
+            if (options.fullPage && !onlyContents) {
                 const attrs = util.getAttributesToString(this._wd.body, ['contenteditable']);
                 return '<!DOCTYPE html><html>' + this._wd.head.outerHTML + '<body ' + attrs + '>' + renderHTML.innerHTML + '</body></html>';
             } else {
                 return renderHTML.innerHTML;
             }
+        },
+
+        /**
+         * @description Gets the clean HTML code for editor
+         * @param {String} html HTML string
+         * @param {String|RegExp} whitelist Regular expression of allowed tags.
+         * RegExp object is create by util.createTagsWhitelist method. (core.editorTagsWhitelistRegExp, core.pasteTagsWhitelistRegExp)
+         * @returns {String}
+         */
+        cleanHTML: function (html, whitelist) {
+            const tagsAllowed = new this._w.RegExp('^(meta|script|link|style|[a-z]+\:[a-z]+)$', 'i');
+            const domTree = this._d.createRange().createContextualFragment(html).childNodes;
+            let cleanHTML = '';
+
+            for (let i = 0, len = domTree.length; i < len; i++) {
+                if (!tagsAllowed.test(domTree[i].nodeName)) {
+                    cleanHTML += domTree[i].nodeType === 1 ? domTree[i].outerHTML : domTree[i].nodeType === 3 ? domTree[i].textContent : '';
+                }
+            }
+
+            cleanHTML = cleanHTML
+                .replace(/<(script|style).*>(\n|.)*<\/(script|style)>/g, '')
+                .replace(/(<[a-zA-Z0-9]+)[^>]*(?=>)/g, function (m, t) {
+                    let v = null;
+                    const tAttr = this._attributesTagsWhitelist[t.match(/(?!<)[a-zA-Z]+/)[0].toLowerCase()];
+                    if (tAttr) v = m.match(tAttr);
+                    else v = m.match(this._attributesWhitelistRegExp);
+
+                    if (v) {
+                        for (let i = 0, len = v.length; i < len; i++) {
+                            if (/^class="(?!(__se__|se-))/.test(v[i])) continue;
+                            t += ' ' + v[i];
+                        }
+                    }
+
+                    return t;
+                }.bind(this))
+                .replace(/<\/?(span[^>^<]*)>/g, '');
+
+            return util._tagConvertor(!cleanHTML ? html : !whitelist ? cleanHTML : cleanHTML.replace(typeof whitelist === 'string' ? util.createTagsWhitelist(whitelist) : whitelist, ''));
         },
 
         /**
@@ -12988,7 +14331,7 @@ var notice = __webpack_require__(1);
          */
         addDocEvent: function (type, listener, useCapture) {
             _d.addEventListener(type, listener, useCapture);
-            if (context.option.iframe) {
+            if (options.iframe) {
                 this._wd.addEventListener(type, listener);
             }
         },
@@ -13001,9 +14344,88 @@ var notice = __webpack_require__(1);
          */
         removeDocEvent: function (type, listener) {
             _d.removeEventListener(type, listener);
-            if (context.option.iframe) {
+            if (options.iframe) {
                 this._wd.removeEventListener(type, listener);
             }
+        },
+
+        /**
+         * @description Converts contents into a format that can be placed in an editor
+         * @param {String} contents contents
+         * @returns {String}
+         */
+        convertContentsForEditor: function (contents) {
+            let returnHTML = '';
+            let tag = this._d.createRange().createContextualFragment(contents).childNodes;
+
+            for (let i = 0, len = tag.length, baseHtml; i < len; i++) {
+                baseHtml = tag[i].outerHTML || tag[i].textContent;
+
+                if (tag[i].nodeType === 3) {
+                    const textArray = baseHtml.split(/\n/g);
+                    let text = '';
+                    for (let t = 0, tLen = textArray.length; t < tLen; t++) {
+                        text = textArray[t].trim();
+                        if (text.length > 0) returnHTML += '<p>' + text + '</p>';
+                    }
+                } else {
+                    returnHTML += baseHtml.replace(/<(?!span|font|b|strong|var|i|em|u|ins|s|strike|del|sub|sup|mark|a|label)[^>^<]+>\s+(?=<)/g, function (m) { return m.trim(); });
+                }
+            }
+
+            if (returnHTML.length === 0) {
+                contents = util._HTMLConvertor(contents);
+                returnHTML = '<p>' + (contents.length > 0 ? contents : '<br>') + '</p>';
+            }
+
+            return util._tagConvertor(returnHTML.replace(this.editorTagsWhitelistRegExp, ''));
+        },
+
+        /**
+         * @description Converts wysiwyg area element into a format that can be placed in an editor of code view mode
+         * @param {Element|String} html WYSIWYG element (context.element.wysiwyg) or HTML string.
+         * @returns {String}
+         */
+        convertHTMLForCodeView: function (html) {
+            let returnHTML = '';
+            const reg = this._w.RegExp;
+            const brReg = new reg('^(BLOCKQUOTE|PRE|TABLE|THEAD|TBODY|TR|TH|TD|OL|UL|IMG|IFRAME|VIDEO|AUDIO|FIGURE|FIGCAPTION|HR|BR|CANVAS|SELECT)$', 'i');
+            const isFormatElement = util.isFormatElement.bind(util);
+            const wDoc = typeof html === 'string' ? this._d.createRange().createContextualFragment(html) : html;
+
+            let indentSize = this._variable.codeIndent * 1;
+            indentSize = indentSize > 0 ? new this._w.Array(indentSize + 1).join(' ') : '';
+
+            (function recursionFunc (element, indent, lineBR) {
+                const children = element.childNodes;
+                const elementRegTest = brReg.test(element.nodeName);
+                const elementIndent = (elementRegTest ? indent : '');
+
+                for (let i = 0, len = children.length, node, br, nodeRegTest; i < len; i++) {
+                    node = children[i];
+                    nodeRegTest = brReg.test(node.nodeName);
+                    br = nodeRegTest ? '\n' : '';
+                    lineBR = isFormatElement(node) && !elementRegTest && !/^(TH|TD)$/i.test(element.nodeName) ? '\n' : '';
+
+                    if (node.nodeType === 3) {
+                        returnHTML += util._HTMLConvertor((/^\n+$/.test(node.data) ? '' : node.data));
+                        continue;
+                    }
+
+                    if (node.childNodes.length === 0) {
+                        returnHTML += (/^(HR)$/i.test(node.nodeName) ? '\n' : '') + elementIndent + node.outerHTML + br;
+                        continue;
+                    }
+                    
+                    node.innerHTML = node.innerHTML;
+                    const tag = node.nodeName.toLowerCase();
+                    returnHTML += (lineBR || (elementRegTest ? '' : br)) + (elementIndent || nodeRegTest ? indent : '') + node.outerHTML.match(reg('<' + tag + '[^>]*>', 'i'))[0] + br;
+                    recursionFunc(node, indent + indentSize, '');
+                    returnHTML += (nodeRegTest ? indent : '') + '</' + tag + '>' + (lineBR || br || elementRegTest ? '\n' :  false || /^(TH|TD)$/i.test(node.nodeName) ? '\n' : '');
+                }
+            }(wDoc, '', '\n'));
+
+            return returnHTML.trim() + '\n';
         },
 
         /**
@@ -13017,7 +14439,7 @@ var notice = __webpack_require__(1);
             if (!charCounter) return true;
             if (!nextCharCount || nextCharCount < 0) nextCharCount = 0;
 
-            const maxCharCount = context.option.maxCharCount;
+            const maxCharCount = options.maxCharCount;
 
             _w.setTimeout(function () {
                 charCounter.textContent = context.element.wysiwyg.textContent.length;
@@ -13072,13 +14494,23 @@ var notice = __webpack_require__(1);
         },
 
         /**
+         * @description Initialize the information of the components.
+         * @private
+         */
+        _resetComponents: function () {
+            this._variable._imagesInfo = [];
+            this._variable._imageIndex = 0;
+            this._variable._videosCnt = 0;
+        },
+
+        /**
          * @description Set method in the code view area
          * @param {String} value HTML string
          * @private
          */
         _setCodeView: function (value) {
-            if (context.option.codeMirrorEditor) {
-                context.option.codeMirrorEditor.getDoc().setValue(value);
+            if (options.codeMirrorEditor) {
+                options.codeMirrorEditor.getDoc().setValue(value);
             } else {
                 context.element.code.value = value;
             }
@@ -13089,15 +14521,17 @@ var notice = __webpack_require__(1);
          * @private
          */
         _getCodeView: function () {
-            return context.option.codeMirrorEditor ? context.option.codeMirrorEditor.getDoc().getValue() : context.element.code.value;
+            return options.codeMirrorEditor ? options.codeMirrorEditor.getDoc().getValue() : context.element.code.value;
         },
 
         /**
          * @description Initializ core variable
+         * @param {Boolean} reload Is relooad?
+         * @param {String} _initHTML initial html string when "reload" is true
          * @private
          */
-        _init: function (reload) {
-            this._ww = context.option.iframe ? context.element.wysiwygFrame.contentWindow : _w;
+        _init: function (reload, _initHTML) {
+            this._ww = options.iframe ? context.element.wysiwygFrame.contentWindow : _w;
             this._wd = _d;
 
             _w.setTimeout(function () {
@@ -13107,10 +14541,10 @@ var notice = __webpack_require__(1);
                 
                 this.history.reset(true);
 
-                if (_options.iframe) {
+                if (options.iframe) {
                     this._wd = context.element.wysiwygFrame.contentDocument;
                     context.element.wysiwyg = this._wd.body;
-                    if (_options.height === 'auto') {
+                    if (options.height === 'auto') {
                         this._iframeAuto = this._wd.body;
                     }
                     this._iframeAutoHeight();
@@ -13119,29 +14553,63 @@ var notice = __webpack_require__(1);
                 if (typeof userFunction.onload === 'function') return userFunction.onload(core, reload);
             }.bind(this));
 
+            this.editorTagsWhitelistRegExp = util.createTagsWhitelist(options._editorTagsWhitelist);
+            this.pasteTagsWhitelistRegExp = util.createTagsWhitelist(options.pasteTagsWhitelist);
+
+            const _attr = options.attributesWhitelist;
+            const tagsAttr = {};
+            let allAttr = '';
+            if (!!_attr) {
+                const _attrKeys = _w.Object.keys(_attr);
+                for (let i = 0, len = _attrKeys.length, a; i < len; i++) {
+                    a = _attrKeys[i];
+                    if (a === 'all') {
+                        allAttr = _attr[a] + '|';
+                    } else {
+                        tagsAttr[a] = new _w.RegExp('((?:' + _attr[a] + ')\s*=\s*"[^"]*")', 'ig');
+                    }
+                }
+            }
+            
+            this._attributesWhitelistRegExp = new _w.RegExp('((?:' + allAttr + 'contenteditable|colspan|rowspan|target|href|src|class|type|data-format|data-size|data-file-size|data-file-name|data-origin|data-align|data-image-link|data-rotate|data-proportion|data-percentage|origin-size)\s*=\s*"[^"]*")', 'ig');
+            this._attributesTagsWhitelist = tagsAttr;
+
             this.codeViewDisabledButtons = context.element.toolbar.querySelectorAll('.se-toolbar button:not([class~="code-view-enabled"])');
-            this._isInline = /inline/i.test(context.option.mode);
-            this._isBalloon = /balloon/i.test(context.option.mode);
+            this._isInline = /inline/i.test(options.mode);
+            this._isBalloon = /balloon|balloon-always/i.test(options.mode);
+            this._isBalloonAlways = /balloon-always/i.test(options.mode);
 
             this.commandMap = {
-                FORMAT: context.tool.format,
-                FONT: context.tool.font,
-                FONT_TOOLTIP: context.tool.fontTooltip,
-                SIZE: context.tool.fontSize,
-                ALIGN: context.tool.align,
-                LI: context.tool.list,
-                LI_ICON: context.tool.list && context.tool.list.querySelector('i'),
                 STRONG: context.tool.bold,
                 INS: context.tool.underline,
                 EM: context.tool.italic,
                 DEL: context.tool.strike,
                 SUB: context.tool.subscript,
                 SUP: context.tool.superscript,
-                OUTDENT: context.tool.outdent
+                OUTDENT: context.tool.outdent,
+                INDENT: context.tool.indent
             };
+
+            // Command plugins registration
+            this.activePlugins = [];
+            let c, button;
+            for (let key in plugins) {
+                c = plugins[key];
+                button = pluginCallButtons[key];
+                if (c.active && button) {
+                    core.callPlugin(key, null, button);
+                }
+            }
 
             this._variable._originCssText = context.element.topArea.style.cssText;
             this._placeholder = context.element.placeholder;
+
+            // Set html
+            if (!reload) {
+                this.context.element.wysiwyg.innerHTML = this.convertContentsForEditor(context.element.originElement.value);
+            } else if (_initHTML) {
+                this.context.element.wysiwyg.innerHTML = _initHTML;
+            }
 
             /** Excute history function */
             this._checkPlaceholder();
@@ -13192,10 +14660,10 @@ var notice = __webpack_require__(1);
      * @description event function
      */
     const event = {
-        _directionKeyCode: new _w.RegExp('^(8|13|32|46|3[3-9]|40|46)$'),
+        _directionKeyCode: new _w.RegExp('^(8|13|3[2-9]|40|46)$'),
         _nonTextKeyCode: new _w.RegExp('^(8|13|1[6-9]|20|27|3[3-9]|40|45|46|11[2-9]|12[0-3]|144|145)$'),
         _historyIgnoreKeyCode: new _w.RegExp('^(1[6-9]|20|27|3[3-9]|40|45|11[2-9]|12[0-3]|144|145)$'),
-        _onButtonsCheck: new _w.RegExp('^(STRONG|INS|EM|DEL|SUB|SUP|LI)$'),
+        _onButtonsCheck: new _w.RegExp('^(STRONG|INS|EM|DEL|SUB|SUP)$'),
         _frontZeroWidthReg: new _w.RegExp(util.zeroWidthSpace + '+', ''),
         _keyCodeShortcut: {
             65: 'A',
@@ -13256,101 +14724,58 @@ var notice = __webpack_require__(1);
         },
 
         _applyTagEffects: function () {
+            let selectionNode = core.getSelectionNode();
+            if (selectionNode === core._lastEffectNode) return;
+            core._lastEffectNode = selectionNode;
+
             const commandMap = core.commandMap;
             const classOnCheck = this._onButtonsCheck;
             const commandMapNodes = [];
             const currentNodes = [];
 
-            let findFormat = true, findAlign = true, findList = true, findFont = true, findSize = true, findOutdent = true, findA = true;
+            const activePlugins = core.activePlugins;
+            const cLen = activePlugins.length;
             let nodeName = '';
 
-            for (let selectionParent = core.getSelectionNode(); !util.isWysiwygDiv(selectionParent); selectionParent = selectionParent.parentNode) {
-                if (!selectionParent) break;
-                if (selectionParent.nodeType !== 1 || util.isBreak(selectionParent)) continue;
-                nodeName = selectionParent.nodeName.toUpperCase();
+            while (selectionNode.firstChild) {
+                selectionNode = selectionNode.firstChild;
+            }
+
+            for (let element = selectionNode; !util.isWysiwygDiv(element); element = element.parentNode) {
+                if (!element) break;
+                if (element.nodeType !== 1 || util.isBreak(element)) continue;
+                nodeName = element.nodeName.toUpperCase();
                 currentNodes.push(nodeName);
 
-                /** Format */
-                if (util.isFormatElement(selectionParent)) {
-                    /* Format block */
-                    if (findFormat && commandMap.FORMAT) {
-                        commandMapNodes.push('FORMAT');
-                        util.changeTxt(commandMap.FORMAT, nodeName);
-                        commandMap.FORMAT.setAttribute('data-focus', nodeName);
-                        findFormat = false;
+                /* Active plugins */
+                for (let c = 0, name; c < cLen; c++) {
+                    name = activePlugins[c];
+                    if (commandMapNodes.indexOf(name) === -1 && plugins[name].active.call(core, element)) {
+                        commandMapNodes.push(name);
                     }
+                }
 
-                    /* Align */
-                    const textAlign = selectionParent.style.textAlign;
-                    if (findAlign && textAlign && commandMap.ALIGN) {
-                        commandMapNodes.push('ALIGN');
-                        commandMap.ALIGN.className = 'se-icon-align-' + textAlign;
-                        commandMap.ALIGN.setAttribute('data-focus', textAlign);
-                        findAlign = false;
-                    }
-
+                if (util.isFormatElement(element)) {
                     /* Outdent */
-                    if (findOutdent && selectionParent.style.marginLeft && util.getNumber(selectionParent.style.marginLeft, 0) > 0 && commandMap.OUTDENT) {
-                        commandMapNodes.push('OUTDENT');
-                        commandMap.OUTDENT.removeAttribute('disabled');
-                        findOutdent = false;
+                    if (commandMapNodes.indexOf('OUTDENT') === -1 && commandMap.OUTDENT) {
+                        if (util.isListCell(element) || (element.style.marginLeft && util.getNumber(element.style.marginLeft, 0) > 0)) {
+                            commandMapNodes.push('OUTDENT');
+                            commandMap.OUTDENT.removeAttribute('disabled');
+                        }
+                    }
+
+                    /* Indent */
+                    if (commandMapNodes.indexOf('INDENT') === -1 && commandMap.INDENT && util.isListCell(element) && !element.previousElementSibling) {
+                        commandMapNodes.push('INDENT');
+                        commandMap.INDENT.setAttribute('disabled', true);
                     }
 
                     continue;
                 }
 
-                /* List */
-                if (findList && util.isList(nodeName) && commandMap.LI) {
-                    commandMapNodes.push('LI');
-                    commandMap.LI.setAttribute('data-focus', nodeName);
-                    if (/UL/i.test(nodeName)) {
-                        util.removeClass(commandMap.LI_ICON, 'se-icon-list-number');
-                        util.addClass(commandMap.LI_ICON, 'se-icon-list-bullets');
-                    } else {
-                        util.removeClass(commandMap.LI_ICON, 'se-icon-list-bullets');
-                        util.addClass(commandMap.LI_ICON, 'se-icon-list-number');
-                    }
-                    findList = false;
-                }
-
-                /** Font */
-                if (findFont && selectionParent.style.fontFamily.length > 0 && commandMap.FONT) {
-                    commandMapNodes.push('FONT');
-                    const selectFont = (selectionParent.style.fontFamily || selectionParent.face || lang.toolbar.font).replace(/["']/g,'');
-                    util.changeTxt(commandMap.FONT, selectFont);
-                    util.changeTxt(commandMap.FONT_TOOLTIP, selectFont);
-                    findFont = false;
-                }
-
-                /** Size */
-                if (findSize && selectionParent.style.fontSize.length > 0 && commandMap.SIZE) {
-                    commandMapNodes.push('SIZE');
-                    util.changeTxt(commandMap.SIZE, selectionParent.style.fontSize);
-                    findSize = false;
-                }
-
-                /** A */
-                if (findA && /^A$/.test(nodeName) && selectionParent.getAttribute('data-image-link') === null && core.plugins.link) {
-                    if (!context.link || core.controllerArray[0] !== context.link.linkBtn) {
-                        core.callPlugin('link', function () {
-                            core.plugins.link.call_controller_linkButton.call(core, selectionParent);
-                        });
-                    }
-                    findA = false;
-                } else if (findA && context.link && core.controllerArray[0] === context.link.linkBtn) {
-                    core.controllersOff();
-                }
-
-                /** strong, ins, em, del, sub, sup */
+                /** default active buttons [strong, ins, em, del, sub, sup] */
                 if (classOnCheck.test(nodeName)) {
                     commandMapNodes.push(nodeName);
-                }
-            }
-
-            /** toggle class on */
-            for (let i = 0; i < commandMapNodes.length; i++) {
-                nodeName = commandMapNodes[i];
-                if (classOnCheck.test(nodeName)) {
                     util.addClass(commandMap[nodeName], 'active');
                 }
             }
@@ -13359,25 +14784,14 @@ var notice = __webpack_require__(1);
             for (let key in commandMap) {
                 if (commandMapNodes.indexOf(key) > -1) continue;
                 
-                if (commandMap.FONT && /^FONT$/i.test(key)) {
-                    util.changeTxt(commandMap.FONT, lang.toolbar.font);
-                    util.changeTxt(commandMap.FONT_TOOLTIP, lang.toolbar.font);
-                }
-                else if (commandMap.SIZE && /^SIZE$/i.test(key)) {
-                    util.changeTxt(commandMap.SIZE, lang.toolbar.fontSize);
-                }
-                else if (commandMap.ALIGN && /^ALIGN$/i.test(key)) {
-                    commandMap.ALIGN.className = 'se-icon-align-left';
-                    commandMap.ALIGN.removeAttribute('data-focus');
+                if (activePlugins.indexOf(key) > -1) {
+                    plugins[key].active.call(core, null);
                 }
                 else if (commandMap.OUTDENT && /^OUTDENT$/i.test(key)) {
                     commandMap.OUTDENT.setAttribute('disabled', true);
                 }
-                else if (commandMap.LI && util.isListCell(key)) {
-                    commandMap.LI.removeAttribute('data-focus');
-                    util.removeClass(commandMap.LI_ICON, 'se-icon-list-bullets');
-                    util.addClass(commandMap.LI_ICON, 'se-icon-list-number');
-                    util.removeClass(commandMap.LI, 'active');
+                else if (commandMap.INDENT && /^INDENT$/i.test(key)) {
+                    commandMap.INDENT.removeAttribute('disabled');
                 }
                 else {
                     util.removeClass(commandMap[key], 'active');
@@ -13388,7 +14802,7 @@ var notice = __webpack_require__(1);
             core._variable.currentNodes = currentNodes.reverse();
 
             /**  Displays the current node structure to resizingBar */
-            if (context.option.showPathLabel) context.element.navigation.textContent = core._variable.currentNodes.join(' > ');
+            if (options.showPathLabel) context.element.navigation.textContent = core._variable.currentNodes.join(' > ');
         },
 
         _cancelCaptionEdit: function () {
@@ -13413,7 +14827,7 @@ var notice = __webpack_require__(1);
                     className = target.className;
                 }
     
-                if (command === core._submenuName) {
+                if (command === core._submenuName || command === core._containerName) {
                     e.stopPropagation();
                 }
             }
@@ -13438,50 +14852,32 @@ var notice = __webpack_require__(1);
             if (!command && !display) return;
             if (target.disabled) return;
             
-            core.focus();
-            
-            /** Dialog, Submenu */
-            if (display) {
-                if (/submenu/.test(display) && (target.nextElementSibling === null || target !== core.submenuActiveButton)) {
-                    core.callPlugin(command, function () {
-                        core.submenuOn(target);
-                    });
-                    return;
-                }
-                else if (/dialog/.test(display)) {
-                    core.callPlugin(command, function () {
-                        core.plugins.dialog.open.call(core, command, false);
-                    });
-                    return;
-                }
-
-                core.submenuOff();
-                return;
-            }
-
-            /** default command */
-            if (command) {
-                core.commandHandler(target, command);
-            }
+            if (!core.hasFocus) core.focus();
+            core._editorRange();
+            core.actionCall(command, display, target);
         },
 
         /**
          * @warning Events are registered only when there is a table plugin.
          */
         onMouseDown_wysiwyg: function (e) {
+            if (context.element.wysiwyg.getAttribute('contenteditable') === 'false') return;
+            
+            const tableCell = util.getParentElement(e.target, util.isCell);
+            if (tableCell) {
+                const tablePlugin = core.plugins.table;
+                if (tablePlugin && tableCell !== tablePlugin._fixedCell && !tablePlugin._shift) {
+                    core.callPlugin('table', function () {
+                        tablePlugin.onTableCellMultiSelect.call(core, tableCell, false);
+                    });
+                }
+            }
+
             if (core._isBalloon) {
                 event._hideToolbar();
             }
 
-            const tableCell = util.getParentElement(e.target, util.isCell);
-            if (!tableCell) return;
-
-            const tablePlugin = core.plugins.table;
-            if (tableCell !== tablePlugin._fixedCell && !tablePlugin._shift) {
-                core.callPlugin('table', function () {
-                    tablePlugin.onTableCellMultiSelect.call(core, tableCell, false);
-                });
-            }
+            if (userFunction.onMouseDown) userFunction.onMouseDown(e, core);
         },
 
         onClick_wysiwyg: function (e) {
@@ -13524,6 +14920,7 @@ var notice = __webpack_require__(1);
             }
 
             core._editorRange();
+            _w.setTimeout(core._editorRange.bind(core));
 
             const selectionNode = core.getSelectionNode();
             const formatEl = util.getFormatElement(selectionNode);
@@ -13537,19 +14934,34 @@ var notice = __webpack_require__(1);
                 } else {
                     core.execCommand('formatBlock', false, util.isRangeFormatElement(rangeEl) ? 'DIV' : 'P');
                 }
-
+                e.preventDefault();
                 core.focus();
+            } else {                
+                event._applyTagEffects();
             }
 
-            event._applyTagEffects();
+            if (core._isBalloon) _w.setTimeout(event._toggleToolbarBalloon);
+            if (userFunction.onClick) userFunction.onClick(e, core);
+        },
 
-            if (core._isBalloon) {
-                const range = core.getRange();
-                if (range.collapsed) event._hideToolbar();
-                else event._showToolbarBalloon(range);
+        _balloonDelay: null,
+        _showToolbarBalloonDelay: function () {
+            if (event._balloonDelay) {
+                _w.clearTimeout(event._balloonDelay);
             }
 
-            if (userFunction.onClick) userFunction.onClick(e);
+            event._balloonDelay = _w.setTimeout(function () {
+                _w.clearTimeout(this._balloonDelay);
+                this._balloonDelay = null;
+                this._showToolbarBalloon();
+            }.bind(event), 350);
+        },
+
+        _toggleToolbarBalloon: function () {
+            core._editorRange();
+            const range = core.getRange();
+            if (core.currentControllerName === 'table' || (!core._isBalloonAlways && range.collapsed)) event._hideToolbar();
+            else event._showToolbarBalloon(range);
         },
 
         _showToolbarBalloon: function (rangeObj) {
@@ -13570,8 +14982,15 @@ var notice = __webpack_require__(1);
             let rects = range.getClientRects();
             rects = rects[isDirTop ? 0 : rects.length - 1];
 
-            const scrollLeft = _w.scrollX || _d.documentElement.scrollLeft;
-            const scrollTop = _w.scrollY || _d.documentElement.scrollTop;
+            let scrollLeft = 0;
+            let scrollTop = 0;
+            let el = context.element.topArea;
+            while (!!el) {
+                scrollLeft += el.scrollLeft;
+                scrollTop += el.scrollTop;
+                el = el.parentElement;
+            }
+
             const editorWidth = context.element.topArea.offsetWidth;
             const stickyTop = event._getStickyOffsetTop();
             let editorLeft = 0;
@@ -13583,11 +15002,37 @@ var notice = __webpack_require__(1);
             
             toolbar.style.visibility = 'hidden';
             toolbar.style.display = 'block';
+
+            if (!rects) {
+                const node = core.getSelectionNode();
+                if (util.isFormatElement(node)) {
+                    const zeroWidth = util.createTextNode(util.zeroWidthSpace);
+                    core.insertNode(zeroWidth, null);
+                    core.setRange(zeroWidth, 1, zeroWidth, 1);
+                    core._editorRange();
+                    rects = core.getRange().getClientRects();
+                    rects = rects[isDirTop ? 0 : rects.length - 1];
+                }
+
+                if (!rects) {
+                    const nodeOffset = util.getOffset(node, context.element.wysiwygFrame);
+                    rects = {
+                        left: nodeOffset.left,
+                        top: nodeOffset.top,
+                        right: nodeOffset.left,
+                        bottom: nodeOffset.top + node.offsetHeight,
+                        noText: true
+                    };
+                    scrollLeft = 0;
+                    scrollTop = 0;
+                }
+
+                isDirTop = true;
+            }
             
             const arrowMargin = _w.Math.round(context.element._arrow.offsetWidth / 2);
             const toolbarWidth = toolbar.offsetWidth;
             const toolbarHeight = toolbar.offsetHeight;
-
             const iframeRects = /iframe/i.test(context.element.wysiwygFrame.nodeName) ? context.element.wysiwygFrame.getClientRects()[0] : null;
             if (iframeRects) {
                 rects = {
@@ -13609,12 +15054,12 @@ var notice = __webpack_require__(1);
         _setToolbarOffset: function (isDirTop, rects, toolbar, editorLeft, editorWidth, scrollLeft, scrollTop, stickyTop, arrowMargin) {
             const padding = 1;
             const toolbarWidth = toolbar.offsetWidth;
-            const toolbarHeight = toolbar.offsetHeight;
+            const toolbarHeight = rects.noText && !isDirTop ? 0 : toolbar.offsetHeight;
 
             const absoluteLeft = (isDirTop ? rects.left : rects.right) - editorLeft - (toolbarWidth / 2) + scrollLeft;
             const overRight = absoluteLeft + toolbarWidth - editorWidth;
             
-            const t = (isDirTop ? rects.top - toolbarHeight - arrowMargin : rects.bottom + arrowMargin) - stickyTop + scrollTop;
+            const t = (isDirTop ? rects.top - toolbarHeight - arrowMargin : rects.bottom + arrowMargin) - (rects.noText ? 0 : stickyTop) + scrollTop;
             let l = absoluteLeft < 0 ? padding : overRight < 0 ? absoluteLeft : absoluteLeft - overRight - padding - 1;
 
             toolbar.style.left = _w.Math.floor(l) + 'px';
@@ -13640,10 +15085,10 @@ var notice = __webpack_require__(1);
             const toolbar = context.element.toolbar;
             toolbar.style.visibility = 'hidden';
             toolbar.style.display = 'block';
-            core._inlineToolbarAttr.width = toolbar.style.width = context.option.toolbarWidth;
+            core._inlineToolbarAttr.width = toolbar.style.width = options.toolbarWidth;
             core._inlineToolbarAttr.top = toolbar.style.top = (-1 - toolbar.offsetHeight) + 'px';
             
-            if (typeof userFunction.showInline === 'function') userFunction.showInline(toolbar, context);
+            if (typeof userFunction.showInline === 'function') userFunction.showInline(toolbar, context, core);
 
             event.onScroll_window();
             core._inlineToolbarAttr.isShow = true;
@@ -13685,52 +15130,111 @@ var notice = __webpack_require__(1);
             const selectRange = !range.collapsed || range.startContainer !== range.endContainer;
             const resizingName = core._resizingName;
             let formatEl = util.getFormatElement(selectionNode) || selectionNode;
-            let rangeEl = util.getRangeFormatElement(selectionNode);
+            let rangeEl = util.getRangeFormatElement(formatEl);
 
             switch (keyCode) {
                 case 8: /** backspace key */
-                    if (selectRange) break;
-                    if (resizingName) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        core.plugins[resizingName].destroy.call(core);
-                        break;
-                    }
-
-                    if (util.isWysiwygDiv(selectionNode.parentNode) && !selectionNode.previousSibling && util.isFormatElement(selectionNode) && !util.isListCell(selectionNode)) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        selectionNode.innerHTML = '<br>';
-                        if (!selectionNode.nextElementSibling) {
-                            const attrs = selectionNode.attributes;
-                            while (attrs[0]) {
-                                selectionNode.removeAttribute(attrs[0].name);
-                            }
-                            core.execCommand('formatBlock', false, 'P');
+                    if (!selectRange) {
+                        if (resizingName) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            core.plugins[resizingName].destroy.call(core);
+                            break;
                         }
-                        return false;
+    
+                        if (util.isWysiwygDiv(selectionNode.parentNode) && util.isFormatElement(selectionNode) && !util.isListCell(selectionNode) && selectionNode.childNodes.length === 0) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            selectionNode.innerHTML = '<br>';
+                            if (!selectionNode.nextElementSibling) {
+                                const attrs = selectionNode.attributes;
+                                while (attrs[0]) {
+                                    selectionNode.removeAttribute(attrs[0].name);
+                                }
+                                core.execCommand('formatBlock', false, 'P');
+                            }
+                            return false;
+                        }
                     }
 
+                    // nested list
                     const commonCon = range.commonAncestorContainer;
-                    if (range.startOffset === 0 && range.endOffset === 0) {
-                        if (rangeEl && formatEl && !util.isCell(rangeEl) && !/^FIGCAPTION$/i.test(rangeEl.nodeName)) {
+                    formatEl = util.getFormatElement(range.startContainer);
+                    rangeEl = util.getRangeFormatElement(formatEl);
+                    if (rangeEl && formatEl && !util.isCell(rangeEl) && !/^FIGCAPTION$/i.test(rangeEl.nodeName)) {
+                        if (util.isListCell(formatEl) && util.isList(rangeEl) && (util.isListCell(rangeEl.parentNode) || formatEl.previousElementSibling) && (selectionNode === formatEl || (selectionNode.nodeType === 3 && (!selectionNode.previousSibling || util.isList(selectionNode.previousSibling)))) &&
+                         (util.getFormatElement(range.startContainer) !== util.getFormatElement(range.endContainer) ? rangeEl.contains(range.startContainer) : (range.startOffset === 0  && range.collapsed))) {
+                            if (range.startContainer !== range.endContainer) {
+                                e.preventDefault();
+
+                                core.removeNode();
+                                if (range.startContainer.nodeType === 3) {
+                                    core.setRange(range.startContainer, range.startContainer.textContent.length, range.startContainer, range.startContainer.textContent.length);
+                                }
+                                // history stack
+                                core.history.push(true);
+                            } else {
+                                let prev = formatEl.previousElementSibling || rangeEl.parentNode;
+                                if (util.isListCell(prev)) {
+                                    e.preventDefault();
+
+                                    const prevLast = prev.lastElementChild;
+                                    if (util.isList(prevLast)) {
+                                        prev = prevLast.lastElementChild;
+                                    }
+
+                                    let con = prev === rangeEl.parentNode ? rangeEl.previousSibling : prev.lastChild;
+                                    if (!con) {
+                                        con = util.createTextNode(util.zeroWidthSpace);
+                                        rangeEl.parentNode.insertBefore(con, rangeEl.parentNode.firstChild);
+                                    }
+                                    const offset = con.nodeType === 3 ? con.textContent.length : 1;
+                                    const children = formatEl.childNodes;
+                                    let after = con;
+                                    let child = children[0];
+                                    while ((child = children[0])) {
+                                        prev.insertBefore(child, after.nextSibling);
+                                        after = child;
+                                    }
+
+                                    util.removeItem(formatEl);
+                                    if (rangeEl.children.length === 0) util.removeItem(rangeEl);
+
+                                    core.setRange(con, offset, con, offset);
+                                    // history stack
+                                    core.history.push(true);
+                                }
+                            }
+                            
+                            break;
+                        }
+
+                        // detach range
+                        if (!selectRange && range.startOffset === 0) {
                             let detach = true;
                             let comm = commonCon;
                             while (comm && comm !== rangeEl && !util.isWysiwygDiv(comm)) {
                                 if (comm.previousSibling) {
-                                    detach = false;
-                                    break;
+                                    if (comm.previousSibling.nodeType === 1 || !util.onlyZeroWidthSpace(comm.previousSibling.textContent.trim())) {
+                                        detach = false;
+                                        break;
+                                    }
                                 }
                                 comm = comm.parentNode;
                             }
-
+    
                             if (detach && rangeEl.parentNode) {
                                 e.preventDefault();
                                 core.detachRangeFormatElement(rangeEl, (util.isListCell(formatEl) ? [formatEl] : null), null, false, false);
+                                // history stack
+                                core.history.push(true);
                                 break;
-                            }	
-                        }	
+                            }
+                        }
+                    }
 
+                    // component
+                    if (!selectRange && range.startOffset === 0) {
                         if (util.isComponent(commonCon.previousSibling) || (commonCon.nodeType === 3 && !commonCon.previousSibling && range.startOffset === 0 && range.endOffset === 0 && util.isComponent(formatEl.previousSibling))) {
                             const previousEl = formatEl.previousSibling;
                             util.removeItem(previousEl);
@@ -13746,6 +15250,7 @@ var notice = __webpack_require__(1);
                         break;
                     }
 
+                    // component
                     if ((util.isFormatElement(selectionNode) || selectionNode.nextSibling === null) && range.startOffset === selectionNode.textContent.length) {
                         let nextEl = formatEl.nextElementSibling;
                         if (util.isComponent(nextEl)) {
@@ -13764,100 +15269,250 @@ var notice = __webpack_require__(1);
                                     core.selectComponent(nextEl.querySelector('iframe'), 'video');
                                 }
                             }
-
                             break;
                         }
                     }
-                    
+
+                    // nested list
+                    formatEl = util.getFormatElement(range.startContainer);
+                    rangeEl = util.getRangeFormatElement(formatEl);
+                    if (util.isListCell(formatEl) && util.isList(rangeEl) && (selectionNode === formatEl || (selectionNode.nodeType === 3 && (!selectionNode.nextSibling || util.isList(selectionNode.nextSibling)) &&
+                     (util.getFormatElement(range.startContainer) !== util.getFormatElement(range.endContainer) ? rangeEl.contains(range.endContainer) : (range.endOffset === selectionNode.textContent.length && range.collapsed))))) {
+                        if (range.startContainer !== range.endContainer) core.removeNode();
+                        
+                        let next = util.getArrayItem(formatEl.children, util.isList, false);
+                        next = next || formatEl.nextElementSibling || rangeEl.parentNode.nextElementSibling;
+                        if (next && (util.isList(next) || util.getArrayItem(next.children, util.isList, false))) {
+                            e.preventDefault();
+
+                            let con, children;
+                            if (util.isList(next)) {
+                                const child = next.firstElementChild;
+                                children = child.childNodes;
+                                con = children[0];
+                                while (children[0]) {
+                                    formatEl.insertBefore(children[0], next);
+                                }
+                                util.removeItem(child);
+                            } else {
+                                con = next.firstChild;
+                                children = next.childNodes;
+                                while (children[0]) {
+                                    formatEl.appendChild(children[0]);
+                                }
+                                util.removeItem(next);
+                            }
+                            core.setRange(con, 0, con, 0);
+                            // history stack
+                            core.history.push(true);
+                        }
+                        break;
+                    }
+
                     break;
                 case 9: /** tab key */
                     e.preventDefault();
                     if (ctrl || alt || util.isWysiwygDiv(selectionNode)) break;
 
                     core.controllersOff();
-
-                    let currentNode = selectionNode;
-                    while (!util.isCell(currentNode) && !util.isWysiwygDiv(currentNode)) {
-                        currentNode = currentNode.parentNode;
-                    }
-
-                    if (currentNode && util.isCell(currentNode)) {
-                        const table = util.getParentElement(currentNode, 'table');
-                        const cells = util.getListChildren(table, util.isCell);
-                        let idx = shift ? util.prevIdx(cells, currentNode) : util.nextIdx(cells, currentNode);
-
-                        if (idx === cells.length && !shift) idx = 0;
-                        if (idx === -1 && shift) idx = cells.length - 1;
-
-                        const moveCell = cells[idx];
-                        if (!moveCell) return false;
-
-                        core.setRange(moveCell, 0, moveCell, 0);
-                        break;
-                    }
-
-                    const lines = core.getSelectedElements();
-
-                    if (!shift) {
-                        const tabText = util.createTextNode(new _w.Array(core._variable.tabSize + 1).join('\u00A0'));
-                        if (lines.length === 1) {
-                            const r = core.insertNode(tabText);
-                            core.setRange(tabText, r.endOffset, tabText, r.endOffset);
+                    const isEdge = (!range.collapsed || core.isEdgePoint(range.startContainer, range.startOffset));            
+                    const selectedFormats = core.getSelectedElements();
+                    const cells = [];
+                    let lines = [];
+                    let fc = util.isListCell(selectedFormats[0]), lc = util.isListCell(selectedFormats[selectedFormats.length - 1]);
+                    let r = {sc: range.startContainer, so: range.startOffset, ec: range.endContainer, eo: range.endOffset};
+                    for (let i = 0, len = selectedFormats.length, f; i < len; i++) {
+                        f = selectedFormats[i];
+                        if (util.isListCell(f)) {
+                            if (!f.previousElementSibling && !shift) {
+                                continue;
+                            } else {
+                                cells.push(f);
+                            }
                         } else {
-                            const len = lines.length - 1;
-                            for (let i = 0, child; i <= len; i++) {
-                                child = lines[i].firstChild;
-                                if (!child) continue;
+                            lines.push(f);
+                        }
+                    }
+                    
+                    // Nested list
+                    if (cells.length > 0 && isEdge && core.plugins.list) {
+                        core.plugins.list.editInsideList.call(core, shift, cells);
+                    } else {
+                        // table
+                        const tableCell = util.getParentElement(selectionNode, util.isCell);
+                        if (tableCell && isEdge) {
+                            const table = util.getParentElement(tableCell, 'table');
+                            const cells = util.getListChildren(table, util.isCell);
+                            let idx = shift ? util.prevIdx(cells, tableCell) : util.nextIdx(cells, tableCell);
 
-                                if (util.isBreak(child)) {
-                                    lines[i].insertBefore(tabText.cloneNode(false), child);
-                                } else {
-                                    child.textContent = tabText.textContent + child.textContent;
+                            if (idx === cells.length && !shift) idx = 0;
+                            if (idx === -1 && shift) idx = cells.length - 1;
+
+                            const moveCell = cells[idx];
+                            if (!moveCell) return false;
+
+                            core.setRange(moveCell, 0, moveCell, 0);
+                            break;
+                        }
+
+                        lines = lines.concat(cells);
+                        fc = lc = null;
+                    }
+
+                    // Lines tab(4)
+                    if (lines.length > 0) {
+                        if (!shift) {
+                            const tabText = util.createTextNode(new _w.Array(core._variable.tabSize + 1).join('\u00A0'));
+                            if (lines.length === 1) {
+                                const textRange = core.insertNode(tabText);
+                                if (!fc) {
+                                    r.sc = tabText;
+                                    r.so = textRange.endOffset;
+                                }
+                                if (!lc) {
+                                    r.ec = tabText;
+                                    r.eo = textRange.endOffset;
+                                }
+                            } else {
+                                const len = lines.length - 1;
+                                for (let i = 0, child; i <= len; i++) {
+                                    child = lines[i].firstChild;
+                                    if (!child) continue;
+    
+                                    if (util.isBreak(child)) {
+                                        lines[i].insertBefore(tabText.cloneNode(false), child);
+                                    } else {
+                                        child.textContent = tabText.textContent + child.textContent;
+                                    }
+                                }
+    
+                                const firstChild = util.getChildElement(lines[0], 'text', false);
+                                const endChild = util.getChildElement(lines[len], 'text', true);
+                                if (!fc && firstChild) {
+                                    r.sc = firstChild;
+                                    r.so = 0;
+                                }
+                                if (!lc && endChild) {
+                                    r.ec = endChild;
+                                    r.eo = endChild.textContent.length;
                                 }
                             }
-
+                        } else {
+                            const len = lines.length - 1;
+                            for (let i = 0, line; i <= len; i++) {
+                                line = lines[i].childNodes;
+                                for (let c = 0, cLen = line.length, child; c < cLen; c++) {
+                                    child = line[c];
+                                    if (!child) break;
+                                    if (util.onlyZeroWidthSpace(child)) continue;
+        
+                                    if (/^\s{1,4}$/.test(child.textContent)) {
+                                        util.removeItem(child);
+                                    } else if (/^\s{1,4}/.test(child.textContent)) {
+                                        child.textContent = child.textContent.replace(/^\s{1,4}/, '');
+                                    }
+                                    
+                                    break;
+                                }
+                            }
+    
                             const firstChild = util.getChildElement(lines[0], 'text', false);
                             const endChild = util.getChildElement(lines[len], 'text', true);
-                            if (firstChild && endChild) core.setRange(firstChild, 0, endChild, endChild.textContent.length);
-                        }
-                    } else {
-                        const len = lines.length - 1;
-                        for (let i = 0, child; i <= len; i++) {
-                            child = lines[i].firstChild;
-                            if (!child) continue;
-
-                            if (/^\s{1,4}$/.test(child.textContent)) {
-                                util.removeItem(child);
-                            } else if (/^\s{1,4}/.test(child.textContent)) {
-                                child.textContent = child.textContent.replace(/^\s{1,4}/, '');
+                            if (!fc && firstChild) {
+                                r.sc = firstChild;
+                                r.so = 0;
+                            }
+                            if (!lc && endChild) {
+                                r.ec = endChild;
+                                r.eo = endChild.textContent.length;
                             }
                         }
-
-                        const firstChild = util.getChildElement(lines[0], 'text', false);
-                        const endChild = util.getChildElement(lines[len], 'text', true);
-                        if (firstChild && endChild) core.setRange(firstChild, 0, endChild, endChild.textContent.length);
                     }
+
+                    core.setRange(r.sc, r.so, r.ec, r.eo);
+                    // history stack
+                    core.history.push(false);
                     
                     break;
                 case 13: /** enter key */
-                    if (selectRange) break;
+                    const freeFormatEl = util.getFreeFormatElement(selectionNode);
+                    if (!shift && freeFormatEl) {
+                        e.preventDefault();
+                        const selectionFormat = selectionNode === freeFormatEl;
+                        const wSelection = core.getSelection();
+                        const children = selectionNode.childNodes, offset = wSelection.focusOffset, prev = selectionNode.previousElementSibling, next = selectionNode.nextSibling;
 
-                    const figcaption = util.getParentElement(rangeEl, 'FIGCAPTION');
+                        if ((selectionFormat && range.collapsed && children.length - 1 <= offset + 1 && util.isBreak(children[offset]) && (!children[offset + 1] || ((!children[offset + 2] || util.onlyZeroWidthSpace(children[offset + 2].textContent)) && children[offset + 1].nodeType === 3 && util.onlyZeroWidthSpace(children[offset + 1].textContent))) &&  offset > 0 && util.isBreak(children[offset - 1])) ||
+                         (!selectionFormat && util.onlyZeroWidthSpace(selectionNode.textContent) && util.isBreak(prev) && (util.isBreak(prev.previousSibling) || !util.onlyZeroWidthSpace(prev.previousSibling.textContent)) && (!next || (!util.isBreak(next) && util.onlyZeroWidthSpace(next.textContent))))) {
+                            if (selectionFormat) util.removeItem(children[offset - 1]);
+                            else util.removeItem(selectionNode);
+                            const newEl = core.appendFormatTag(freeFormatEl, util.isFormatElement(freeFormatEl.nextElementSibling) ? freeFormatEl.nextElementSibling : null);
+                            util.copyFormatAttributes(newEl, freeFormatEl);
+                            core.setRange(newEl, 1, newEl, 1);
+                            break;
+                        }
+                        
+                        if (selectionFormat) {
+                            core.execCommand('insertHTML', false, '<BR><BR>');
+
+                            let focusNode = wSelection.focusNode;
+                            const wOffset = wSelection.focusOffset;
+                            if (freeFormatEl === focusNode) {
+                                focusNode = focusNode.childNodes[wOffset - offset > 1 ? wOffset - 1 : wOffset];
+                            } else {
+                                focusNode = focusNode.previousSibling;
+                            }
+
+                            core.setRange(focusNode, 1, focusNode, 1);
+                        } else {
+                            const focusNext = wSelection.focusNode.nextSibling;
+                            const br = util.createElement('BR');
+                            core.insertNode(br);
+                            
+                            const brPrev = br.previousSibling, brNext = br.nextSibling;
+                            if (!util.isBreak(focusNext) && !util.isBreak(brPrev) && (!brNext || util.onlyZeroWidthSpace(brNext))) {
+                                br.parentNode.insertBefore(br.cloneNode(false), br);
+                                core.setRange(br, 1, br, 1);
+                            } else {
+                                core.setRange(brNext, 0, brNext, 0);
+                            }
+                        }
+
+                        event._onShortcutKey = true;
+                        break;
+                    }
+
+                    if (selectRange) break;
+                    
                     if (rangeEl && formatEl && !util.isCell(rangeEl) && !/^FIGCAPTION$/i.test(rangeEl.nodeName)) {
                         const range = core.getRange();
-                        if (!range.commonAncestorContainer.nextElementSibling && util.onlyZeroWidthSpace(formatEl.innerText.trim())) {
+                        if ((range.commonAncestorContainer.nodeType === 3 ? !range.commonAncestorContainer.nextElementSibling : true) && util.onlyZeroWidthSpace(formatEl.innerText.trim())) {
                             e.preventDefault();
-                            const newEl = core.appendFormatTag(rangeEl, util.isCell(rangeEl.parentNode) ? 'DIV' : util.isListCell(formatEl) ? 'P' : null);
+                            let newEl = null;
+
+                            if (util.isListCell(rangeEl.parentNode)) {
+                                rangeEl = formatEl.parentNode.parentNode.parentNode;
+                                const splitRange = util.splitElement(formatEl, null, util.getElementDepth(formatEl) - 2);
+                                newEl = util.createElement('LI');
+                                rangeEl.insertBefore(newEl, splitRange);
+                            } else {
+                                const newFormat = util.isCell(rangeEl.parentNode) ? 'DIV' : util.isList(rangeEl.parentNode) ? 'LI' : util.isFormatElement(rangeEl.nextElementSibling) ? rangeEl.nextElementSibling.nodeName : util.isFormatElement(rangeEl.previousElementSibling) ? rangeEl.previousElementSibling.nodeName : 'P';
+                                newEl = util.createElement(newFormat);
+                                const edge = core.detachRangeFormatElement(rangeEl, [formatEl], null, true, true);
+                                edge.cc.insertBefore(newEl, edge.ec);
+                            }
+                            
+                            newEl.innerHTML = '<br>';
                             util.copyFormatAttributes(newEl, formatEl);
-                            util.removeItemAllParents(formatEl);
+                            util.removeItemAllParents(formatEl, null);
                             core.setRange(newEl, 1, newEl, 1);
                             break;
                         }
                     }
 
-                    if (rangeEl && figcaption && util.getParentElement(rangeEl, util.isList)) {
+                    if (rangeEl && util.getParentElement(rangeEl, 'FIGCAPTION') && util.getParentElement(rangeEl, util.isList)) {
                         e.preventDefault();
-                        formatEl = core.appendFormatTag(formatEl);
+                        formatEl = core.appendFormatTag(formatEl, null);
                         core.setRange(formatEl, 0, formatEl, 0);
                     }
 
@@ -13909,20 +15564,25 @@ var notice = __webpack_require__(1);
                 }
             }
 
-            if (userFunction.onKeyDown) userFunction.onKeyDown(e);
+            if (userFunction.onKeyDown) userFunction.onKeyDown(e, core);
         },
 
         onKeyUp_wysiwyg: function (e) {
             if (event._onShortcutKey) return;
             core._editorRange();
+            const range = core.getRange();
             const keyCode = e.keyCode;
             const ctrl = e.ctrlKey || e.metaKey || keyCode === 91 || keyCode === 92;
             const alt = e.altKey;
             let selectionNode = core.getSelectionNode();
 
-            if (core._isBalloon && !core.getRange().collapsed) {
-                event._showToolbarBalloon();
-                return;
+            if (core._isBalloon && ((core._isBalloonAlways && keyCode !== 27) || !range.collapsed)) {
+                if (core._isBalloonAlways) {
+                    event._showToolbarBalloonDelay();
+                } else {
+                    event._showToolbarBalloon();
+                    return;
+                }
             }
 
             /** when format tag deleted */
@@ -13946,7 +15606,7 @@ var notice = __webpack_require__(1);
 
             const formatEl = util.getFormatElement(selectionNode);
             const rangeEl = util.getRangeFormatElement(selectionNode);
-            if (!formatEl || formatEl === rangeEl) {
+            if ((!formatEl && range.collapsed) || formatEl === rangeEl) {
                 core.execCommand('formatBlock', false, util.isRangeFormatElement(rangeEl) ? 'DIV' : 'P');
                 core.focus();
                 selectionNode = core.getSelectionNode();
@@ -13957,10 +15617,9 @@ var notice = __webpack_require__(1);
             }
 
             core._checkComponents();
-
-            const historyKey = !ctrl && !alt && !event._historyIgnoreKeyCode.test(keyCode);
-            if (historyKey && util.zeroWidthRegExp.test(selectionNode.textContent)) {
-                const range = core.getRange();
+            
+            const textKey = !ctrl && !alt && !event._nonTextKeyCode.test(keyCode);
+            if (textKey && selectionNode.nodeType === 3 && util.zeroWidthRegExp.test(selectionNode.textContent)) {
                 let so = range.startOffset, eo = range.endOffset;
                 const frontZeroWidthCnt = (selectionNode.textContent.substring(0, eo).match(event._frontZeroWidthReg) || '').length;
                 so = range.startOffset - frontZeroWidthCnt;
@@ -13969,7 +15628,6 @@ var notice = __webpack_require__(1);
                 core.setRange(selectionNode, so < 0 ? 0 : so, selectionNode, eo < 0 ? 0 : eo);
             }
 
-            const textKey = !ctrl && !alt && !event._nonTextKeyCode.test(keyCode);
             if (!core._charCount(1, textKey)) {
                 if (e.key.length === 1) {
                     e.preventDefault();
@@ -13979,17 +15637,30 @@ var notice = __webpack_require__(1);
             }
 
             // history stack
+            const historyKey = !ctrl && !alt && !event._historyIgnoreKeyCode.test(keyCode);
             if (historyKey) {
                 core.history.push(true);
             }
 
-            if (userFunction.onKeyUp) userFunction.onKeyUp(e);
+            if (userFunction.onKeyUp) userFunction.onKeyUp(e, core);
         },
 
         onScroll_wysiwyg: function (e) {
             core.controllersOff();
             if (core._isBalloon) event._hideToolbar();
-            if (userFunction.onScroll) userFunction.onScroll(e);
+            if (userFunction.onScroll) userFunction.onScroll(e, core);
+        },
+
+        onFocus_wysiwyg: function (e) {
+            core.hasFocus = true;
+            if (core._isInline) event._showToolbarInline();
+            if (userFunction.onFocus) userFunction.onFocus(e, core);
+        },
+
+        onBlur_wysiwyg: function (e) {
+            core.hasFocus = false;
+            if (core._isInline || core._isBalloon) event._hideToolbar();
+            if (userFunction.onBlur) userFunction.onBlur(e, core);
         },
 
         onMouseDown_resizingBar: function (e) {
@@ -14038,11 +15709,11 @@ var notice = __webpack_require__(1);
         },
 
         onScroll_window: function () {
-            if (core._variable.isFullScreen || context.element.toolbar.offsetWidth === 0 || context.option.stickyToolbar < 0) return;
+            if (core._variable.isFullScreen || context.element.toolbar.offsetWidth === 0 || options.stickyToolbar < 0) return;
 
             const element = context.element;
             const editorHeight = element.editorArea.offsetHeight;
-            const y = (this.scrollY || _d.documentElement.scrollTop) + context.option.stickyToolbar;
+            const y = (this.scrollY || _d.documentElement.scrollTop) + options.stickyToolbar;
             const editorTop = event._getStickyOffsetTop() - (core._isInline ? element.toolbar.offsetHeight : 0);
             
             if (y < editorTop) {
@@ -14050,7 +15721,7 @@ var notice = __webpack_require__(1);
             }
             else if (y + core._variable.minResizingSize >= editorHeight + editorTop) {
                 if (!core._sticky) event._onStickyToolbar();
-                element.toolbar.style.top = (editorHeight + editorTop + context.option.stickyToolbar -y - core._variable.minResizingSize) + 'px';
+                element.toolbar.style.top = (editorHeight + editorTop + options.stickyToolbar -y - core._variable.minResizingSize) + 'px';
             }
             else if (y >= editorTop) {
                 event._onStickyToolbar();
@@ -14077,7 +15748,7 @@ var notice = __webpack_require__(1);
                 element._stickyDummy.style.display = 'block';
             }
 
-            element.toolbar.style.top = context.option.stickyToolbar + 'px';
+            element.toolbar.style.top = options.stickyToolbar + 'px';
             element.toolbar.style.width = core._isInline ? core._inlineToolbarAttr.width : element.toolbar.offsetWidth + 'px';
             util.addClass(element.toolbar, 'se-toolbar-sticky');
             core._sticky = true;
@@ -14104,9 +15775,9 @@ var notice = __webpack_require__(1);
             if (!clipboardData) return true;
 
             const maxCharCount = core._charCount(clipboardData.getData('text/plain').length, true);
-            const cleanData = util.cleanHTML(clipboardData.getData('text/html'));
+            const cleanData = core.cleanHTML(clipboardData.getData('text/html'), core.pasteTagsWhitelistRegExp);
 
-            if (typeof userFunction.onPaste === 'function' && !userFunction.onPaste(e, cleanData, maxCharCount)) {
+            if (typeof userFunction.onPaste === 'function' && !userFunction.onPaste(e, cleanData, maxCharCount, core)) {
                 e.preventDefault();
                 e.stopPropagation();
                 return false;
@@ -14161,14 +15832,14 @@ var notice = __webpack_require__(1);
                 return false;
             // html paste
             } else {
-                const cleanData = util.cleanHTML(dataTransfer.getData('text/html'));
+                const cleanData = core.cleanHTML(dataTransfer.getData('text/html'), core.pasteTagsWhitelistRegExp);
                 if (cleanData) {
                     event._setDropLocationSelection(e);
                     core.execCommand('insertHTML', false, cleanData);
                 }
             }
 
-            if (userFunction.onDrop) userFunction.onDrop(e);
+            if (userFunction.onDrop) userFunction.onDrop(e, core);
         },
 
         _setDropLocationSelection: function (e) {
@@ -14180,17 +15851,19 @@ var notice = __webpack_require__(1);
         },
 
         _onChange_historyStack: function () {
+            event._applyTagEffects();
             if (context.tool.save) context.tool.save.removeAttribute('disabled');
-            if (userFunction.onChange) userFunction.onChange(core.getContents(true));
+            if (userFunction.onChange) userFunction.onChange(core.getContents(true), core);
         },
 
         _addEvent: function () {
-            const eventWysiwyg = _options.iframe ? core._ww : context.element.wysiwyg;
+            const eventWysiwyg = options.iframe ? core._ww : context.element.wysiwyg;
 
             /** toolbar event */
             context.element.toolbar.addEventListener('mousedown', event.onMouseDown_toolbar, false);
             context.element.toolbar.addEventListener('click', event.onClick_toolbar, false);
             /** editor area */
+            eventWysiwyg.addEventListener('mousedown', event.onMouseDown_wysiwyg, false);
             eventWysiwyg.addEventListener('click', event.onClick_wysiwyg, false);
             eventWysiwyg.addEventListener('keydown', event.onKeyDown_wysiwyg, false);
             eventWysiwyg.addEventListener('keyup', event.onKeyUp_wysiwyg, false);
@@ -14199,11 +15872,8 @@ var notice = __webpack_require__(1);
             eventWysiwyg.addEventListener('dragover', event.onDragOver_wysiwyg, false);
             eventWysiwyg.addEventListener('drop', event.onDrop_wysiwyg, false);
             eventWysiwyg.addEventListener('scroll', event.onScroll_wysiwyg, false);
-
-            /** Events are registered only a balloon mode or when there is a table plugin. */
-            if (core._isBalloon || core.plugins.table) {
-                eventWysiwyg.addEventListener('mousedown', event.onMouseDown_wysiwyg, false);
-            }
+            eventWysiwyg.addEventListener('focus', event.onFocus_wysiwyg, false);
+            eventWysiwyg.addEventListener('blur', event.onBlur_wysiwyg, false);
 
             /** Events are registered only when there is a table plugin.  */
             if (core.plugins.table) {
@@ -14211,7 +15881,7 @@ var notice = __webpack_require__(1);
             }
             
             /** code view area auto line */
-            if (context.option.height === 'auto' && !context.option.codeMirrorEditor) {
+            if (options.height === 'auto' && !options.codeMirrorEditor) {
                 context.element.code.addEventListener('keydown', event._codeViewAutoHeight, false);
                 context.element.code.addEventListener('keyup', event._codeViewAutoHeight, false);
                 context.element.code.addEventListener('paste', event._codeViewAutoHeight, false);
@@ -14219,21 +15889,11 @@ var notice = __webpack_require__(1);
 
             /** resizingBar */
             if (context.element.resizingBar) {
-                if (/\d+/.test(context.option.height)) {
+                if (/\d+/.test(options.height)) {
                     context.element.resizingBar.addEventListener('mousedown', event.onMouseDown_resizingBar, false);
                 } else {
                     util.addClass(context.element.resizingBar, 'se-resizing-none');
                 }
-            }
-
-            /** inline editor */
-            if (core._isInline) {
-                eventWysiwyg.addEventListener('focus', event._showToolbarInline, false);
-            }
-
-            /** inline, balloon editor */
-            if (core._isInline || core._isBalloon) {
-                eventWysiwyg.addEventListener('blur', event._hideToolbar, false);
             }
             
             /** window event */
@@ -14241,13 +15901,13 @@ var notice = __webpack_require__(1);
             _w.removeEventListener('scroll', event.onScroll_window);
 
             _w.addEventListener('resize', event.onResize_window, false);
-            if (context.option.stickyToolbar > -1) {
+            if (options.stickyToolbar > -1) {
                 _w.addEventListener('scroll', event.onScroll_window, false);
             }
         },
 
         _removeEvent: function () {
-            const eventWysiwyg = _options.iframe ? core._ww : context.element.wysiwyg;
+            const eventWysiwyg = options.iframe ? core._ww : context.element.wysiwyg;
 
             context.element.toolbar.removeEventListener('mousedown', event.onMouseDown_toolbar);
             context.element.toolbar.removeEventListener('click', event.onClick_toolbar);
@@ -14264,8 +15924,8 @@ var notice = __webpack_require__(1);
             eventWysiwyg.removeEventListener('mousedown', event.onMouseDown_wysiwyg);
             eventWysiwyg.removeEventListener('touchstart', event.onMouseDown_wysiwyg, {passive: true, useCapture: false});
             
-            eventWysiwyg.removeEventListener('focus', event._showToolbarInline);
-            eventWysiwyg.removeEventListener('blur', event._hideToolbar);
+            eventWysiwyg.removeEventListener('focus', event.onFocus_wysiwyg);
+            eventWysiwyg.removeEventListener('blur', event.onBlur_wysiwyg);
 
             context.element.code.removeEventListener('keydown', event._codeViewAutoHeight);
             context.element.code.removeEventListener('keyup', event._codeViewAutoHeight);
@@ -14290,24 +15950,59 @@ var notice = __webpack_require__(1);
 
         /**
          * @description Event functions
-         * @param {Object} event Event Object
+         * @param {Object} e Event Object
+         * @param {Object} core Core object
          */
         onload: null,
         onScroll: null,
+        onMouseDown: null,
         onClick: null,
         onKeyDown: null,
         onKeyUp: null,
         onDrop: null,
         onChange: null,
         onPaste: null,
+        onFocus: null,
+        onBlur: null,
         showInline: null,
+
+        /**
+         * @description It replaces the default callback function of the image upload
+         * @param {Object} response Response object
+         * @param {Object} info Input information
+         * - linkValue: Link url value
+         * - linkNewWindow: Open in new window Check Value
+         * - inputWidth: Value of width input
+         * - inputHeight: Value of height input
+         * - align: Align Check Value
+         * - isUpdate: Update image if true, create image if false
+         * - currentImage: If isUpdate is true, the currently selected image.
+         * @param {Object} core Core object
+         */
+        imageUploadHandler: null,
+
+        /**
+         * @description Called before the image is uploaded
+         * If false is returned, no image upload is performed.
+         * @param {Array} files Files array
+         * @param {Object} info Input information
+         * @param {Object} core Core object
+         * @returns {Boolean}
+         */
+        onImageUploadBefore: null,
 
         /**
          * @description Called when the image is uploaded or the uploaded image is deleted
          * @param {Element} targetImgElement Current img element
          * @param {Number} index Uploaded index
-         * @param {Boolean} isDelete Whether or not it was called after the delete operation
+         * @param {String} state Upload status ('create', 'update', 'delete')
          * @param {Object} imageInfo Image info object
+         * - index: data index
+         * - name: file name
+         * - size: file size
+         * - select: select function
+         * - delete: delete function
+         * @param {Object} core Core object
          */
         onImageUpload: null,
 
@@ -14315,6 +16010,8 @@ var notice = __webpack_require__(1);
          * @description Called when the image is upload failed
          * @param {String} errorMessage Error message
          * @param {Object} result Result info Object
+         * @param {Object} core Core object
+         * @returns {Boolean}
          */
         onImageUploadError: null,
 
@@ -14322,18 +16019,25 @@ var notice = __webpack_require__(1);
          * @description Add or reset option property
          * @param {Object} options Options
          */
-        setOptions: function (options) {
+        setOptions: function (_options) {
             event._removeEvent();
 
-            core.plugins = options.plugins || core.plugins;
-            const mergeOptions = [context.option, options].reduce(function (init, option) {
-                Object.keys(option).forEach(function (key) {
-                    init[key] = option[key];
-                });
+            core.plugins = _options.plugins || core.plugins;
+            const mergeOptions = [_options, _options].reduce(function (init, option) {
+                for (let key in option) {
+                    if (key === 'plugins' && option[key] && init[key]) {
+                        let i = init[key], o = option[key];
+                        i = i.length ? i : _w.Object.keys(i).map(function(name) { return i[name]; });
+                        o = o.length ? o : _w.Object.keys(o).map(function(name) { return o[name]; });
+                        init[key] = (o.filter(function(val) { return i.indexOf(val) === -1; })).concat(i);
+                    } else {
+                        init[key] = option[key];
+                    }
+                }
                 return init;
             }, {});
 
-            const cons = lib_constructor._setOptions(mergeOptions, context, core.plugins, context.option);
+            const cons = lib_constructor._setOptions(mergeOptions, context, core.plugins, _options);
 
             if (cons.callButtons) {
                 pluginCallButtons = cons.callButtons;
@@ -14345,6 +16049,7 @@ var notice = __webpack_require__(1);
             }
 
             // reset context
+            const _initHTML = context.element.wysiwyg.innerHTML;
             const el = context.element;
             const constructed = {
                 _top: el.topArea,
@@ -14363,12 +16068,12 @@ var notice = __webpack_require__(1);
                 _arrow: el._arrow
             };
             
-            _options = mergeOptions;
-            core.lang = lang = _options.lang;
-            core.context = context = lib_context(context.element.originElement, constructed, _options);
+            options = mergeOptions;
+            core.lang = lang = options.lang;
+            core.context = context = lib_context(context.element.originElement, constructed, options);
 
             core._imagesInfoReset = true;
-            core._init(true);
+            core._init(true, _initHTML);
             event._addEvent();
             core._charCount(0, false);
 
@@ -14477,12 +16182,19 @@ var notice = __webpack_require__(1);
          * @param {String} contents Contents to Input
          */
         appendContents: function (contents) {
-            const convertValue = util.convertContentsForEditor(contents);
+            const convertValue = core.convertContentsForEditor(contents);
             
             if (!core._variable.isCodeView) {
-                context.element.wysiwyg.innerHTML += convertValue;
+                const temp = util.createElement('DIV');
+                temp.innerHTML = convertValue;
+
+                const wysiwyg = context.element.wysiwyg;
+                const children = temp.children;
+                for (let i = 0, len = children.length; i < len; i++) {
+                    wysiwyg.appendChild(children[i]);
+                }
             } else {
-                core._setCodeView(core._getCodeView() + '\n' + util.convertHTMLForCodeView(convertValue, core._variable.codeIndent));
+                core._setCodeView(core._getCodeView() + '\n' + core.convertHTMLForCodeView(convertValue));
             }
 
             // history stack
@@ -14496,8 +16208,8 @@ var notice = __webpack_require__(1);
             context.tool.cover.style.display = 'block';
             context.element.wysiwyg.setAttribute('contenteditable', false);
 
-            if (context.option.codeMirrorEditor) {
-                context.option.codeMirrorEditor.setOption('readOnly', true);
+            if (options.codeMirrorEditor) {
+                options.codeMirrorEditor.setOption('readOnly', true);
             } else {
                 context.element.code.setAttribute('disabled', 'disabled');
             }
@@ -14510,8 +16222,8 @@ var notice = __webpack_require__(1);
             context.tool.cover.style.display = 'none';
             context.element.wysiwyg.setAttribute('contenteditable', true);
 
-            if (context.option.codeMirrorEditor) {
-                context.option.codeMirrorEditor.setOption('readOnly', false);
+            if (options.codeMirrorEditor) {
+                options.codeMirrorEditor.setOption('readOnly', false);
             } else {
                 context.element.code.removeAttribute('disabled');
             }
@@ -14522,7 +16234,7 @@ var notice = __webpack_require__(1);
          */
         show: function () {
             const topAreaStyle = context.element.topArea.style;
-            if (topAreaStyle.display === 'none') topAreaStyle.display = context.option.display;
+            if (topAreaStyle.display === 'none') topAreaStyle.display = options.display;
         },
 
         /**
@@ -14536,6 +16248,9 @@ var notice = __webpack_require__(1);
          * @description Destroy the suneditor
          */
         destroy: function () {
+            /** remove history */
+            core.history._destroy();
+
             /** remove event listeners */
             event._removeEvent();
             
@@ -14597,9 +16312,12 @@ var notice = __webpack_require__(1);
     };
 
     /** initialize core and add event listeners */
-    core._init(false);
+    core._init(false, null);
     event._addEvent();
     core._charCount(0, false);
+
+    // functionss
+    core.functions = userFunction;
 
     return userFunction;
 });
@@ -14637,13 +16355,13 @@ var notice = __webpack_require__(1);
      * @description Create the suneditor
      * @param {String|Element} idOrElement textarea Id or textarea element
      * @param {Json} options user options
-     * @returns {{save: save, getContext: getContext, getContent: getContent, setContent: setContent, appendContent: appendContent, disabled: disabled, enabled: enabled, show: show, hide: hide, destroy: destroy}}
+     * @returns {Object}
      */
     create: function (idOrElement, options, _init_options) {
         if (typeof options !== 'object') options = {};
         if (_init_options) {
             options =  [_init_options, options].reduce(function (init, option) {
-                            Object.keys(option).forEach(function (key) {
+                            for (let key in option) {
                                 if (key === 'plugins' && option[key] && init[key]) {
                                     let i = init[key], o = option[key];
                                     i = i.length ? i : Object.keys(i).map(function(name) { return i[name]; });
@@ -14652,7 +16370,7 @@ var notice = __webpack_require__(1);
                                 } else {
                                     init[key] = option[key];
                                 }
-                            });
+                            }
                             return init;
                         }, {});
         }
@@ -14833,7 +16551,7 @@ var SunEditor_SunEditor = /*#__PURE__*/function (_Component) {
 
     _this = _possibleConstructorReturn(this, _getPrototypeOf(SunEditor).call(this, props));
     _this.state = {
-      id: 'editor' + +Date.now().toString() + Math.random().toString(36).slice(-8)
+      id: "editor" + +Date.now().toString() + Math.random().toString(36).slice(-8)
     };
     return _this;
   }
@@ -14846,7 +16564,7 @@ var SunEditor_SunEditor = /*#__PURE__*/function (_Component) {
           _this$props$setOption = _this$props.setOptions,
           setOptions = _this$props$setOption === void 0 ? {} : _this$props$setOption,
           _this$props$width = _this$props.width,
-          width = _this$props$width === void 0 ? '100%' : _this$props$width;
+          width = _this$props$width === void 0 ? "100%" : _this$props$width;
       var editor = suneditor.create(this.state.id, {
         width: width,
         lang: misc_getLanguage(lang)
@@ -14873,6 +16591,10 @@ var SunEditor_SunEditor = /*#__PURE__*/function (_Component) {
           onImageUploadError = _this$props2.onImageUploadError,
           onPaste = _this$props2.onPaste,
           autoFocus = _this$props2.autoFocus,
+          onBlur = _this$props2.onBlur,
+          onFocus = _this$props2.onFocus,
+          onLoad = _this$props2.onLoad,
+          onImageUploadBefore = _this$props2.onImageUploadBefore,
           placeholder = _this$props2.placeholder;
       if (onChange) editor.onChange = function (content) {
         return onChange(content);
@@ -14889,6 +16611,18 @@ var SunEditor_SunEditor = /*#__PURE__*/function (_Component) {
       if (onKeyDown) editor.onKeyDown = function (e) {
         return onKeyDown(e);
       };
+      if (onBlur) editor.onBlur = function (e) {
+        return onBlur(e);
+      };
+      if (onFocus) editor.onFocus = function (e) {
+        return onFocus(e);
+      };
+      if (onLoad) editor.onload = function (c, reload) {
+        return onLoad(reload);
+      };
+      if (onImageUploadBefore) editor.onImageUploadBefore = function (files, info) {
+        return onImageUploadBefore(files, info);
+      };
       if (onDrop) editor.onDrop = function (e) {
         return onDrop(e);
       };
@@ -14903,7 +16637,6 @@ var SunEditor_SunEditor = /*#__PURE__*/function (_Component) {
       };
       if (placeholder) setOptions.placeholder = placeholder;
       if (!setOptions.plugins) setOptions.plugins = misc_getPlugins(setOptions);
-      console.log(setOptions);
       editor.setOptions(setOptions);
       if (setContents) editor.setContents(setContents);
       if (insertHTML) editor.insertHTML(insertHTML);
@@ -14981,7 +16714,11 @@ SunEditor_SunEditor.propTypes = {
   onKeyUp: prop_types_default.a.func,
   onKeyDown: prop_types_default.a.func,
   onDrop: prop_types_default.a.func,
+  onBlur: prop_types_default.a.func,
+  onFocus: prop_types_default.a.func,
+  onLoad: prop_types_default.a.func,
   onPaste: prop_types_default.a.func,
+  onImageUploadBefore: prop_types_default.a.func,
   onImageUpload: prop_types_default.a.func,
   onImageUploadError: prop_types_default.a.func,
   setOptions: prop_types_default.a.object,

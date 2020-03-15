@@ -1,4 +1,5 @@
 import * as React from 'react';
+import SetOptions from './types/SetOptions';
 
 declare module 'suneditor-react' {
   export interface SunEditorReactProps {
@@ -7,6 +8,9 @@ declare module 'suneditor-react' {
     onClick?: (event: MouseEvent) => void;
     onKeyUp?: (event: KeyboardEvent) => void;
     onKeyDown?: (event: KeyboardEvent) => void;
+    onFocus?: (event: FocusEvent) => void;
+    onBlur?: (event: FocusEvent) => void;
+    onLoad?: (reload: boolean) => void;
     onDrop?: (event: DragEvent) => void;
     onPaste?: (event: ClipboardEvent, cleanData: string, maxCharCount: boolean) => void;
     onImageUpload?: (
@@ -16,9 +20,10 @@ declare module 'suneditor-react' {
       imageInfo: object,
       remainingFilesCount: number
     ) => void;
+    onImageUploadBefore?: (files: Array<File>, info: object) => void;
     onImageUploadError?: (errorMessage, result) => void;
-    setOptions?: object;
-    setContents: string;
+    setOptions?: SetOptions;
+    setContents?: string;
     appendContents?: string;
     enable?: boolean;
     showToolbar?: boolean;
