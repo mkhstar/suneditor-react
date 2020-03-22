@@ -4,9 +4,6 @@ import getPlugins from "./misc/getPlugins";
 import getLanguage from "./misc/getLanguage";
 import PropTypes from "prop-types";
 
-/**
- * @augments {Component<{  onChange:Function,  onScroll:Function,  onClick:Function,  onKeyUp:Function,  onKeyDown:Function,  onDrop:Function,  onImageUpload:Function,  onImageUploadError:Function,  setOptions:object,  setContents:string,  appendContents:string,  enable:boolean,  disable:boolean,  hide:boolean,  show:boolean,  lang:oneOfType(object,string])>}
- */
 class SunEditor extends Component {
   constructor(props) {
     super(props);
@@ -28,6 +25,7 @@ class SunEditor extends Component {
     const {
       insertHTML,
       setContents,
+      setDefaultStyle,
       appendContents,
       disable,
       enable,
@@ -88,6 +86,7 @@ class SunEditor extends Component {
     if (!setOptions.plugins) setOptions.plugins = getPlugins(setOptions);
     editor.setOptions(setOptions);
     if (setContents) editor.setContents(setContents);
+    if (setDefaultStyle) editor.setDefaultStyle(setDefaultStyle);
     if (insertHTML) editor.insertHTML(insertHTML);
     if (appendContents) editor.appendContents(appendContents);
     if (enable === true) editor.enabled();
@@ -167,6 +166,7 @@ SunEditor.propTypes = {
   setOptions: PropTypes.object,
   setContents: PropTypes.string,
   appendContents: PropTypes.string,
+  setDefaultStyle: PropTypes.string,
   enable: PropTypes.bool,
   showToolbar: PropTypes.bool,
   enableToolbar: PropTypes.bool,

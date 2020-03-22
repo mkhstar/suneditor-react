@@ -139,6 +139,18 @@ render() {
 }
 ```
 
+
+**setDefaultStyle**
+
+**_Set the default style of the editor's edit area_**
+
+```javascript
+//...
+render() {
+	return <SunEditor setDefaultStyle="font-family: cursive; font-size: 10px;" />
+}
+```
+
 ### Editor Status
 **Note:** This prop is now dynamic! Which means that, the Boolean passed to the Editor's status prop (like enable, disable, show, hide) can be used to toggle the Editor Status.
 

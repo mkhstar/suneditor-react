@@ -25,6 +25,7 @@ declare module 'suneditor-react' {
     setOptions?: SetOptions;
     setContents?: string;
     appendContents?: string;
+    setDefaultStyle?: string;
     enable?: boolean;
     showToolbar?: boolean;
     enableToolbar?: boolean;
