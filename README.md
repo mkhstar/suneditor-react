@@ -313,9 +313,11 @@ render() {
 
 **_Has the editor been blurred?_**
 
+From the second parameter you can get the contents of the editor.
+
 ```javascript
-handleBlur(event){
-	console.log(event); //Get the blur event
+handleBlur(event, editorContents){
+	console.log(event, editorContents); //Get the blur event
 }
 render() {
 	return <SunEditor onBlur={handleBlur} />

@@ -54,7 +54,7 @@ class SunEditor extends Component {
     if (onClick) editor.onClick = e => onClick(e);
     if (onKeyUp) editor.onKeyUp = e => onKeyUp(e);
     if (onKeyDown) editor.onKeyDown = e => onKeyDown(e);
-    if (onBlur) editor.onBlur = e => onBlur(e);
+    if (onBlur) editor.onBlur = e => onBlur(e, editor.getContents());
     if (onFocus) editor.onFocus = e => onFocus(e);
     if (onLoad) editor.onload = (c, reload) => onLoad(reload);
     if (onImageUploadBefore)
@@ -85,7 +85,10 @@ class SunEditor extends Component {
     if (placeholder) setOptions.placeholder = placeholder;
     if (!setOptions.plugins) setOptions.plugins = getPlugins(setOptions);
     editor.setOptions(setOptions);
-    if (setContents) editor.setContents(setContents);
+    if (setContents) {
+      editor.setContents(setContents)
+      editor.core.focusEdge();
+    };
     if (setDefaultStyle) editor.setDefaultStyle(setDefaultStyle);
     if (insertHTML) editor.insertHTML(insertHTML);
     if (appendContents) editor.appendContents(appendContents);
@@ -110,6 +113,7 @@ class SunEditor extends Component {
     // Props compared
     if (prevProps.setContents !== this.props.setContents) {
       this.editor.setContents(this.props.setContents);
+      this.editor.core.context.element.wysiwyg.blur();
     }
     if (prevProps.appendContents !== this.props.appendContents) {
       this.editor.appendContents(this.props.appendContents);

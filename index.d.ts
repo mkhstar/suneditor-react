@@ -9,7 +9,7 @@ declare module 'suneditor-react' {
     onKeyUp?: (event: KeyboardEvent) => void;
     onKeyDown?: (event: KeyboardEvent) => void;
     onFocus?: (event: FocusEvent) => void;
-    onBlur?: (event: FocusEvent) => void;
+    onBlur?: (event: FocusEvent, editorContents: string) => void;
     onLoad?: (reload: boolean) => void;
     onDrop?: (event: DragEvent) => void;
     onPaste?: (event: ClipboardEvent, cleanData: string, maxCharCount: boolean) => void;
