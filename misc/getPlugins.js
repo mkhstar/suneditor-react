@@ -10,6 +10,9 @@ const getPlugins = ({ buttonList }) => {
     if (buttonList.indexOf("align") >= 0)
       pluginList.push(require("suneditor/src/plugins/submenu/align").default);
 
+    if (buttonList.indexOf("math") >= 0)
+      pluginList.push(require("suneditor/src/plugins/dialog/math").default);
+
     if (buttonList.indexOf("font") >= 0)
       pluginList.push(require("suneditor/src/plugins/submenu/font").default);
     if (buttonList.indexOf("fontColor") >= 0)
