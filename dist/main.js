@@ -82,7 +82,7 @@ module.exports =
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 34);
+/******/ 	return __webpack_require__(__webpack_require__.s = 35);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -99,7 +99,7 @@ module.exports =
 if (false) { var throwOnDirectAccess, ReactIs; } else {
   // By explicitly using `prop-types` you are opting into new production behavior.
   // http://fb.me/prop-types-in-prod
-  module.exports = __webpack_require__(32)();
+  module.exports = __webpack_require__(33)();
 }
 
 
@@ -2060,6 +2060,60 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /* harmony default export */ __webpack_exports__["default"] = ({
+    name: 'blockquote',
+    display: 'command',
+    add: function (core, targetElement) {
+        const context = core.context;
+        context.blockquote = {
+            targetButton: targetElement,
+            tag: core.util.createElement('BLOCKQUOTE')
+        };
+    },
+
+    /**
+     * @overriding core
+     */
+    active: function (element) {
+        if (!element) {
+            this.util.removeClass(this.context.blockquote.targetButton, 'active');
+        } else if (/blockquote/i.test(element.nodeName)) {
+            this.util.addClass(this.context.blockquote.targetButton, 'active');
+            return true;
+        }
+        
+        return false;
+    },
+
+    /**
+     * @overriding core
+     */
+    action: function () {
+        const currentBlockquote = this.util.getParentElement(this.getSelectionNode(), 'blockquote');
+
+        if (currentBlockquote) {
+            this.detachRangeFormatElement(currentBlockquote, null, null, false, false);
+        } else {
+            this.applyRangeFormatElement(this.context.blockquote.tag.cloneNode(false));
+        }
+    }
+});
+
+/***/ }),
+/* 9 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/*
+ * wysiwyg web editor
+ *
+ * suneditor.js
+ * Copyright 2017 JiHong Lee.
+ * MIT license.
+ */
+
+
+/* harmony default export */ __webpack_exports__["default"] = ({
     name: 'font',
     display: 'submenu',
     add: function (core, targetElement) {
@@ -2184,7 +2238,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 9 */
+/* 10 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2293,7 +2347,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 10 */
+/* 11 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2413,7 +2467,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 11 */
+/* 12 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2692,7 +2746,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 12 */
+/* 13 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2802,7 +2856,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 13 */
+/* 14 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2896,7 +2950,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 14 */
+/* 15 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -3007,7 +3061,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 15 */
+/* 16 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -3458,7 +3512,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 16 */
+/* 17 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -3599,7 +3653,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 17 */
+/* 18 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -5047,7 +5101,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 18 */
+/* 19 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -5123,7 +5177,7 @@ __webpack_require__.r(__webpack_exports__);
 });
 
 /***/ }),
-/* 19 */
+/* 20 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -5293,7 +5347,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 20 */
+/* 21 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -6438,7 +6492,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 21 */
+/* 22 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -6734,7 +6788,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 22 */
+/* 23 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -7566,7 +7620,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 23 */
+/* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7736,7 +7790,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 24 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7902,7 +7956,7 @@ __webpack_require__.r(__webpack_exports__);
 }));
 
 /***/ }),
-/* 25 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8068,7 +8122,7 @@ __webpack_require__.r(__webpack_exports__);
 }));
 
 /***/ }),
-/* 26 */
+/* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8235,7 +8289,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 27 */
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8401,7 +8455,7 @@ __webpack_require__.r(__webpack_exports__);
 }));
 
 /***/ }),
-/* 28 */
+/* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8567,7 +8621,7 @@ __webpack_require__.r(__webpack_exports__);
 }));
 
 /***/ }),
-/* 29 */
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8734,7 +8788,7 @@ __webpack_require__.r(__webpack_exports__);
 }));
 
 /***/ }),
-/* 30 */
+/* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8900,7 +8954,7 @@ __webpack_require__.r(__webpack_exports__);
 }));
 
 /***/ }),
-/* 31 */
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9066,7 +9120,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 32 */
+/* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9079,7 +9133,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
-var ReactPropTypesSecret = __webpack_require__(33);
+var ReactPropTypesSecret = __webpack_require__(34);
 
 function emptyFunction() {}
 function emptyFunctionWithReset() {}
@@ -9137,7 +9191,7 @@ module.exports = function() {
 
 
 /***/ }),
-/* 33 */
+/* 34 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9156,7 +9210,7 @@ module.exports = ReactPropTypesSecret;
 
 
 /***/ }),
-/* 34 */
+/* 35 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -18364,21 +18418,22 @@ var getPlugins = function getPlugins(_ref) {
     buttonList = flatten(buttonList);
     if (buttonList.indexOf("align") >= 0) pluginList.push(__webpack_require__(6).default);
     if (buttonList.indexOf("math") >= 0) pluginList.push(__webpack_require__(7).default);
-    if (buttonList.indexOf("font") >= 0) pluginList.push(__webpack_require__(8).default);
-    if (buttonList.indexOf("fontColor") >= 0) pluginList.push(__webpack_require__(9).default);
-    if (buttonList.indexOf("fontSize") >= 0) pluginList.push(__webpack_require__(10).default);
-    if (buttonList.indexOf("formatBlock") >= 0) pluginList.push(__webpack_require__(11).default);
-    if (buttonList.indexOf("hiliteColor") >= 0) pluginList.push(__webpack_require__(12).default);
-    if (buttonList.indexOf("horizontalRule") >= 0) pluginList.push(__webpack_require__(13).default);
-    if (buttonList.indexOf("lineHeight") >= 0) pluginList.push(__webpack_require__(14).default);
-    if (buttonList.indexOf("list") >= 0) pluginList.push(__webpack_require__(15).default);
-    if (buttonList.indexOf("paragraphStyle") >= 0) pluginList.push(__webpack_require__(16).default);
-    if (buttonList.indexOf("table") >= 0) pluginList.push(__webpack_require__(17).default);
-    if (buttonList.indexOf("template") >= 0) pluginList.push(__webpack_require__(18).default);
-    if (buttonList.indexOf("textStyle") >= 0) pluginList.push(__webpack_require__(19).default);
-    if (buttonList.indexOf("image") >= 0) pluginList.push(__webpack_require__(20).default);
-    if (buttonList.indexOf("link") >= 0) pluginList.push(__webpack_require__(21).default);
-    if (buttonList.indexOf("video") >= 0) pluginList.push(__webpack_require__(22).default);
+    if (buttonList.indexOf("blockquote") >= 0) pluginList.push(__webpack_require__(8).default);
+    if (buttonList.indexOf("font") >= 0) pluginList.push(__webpack_require__(9).default);
+    if (buttonList.indexOf("fontColor") >= 0) pluginList.push(__webpack_require__(10).default);
+    if (buttonList.indexOf("fontSize") >= 0) pluginList.push(__webpack_require__(11).default);
+    if (buttonList.indexOf("formatBlock") >= 0) pluginList.push(__webpack_require__(12).default);
+    if (buttonList.indexOf("hiliteColor") >= 0) pluginList.push(__webpack_require__(13).default);
+    if (buttonList.indexOf("horizontalRule") >= 0) pluginList.push(__webpack_require__(14).default);
+    if (buttonList.indexOf("lineHeight") >= 0) pluginList.push(__webpack_require__(15).default);
+    if (buttonList.indexOf("list") >= 0) pluginList.push(__webpack_require__(16).default);
+    if (buttonList.indexOf("paragraphStyle") >= 0) pluginList.push(__webpack_require__(17).default);
+    if (buttonList.indexOf("table") >= 0) pluginList.push(__webpack_require__(18).default);
+    if (buttonList.indexOf("template") >= 0) pluginList.push(__webpack_require__(19).default);
+    if (buttonList.indexOf("textStyle") >= 0) pluginList.push(__webpack_require__(20).default);
+    if (buttonList.indexOf("image") >= 0) pluginList.push(__webpack_require__(21).default);
+    if (buttonList.indexOf("link") >= 0) pluginList.push(__webpack_require__(22).default);
+    if (buttonList.indexOf("video") >= 0) pluginList.push(__webpack_require__(23).default);
     return pluginList;
   }
 };
@@ -18416,31 +18471,31 @@ var getLanguage = function getLanguage(lang) {
           return __webpack_require__(2);
 
         case 'da':
-          return __webpack_require__(23);
-
-        case 'de':
           return __webpack_require__(24);
 
-        case 'es':
+        case 'de':
           return __webpack_require__(25);
 
-        case 'fr':
+        case 'es':
           return __webpack_require__(26);
 
-        case 'ja':
+        case 'fr':
           return __webpack_require__(27);
 
-        case 'ko':
+        case 'ja':
           return __webpack_require__(28);
 
-        case 'pt_br':
+        case 'ko':
           return __webpack_require__(29);
 
-        case 'ru':
+        case 'pt_br':
           return __webpack_require__(30);
 
-        case 'zh_cn':
+        case 'ru':
           return __webpack_require__(31);
+
+        case 'zh_cn':
+          return __webpack_require__(32);
 
         default:
           return __webpack_require__(2);
@@ -18458,6 +18513,8 @@ var prop_types_default = /*#__PURE__*/__webpack_require__.n(prop_types);
 
 // CONCATENATED MODULE: ./SunEditor.js
 function SunEditor_typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { SunEditor_typeof = function _typeof(obj) { return typeof obj; }; } else { SunEditor_typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return SunEditor_typeof(obj); }
+
+function _extends() { _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; }; return _extends.apply(this, arguments); }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -18490,26 +18547,27 @@ var SunEditor_SunEditor = /*#__PURE__*/function (_Component) {
     _classCallCheck(this, SunEditor);
 
     _this = _possibleConstructorReturn(this, _getPrototypeOf(SunEditor).call(this, props));
-    _this.state = {
-      id: "editor" + +Date.now().toString() + Math.random().toString(36).slice(-8)
-    };
+    _this.txtArea = Object(external_react_["createRef"])();
     return _this;
   }
 
   _createClass(SunEditor, [{
     key: "componentDidMount",
     value: function componentDidMount() {
+      var _this2 = this;
+
       var _this$props = this.props,
           lang = _this$props.lang,
           _this$props$setOption = _this$props.setOptions,
           setOptions = _this$props$setOption === void 0 ? {} : _this$props$setOption,
           _this$props$width = _this$props.width,
           width = _this$props$width === void 0 ? "100%" : _this$props$width;
-      var editor = suneditor.create(this.state.id, {
+      var editor = suneditor.create(this.txtArea.current, {
         width: width,
         lang: misc_getLanguage(lang)
       });
       var _this$props2 = this.props,
+          name = _this$props2.name,
           insertHTML = _this$props2.insertHTML,
           setContents = _this$props2.setContents,
           setDefaultStyle = _this$props2.setDefaultStyle,
@@ -18537,8 +18595,9 @@ var SunEditor_SunEditor = /*#__PURE__*/function (_Component) {
           onLoad = _this$props2.onLoad,
           onImageUploadBefore = _this$props2.onImageUploadBefore,
           placeholder = _this$props2.placeholder;
-      if (onChange) editor.onChange = function (content) {
-        return onChange(content);
+      if (onChange || name) editor.onChange = function (content) {
+        if (name) _this2.txtArea.current.value = content;
+        if (onChange) onChange(content);
       };
       if (onScroll) editor.onScroll = function (e) {
         return onScroll(e);
@@ -18645,11 +18704,11 @@ var SunEditor_SunEditor = /*#__PURE__*/function (_Component) {
   }, {
     key: "render",
     value: function render() {
-      return external_react_default.a.createElement("textarea", {
-        id: this.state.id,
-        cols: "30",
-        rows: "10"
-      });
+      var dynamicName = {};
+      if (this.props.name) dynamicName.name = this.props.name;
+      return external_react_default.a.createElement("textarea", _extends({
+        ref: this.txtArea
+      }, dynamicName));
     }
   }]);
 
@@ -18672,6 +18731,7 @@ SunEditor_SunEditor.propTypes = {
   onImageUploadError: prop_types_default.a.func,
   setOptions: prop_types_default.a.object,
   setContents: prop_types_default.a.string,
+  name: prop_types_default.a.string,
   appendContents: prop_types_default.a.string,
   setDefaultStyle: prop_types_default.a.string,
   enable: prop_types_default.a.bool,

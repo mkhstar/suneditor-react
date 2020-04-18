@@ -24,6 +24,7 @@ declare module 'suneditor-react' {
     onImageUploadError?: (errorMessage, result) => void;
     setOptions?: SetOptions;
     setContents?: string;
+    name?: string;
     appendContents?: string;
     setDefaultStyle?: string;
     enable?: boolean;

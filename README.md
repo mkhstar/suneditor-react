@@ -50,6 +50,21 @@ render() {
 }
 ```
 
+
+**name**
+
+**_HTML form name of editor_**
+
+This is used to set the HTML form name of the editor. This means on HTML form submission, it will be submitted together with contents of the editor by the name provided.
+
+
+```javascript
+//...
+render() {
+	return <SunEditor name="my-editor" />
+}
+```
+
 **width**
 
 **_Set Editor's width_**

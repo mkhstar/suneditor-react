@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { Component, createRef } from "react";
 import suneditor from "suneditor";
 import getPlugins from "./misc/getPlugins";
 import getLanguage from "./misc/getLanguage";
@@ -7,22 +7,16 @@ import PropTypes from "prop-types";
 class SunEditor extends Component {
   constructor(props) {
     super(props);
-    this.state = {
-      id:
-        "editor" +
-        +Date.now().toString() +
-        Math.random()
-          .toString(36)
-          .slice(-8)
-    };
+    this.txtArea = createRef()
   }
   componentDidMount() {
     const { lang, setOptions = {}, width = "100%" } = this.props;
-    const editor = suneditor.create(this.state.id, {
+    const editor = suneditor.create(this.txtArea.current, {
       width,
       lang: getLanguage(lang)
     });
     const {
+      name,
       insertHTML,
       setContents,
       setDefaultStyle,
@@ -49,7 +43,10 @@ class SunEditor extends Component {
       onImageUploadBefore,
       placeholder
     } = this.props;
-    if (onChange) editor.onChange = content => onChange(content);
+    if (onChange || name) editor.onChange = content => {
+      if (name) this.txtArea.current.value = content;
+      if (onChange) onChange(content);
+    }
     if (onScroll) editor.onScroll = e => onScroll(e);
     if (onClick) editor.onClick = e => onClick(e);
     if (onKeyUp) editor.onKeyUp = e => onKeyUp(e);
@@ -149,7 +146,9 @@ class SunEditor extends Component {
   }
 
   render() {
-    return <textarea id={this.state.id} cols="30" rows="10" />;
+    const dynamicName = {};
+    if (this.props.name) dynamicName.name = this.props.name;
+    return <textarea ref={this.txtArea} {...dynamicName} />;
   }
 }
 
@@ -169,6 +168,7 @@ SunEditor.propTypes = {
   onImageUploadError: PropTypes.func,
   setOptions: PropTypes.object,
   setContents: PropTypes.string,
+  name: PropTypes.string,
   appendContents: PropTypes.string,
   setDefaultStyle: PropTypes.string,
   enable: PropTypes.bool,
