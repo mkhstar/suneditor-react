@@ -1,5 +1,5 @@
 export default interface SetOptions {
-    buttonList?: Array<Array<string>>;
+    buttonList?: Array<Array<string> | string>;
     placeholder?: string;
     templates?: Array<{name: string, html: string}>;
     youtubeQuery?: string;
