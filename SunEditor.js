@@ -109,8 +109,7 @@ class SunEditor extends Component {
   componentDidUpdate(prevProps) {
     // Props compared
     if (prevProps.setContents !== this.props.setContents) {
-      this.editor.setContents(this.props.setContents);
-      this.editor.core.context.element.wysiwyg.blur();
+      !this.editor.core.hasFocus && this.editor.setContents(this.props.setContents);
     }
     if (prevProps.appendContents !== this.props.appendContents) {
       this.editor.appendContents(this.props.appendContents);
