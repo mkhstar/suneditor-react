@@ -39,6 +39,12 @@ declare module 'suneditor-react' {
     width?: number | string;
   }
 
+  export const buttonList: {
+    basic: (string | string[])[]
+    complex: (string | string[])[]
+    formatting: (string | string[])[]
+  }
+
   const SunEditor: React.ComponentType<SunEditorReactProps>;
   export default SunEditor;
 }
