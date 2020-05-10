@@ -6,6 +6,7 @@ declare module 'suneditor-react' {
     onChange?: (content: string) => void;
     onScroll?: (event: UIEvent) => void;
     onClick?: (event: MouseEvent) => void;
+    onMouseDown?: (event: MouseEvent) => void;
     onKeyUp?: (event: KeyboardEvent) => void;
     onKeyDown?: (event: KeyboardEvent) => void;
     onFocus?: (event: FocusEvent) => void;
@@ -20,8 +21,27 @@ declare module 'suneditor-react' {
       imageInfo: object,
       remainingFilesCount: number
     ) => void;
+    onVideoUpload?: (
+      targetElement: HTMLElement,
+      index: number,
+      state: string,
+      info: object,
+      remainingFilesCount: number
+    ) => void;
+    onAudioUpload?: (
+      targetElement: HTMLElement,
+      index: number,
+      state: string,
+      info: object,
+      remainingFilesCount: number
+    ) => void;
     onImageUploadBefore?: (files: Array<File>, info: object) => void;
+    onVideoUploadBefore?: (files: Array<File>, info: object) => void;
+    onAudioUploadBefore?: (files: Array<File>, info: object) => void;
     onImageUploadError?: (errorMessage, result) => void;
+    onVideoUploadError?: (errorMessage, result) => void;
+    onAudioUploadError?: (errorMessage, result) => void;
+    
     setOptions?: SetOptions;
     setContents?: string;
     name?: string;

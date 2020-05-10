@@ -294,6 +294,34 @@ render() {
 }
 ```
 
+
+**onMouseDown**
+
+**_Has the mouse is pressed and not yet released?_**
+
+```javascript
+handleMouseDown(event){
+	console.log(event); //Get the click event
+}
+render() {
+	return <SunEditor onMouseDown={handleMouseDown} />
+}
+```
+
+**onInput**
+
+**_Has the editor received input?_**
+
+```javascript
+handleInput(event){
+	console.log(event); //Get the click event
+}
+render() {
+	return <SunEditor onInput={handleInput} />
+}
+```
+
+
 **onKeyUp**
 
 **_Has the key been released up in the editor?_**
@@ -383,7 +411,7 @@ render() {
 
 **onImageUploadBefore**
 
-**_Has an image been uploaded into the editor?_**
+**_Before an image is uploaded into the editor_**
 
 ```javascript
 handleImageUploadBefore(files, info){
@@ -408,19 +436,6 @@ render() {
 }
 ```
 
-**onPaste**
-
-**\_Has something been pasted into the suneditor?**
-
-```javascript
-handlePaste(e, cleanData, maxCharCount){
-	console.log(e, cleanData, maxCharCount)
-}
-render() {
-	return <SunEditor onPaste={handlePaste} />
-}
-```
-
 **onImageUploadError**
 
 **_Has an image uploaded to the editor resulted in an error?_**
@@ -431,6 +446,102 @@ handleImageUploadError(errorMessage, result){
 }
 render() {
 	return <SunEditor onImageUploadError={handleImageUploadError} />
+}
+```
+
+
+**onVideoUploadBefore**
+
+**_Before a video is uploaded to the editor_**
+
+```javascript
+handleVideoUploadBefore(files, info){
+	console.log(files, info)
+}
+render() {
+	return <SunEditor onVideoUploadBefore={handleVideoUploadBefore} />
+}
+```
+
+
+**onVideoUpload**
+
+**_Has an image been uploaded into the editor?_**
+
+```javascript
+handleVideoUpload(targetElement, index, state, info, remainingFilesCount){
+	console.log(targetElement, index, state, info, remainingFilesCount)
+}
+render() {
+	return <SunEditor onVideoUpload={handleVideoUpload} />
+}
+```
+
+**onVideoUploadError**
+
+**_Has a video uploaded to the editor resulted in an error?_**
+
+```javascript
+handleVideoUploadError(errorMessage, result){
+	console.log(errorMessage, result)
+}
+render() {
+	return <SunEditor onVideoUploadError={handleVideoUploadError} />
+}
+```
+
+
+**onAudioUploadBefore**
+
+**_Before an audio is uploaded to the editor_**
+
+```javascript
+handleAudioUploadBefore(files, info){
+	console.log(files, info)
+}
+render() {
+	return <SunEditor onAudioUploadBefore={handleAudioUploadBefore} />
+}
+```
+
+
+**onAudioUpload**
+
+**_Has an audio been uploaded into the editor?_**
+
+```javascript
+handleAudioUpload(targetElement, index, state, info, remainingFilesCount){
+	console.log(targetElement, index, state, info, remainingFilesCount)
+}
+render() {
+	return <SunEditor onAudioUpload={handleAudioUpload} />
+}
+```
+
+**onAudioUploadError**
+
+**_Has an audio uploaded to the editor resulted in an error?_**
+
+```javascript
+handleAudioUploadError(errorMessage, result){
+	console.log(errorMessage, result)
+}
+render() {
+	return <SunEditor onAudioUploadError={handleAudioUploadError} />
+}
+```
+
+
+**onPaste**
+
+**\_Has something been pasted into the suneditor?**
+
+```javascript
+handlePaste(e, cleanData, maxCharCount){
+	console.log(e, cleanData, maxCharCount)
+}
+render() {
+	return <SunEditor onPaste={handlePaste} />
 }
 ```
 

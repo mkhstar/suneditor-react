@@ -7,14 +7,16 @@ import PropTypes from "prop-types";
 class SunEditor extends Component {
   constructor(props) {
     super(props);
-    this.txtArea = createRef()
+    this.txtArea = createRef();
   }
   componentDidMount() {
     const { lang, setOptions = {}, width = "100%" } = this.props;
-    const editor = suneditor.create(this.txtArea.current, {
-      width,
-      lang: getLanguage(lang)
-    });
+
+    setOptions.lang = setOptions.lang || getLanguage(lang);
+    setOptions.plugins = setOptions.plugins || getPlugins(setOptions);
+    setOptions.width = setOptions.width || width;
+
+    const editor = suneditor.create(this.txtArea.current);
     const {
       name,
       insertHTML,
@@ -40,24 +42,41 @@ class SunEditor extends Component {
       onBlur,
       onFocus,
       onLoad,
+      onInput,
       onImageUploadBefore,
-      placeholder
+      onVideoUploadBefore,
+      onAudioUploadBefore,
+      onVideoUpload,
+      onMouseDown,
+      onAudioUpload,
+      onVideoUploadError,
+      onAudioUploadError,
+      placeholder,
     } = this.props;
-    if (onChange || name) editor.onChange = content => {
-      if (name) this.txtArea.current.value = content;
-      if (onChange) onChange(content);
-    }
-    if (onScroll) editor.onScroll = e => onScroll(e);
-    if (onClick) editor.onClick = e => onClick(e);
-    if (onKeyUp) editor.onKeyUp = e => onKeyUp(e);
-    if (onKeyDown) editor.onKeyDown = e => onKeyDown(e);
-    if (onBlur) editor.onBlur = e => onBlur(e, editor.getContents());
-    if (onFocus) editor.onFocus = e => onFocus(e);
+    if (onChange || name)
+      editor.onChange = (content) => {
+        if (name) this.txtArea.current.value = content;
+        if (onChange) onChange(content);
+      };
+    if (onScroll) editor.onMouseDown = (e) => onMouseDown(e);
+    if (onInput) editor.onInput = (e) => onInput(e);
+    if (onScroll) editor.onScroll = (e) => onScroll(e);
+    if (onClick) editor.onClick = (e) => onClick(e);
+    if (onKeyUp) editor.onKeyUp = (e) => onKeyUp(e);
+    if (onKeyDown) editor.onKeyDown = (e) => onKeyDown(e);
+    if (onBlur) editor.onBlur = (e) => onBlur(e, editor.getContents());
+    if (onFocus) editor.onFocus = (e) => onFocus(e);
     if (onLoad) editor.onload = (c, reload) => onLoad(reload);
     if (onImageUploadBefore)
       editor.onImageUploadBefore = (files, info) =>
         onImageUploadBefore(files, info);
-    if (onDrop) editor.onDrop = e => onDrop(e);
+    if (onVideoUploadBefore)
+      editor.onVideoUploadBefore = (files, info) =>
+        onVideoUploadBefore(files, info);
+    if (onAudioUploadBefore)
+      editor.onAudioUploadBefore = (files, info) =>
+        onAudioUploadBefore(files, info);
+    if (onDrop) editor.onDrop = (e) => onDrop(e);
     if (onPaste)
       editor.onPaste = (e, cleanData, maxCharCount) =>
         onPaste(e, cleanData, maxCharCount);
@@ -76,16 +95,39 @@ class SunEditor extends Component {
           imageInfo,
           remainingFilesCount
         );
+    if (onVideoUpload)
+      editor.onVideoUpload = (
+        targetElement,
+        index,
+        state,
+        info,
+        remainingFilesCount
+      ) =>
+        onVideoUpload(targetElement, index, state, info, remainingFilesCount);
+    if (onAudioUpload)
+      editor.onAudioUpload = (
+        targetElement,
+        index,
+        state,
+        info,
+        remainingFilesCount
+      ) =>
+        onAudioUpload(targetElement, index, state, info, remainingFilesCount);
     if (onImageUploadError)
       editor.onImageUploadError = (errorMessage, result) =>
         onImageUploadError(errorMessage, result);
+    if (onVideoUploadError)
+      editor.onVideoUploadError = (errorMessage, result) =>
+        onVideoUploadError(errorMessage, result);
+    if (onAudioUploadError)
+      editor.onAudioUploadError = (errorMessage, result) =>
+        onAudioUploadError(errorMessage, result);
     if (placeholder) setOptions.placeholder = placeholder;
-    if (!setOptions.plugins) setOptions.plugins = getPlugins(setOptions);
     editor.setOptions(setOptions);
     if (setContents) {
-      editor.setContents(setContents)
+      editor.setContents(setContents);
       editor.core.focusEdge();
-    };
+    }
     if (setDefaultStyle) editor.setDefaultStyle(setDefaultStyle);
     if (insertHTML) editor.insertHTML(insertHTML);
     if (appendContents) editor.appendContents(appendContents);
@@ -109,7 +151,8 @@ class SunEditor extends Component {
   componentDidUpdate(prevProps) {
     // Props compared
     if (prevProps.setContents !== this.props.setContents) {
-      !this.editor.core.hasFocus && this.editor.setContents(this.props.setContents);
+      !this.editor.core.hasFocus &&
+        this.editor.setContents(this.props.setContents);
     }
     if (prevProps.appendContents !== this.props.appendContents) {
       this.editor.appendContents(this.props.appendContents);
@@ -157,6 +200,7 @@ SunEditor.propTypes = {
   onClick: PropTypes.func,
   onKeyUp: PropTypes.func,
   onKeyDown: PropTypes.func,
+  onInput: PropTypes.func,
   onDrop: PropTypes.func,
   onBlur: PropTypes.func,
   onFocus: PropTypes.func,
@@ -165,6 +209,13 @@ SunEditor.propTypes = {
   onImageUploadBefore: PropTypes.func,
   onImageUpload: PropTypes.func,
   onImageUploadError: PropTypes.func,
+  onVideoUploadBefore: PropTypes.func,
+  onAudioUploadBefore: PropTypes.func,
+  onVideoUpload: PropTypes.func,
+  onMouseDown: PropTypes.func,
+  onAudioUpload: PropTypes.func,
+  onVideoUploadError: PropTypes.func,
+  onAudioUploadError: PropTypes.func,
   setOptions: PropTypes.object,
   setContents: PropTypes.string,
   name: PropTypes.string,
@@ -179,6 +230,6 @@ SunEditor.propTypes = {
   autoFocus: PropTypes.bool,
   placeholder: PropTypes.string,
   lang: PropTypes.oneOfType([PropTypes.object, PropTypes.string]),
-  width: PropTypes.oneOfType([PropTypes.number, PropTypes.string])
+  width: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
 };
 export default SunEditor;

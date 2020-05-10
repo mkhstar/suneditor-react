@@ -22,6 +22,8 @@ const getLanguage = lang => {
           return require('suneditor/src/lang/pt_br');
         case 'ru':
           return require('suneditor/src/lang/ru');
+        case 'it':
+          return require('suneditor/src/lang/it');
         case 'zh_cn':
           return require('suneditor/src/lang/zh_cn');
         default:

@@ -45,6 +45,8 @@ const getPlugins = ({ buttonList }) => {
       pluginList.push(require("suneditor/src/plugins/dialog/link").default);
     if (buttonList.indexOf("video") >= 0)
       pluginList.push(require("suneditor/src/plugins/dialog/video").default);
+    if (buttonList.indexOf("audio") >= 0)
+      pluginList.push(require("suneditor/src/plugins/dialog/audio").default);
 
     return pluginList;
   }

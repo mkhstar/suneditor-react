@@ -82,7 +82,7 @@ module.exports =
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 35);
+/******/ 	return __webpack_require__(__webpack_require__.s = 39);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -99,7 +99,7 @@ module.exports =
 if (false) { var throwOnDirectAccess, ReactIs; } else {
   // By explicitly using `prop-types` you are opting into new production behavior.
   // http://fb.me/prop-types-in-prod
-  module.exports = __webpack_require__(33)();
+  module.exports = __webpack_require__(37)();
 }
 
 
@@ -165,8 +165,8 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
             context.dialog.modal = dialog_area;
 
             /** add event listeners */
-            context.dialog.modal.addEventListener('mousedown', this.onMouseDown_dialog.bind(core));
-            context.dialog.modal.addEventListener('click', this.onClick_dialog.bind(core));
+            context.dialog.modal.addEventListener('mousedown', this._onMouseDown_dialog.bind(core));
+            context.dialog.modal.addEventListener('click', this._onClick_dialog.bind(core));
             
             /** append html */
             context.element.relative.appendChild(dialog_div);
@@ -178,8 +178,9 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
         /**
          * @description Event to control the behavior of closing the dialog
          * @param {MouseEvent} e Event object
+         * @private
          */
-        onMouseDown_dialog: function (e) {
+        _onMouseDown_dialog: function (e) {
             if (/se-dialog-inner/.test(e.target.className)) {
                 this.context.dialog._closeSignal = true;
             } else {
@@ -190,8 +191,9 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
         /**
          * @description Event to close the window when the outside area of the dialog or close button is click
          * @param {MouseEvent} e Event object
+         * @private
          */
-        onClick_dialog: function (e) {
+        _onClick_dialog: function (e) {
             e.stopPropagation();
 
             if (/close/.test(e.target.getAttribute('data-command')) || this.context.dialog._closeSignal) {
@@ -265,10 +267,20 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
 
     if (typeof noGlobal === typeof undefined) {
         if (!window.SUNEDITOR_MODULES) {
-            window.SUNEDITOR_MODULES = {};
+            Object.defineProperty(window, 'SUNEDITOR_MODULES', {
+                enumerable: true,
+                writable: false,
+                configurable: false,
+                value: {}
+            });
         }
 
-        window.SUNEDITOR_MODULES.dialog = dialog;
+        Object.defineProperty(window.SUNEDITOR_MODULES, 'dialog', {
+            enumerable: true,
+            writable: false,
+            configurable: false,
+            value: dialog
+        });
     }
 
     return dialog;
@@ -276,6 +288,418 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
 
 /***/ }),
 /* 2 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+/*
+ * wysiwyg web editor
+ *
+ * suneditor.js
+ * Copyright 2017 JiHong Lee.
+ * MIT license.
+ */
+
+
+(function (global, factory) {
+    if ( true && typeof module.exports === 'object') {
+        module.exports = global.document ?
+            factory(global, true) :
+            function (w) {
+                if (!w.document) {
+                    throw new Error('SUNEDITOR_MODULES a window with a document');
+                }
+                return factory(w);
+            };
+    } else {
+        factory(global);
+    }
+}(typeof window !== 'undefined' ? window : this, function (window, noGlobal) {
+    const component = {
+        name: 'component',
+        /**
+         * @description Create a container for the resizing component and insert the element.
+         * @param {Element} cover Cover element (FIGURE)
+         * @param {String} className Class name of container (fixed: se-component)
+         * @returns {Element} Created container element
+         */
+        set_container: function (cover, className) {
+            const container = this.util.createElement('DIV');
+            container.className = 'se-component ' + className;
+            container.setAttribute('contenteditable', false);
+            container.appendChild(cover);
+    
+            return container;
+        },
+
+        /**
+         * @description Cover the target element with a FIGURE element.
+         * @param {Element} element Target element
+         */
+        set_cover: function (element) {
+            const cover = this.util.createElement('FIGURE');
+            cover.appendChild(element);
+    
+            return cover;
+        },
+
+        /**
+         * @description Return HTML string of caption(FIGCAPTION) element
+         * @returns {String}
+         */
+        create_caption: function () {
+            const caption = this.util.createElement('FIGCAPTION');
+            caption.setAttribute('contenteditable', true);
+            caption.innerHTML = '<div>' + this.lang.dialogBox.caption + '</div>';
+            return caption;
+        }
+    };
+
+    if (typeof noGlobal === typeof undefined) {
+        if (!window.SUNEDITOR_MODULES) {
+            Object.defineProperty(window, 'SUNEDITOR_MODULES', {
+                enumerable: true,
+                writable: false,
+                configurable: false,
+                value: {}
+            });
+        }
+
+        Object.defineProperty(window.SUNEDITOR_MODULES, 'component', {
+            enumerable: true,
+            writable: false,
+            configurable: false,
+            value: component
+        });
+    }
+
+    return component;
+}));
+
+/***/ }),
+/* 3 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+/*
+ * wysiwyg web editor
+ *
+ * suneditor.js
+ * Copyright 2017 JiHong Lee.
+ * MIT license.
+ */
+
+
+(function (global, factory) {
+    if ( true && typeof module.exports === 'object') {
+        module.exports = global.document ?
+            factory(global, true) :
+            function (w) {
+                if (!w.document) {
+                    throw new Error('SUNEDITOR_MODULES a window with a document');
+                }
+                return factory(w);
+            };
+    } else {
+        factory(global);
+    }
+}(typeof window !== 'undefined' ? window : this, function (window, noGlobal) {
+    const fileManager = {
+        name: 'fileManager',
+        _xmlHttp: null,
+
+        /**
+         * @description Upload the file to the server.
+         * @param {String} uploadUrl Upload server url
+         * @param {Object|null} uploadHeader Request header
+         * @param {FormData} formData FormData in body
+         * @param {Function|null} callBack Success call back function
+         * @param {Function|null} errorCallBack Error call back function
+         * @example this.plugins.fileManager.upload.call(this, imageUploadUrl, this.context.option.imageUploadHeader, formData, this.plugins.image.callBack_imgUpload.bind(this, info), this.functions.onImageUploadError);
+         */
+        upload: function (uploadUrl, uploadHeader, formData, callBack, errorCallBack) {
+            this.showLoading();
+            const filePlugin = this.plugins.fileManager;
+            const xmlHttp = filePlugin._xmlHttp = this.util.getXMLHttpRequest();
+
+            xmlHttp.onreadystatechange = filePlugin._callBackUpload.bind(this, xmlHttp, callBack, errorCallBack);
+            xmlHttp.open('post', uploadUrl, true);
+            if(uploadHeader !== null && typeof uploadHeader === 'object' && this._w.Object.keys(uploadHeader).length > 0){
+                for(let key in uploadHeader){
+                    xmlHttp.setRequestHeader(key, uploadHeader[key]);
+                }
+            }
+            xmlHttp.send(formData);  
+        },
+
+        _callBackUpload: function (xmlHttp, callBack, errorCallBack) {
+            if (xmlHttp.readyState === 4) {
+                if (xmlHttp.status === 200) {
+                    try {
+                        callBack(xmlHttp);
+                    } catch (e) {
+                        throw Error('[SUNEDITOR.fileManager.upload.callBack.fail] cause : "' + e.message + '"');
+                    } finally {
+                        this.closeLoading();
+                    }
+                } else { // exception
+                    this.closeLoading();
+                    const res = !xmlHttp.responseText ? xmlHttp : JSON.parse(xmlHttp.responseText);
+                    if (typeof errorCallBack !== 'function' || errorCallBack('', res, this)) {
+                        const err = '[SUNEDITOR.fileManager.upload.serverException] status: ' + xmlHttp.status + ', response: ' + (res.errorMessage || xmlHttp.responseText);
+                        this.functions.noticeOpen(err);
+                        throw Error(err);
+                    }
+                }
+            }
+        },
+        
+        /**
+         * @description Checke the file's information and modify the tag that does not fit the format.
+         * @param {String} pluginName Plugin name
+         * @param {Array} tagNames Tag array to check
+         * @param {Function|null} uploadEventHandler Event handler to process updated file info after checking (used in "setInfo")
+         * @param {Function} modifyHandler A function to modify a tag that does not fit the format (Argument value: Tag element)
+         * @param {Boolean} resizing True if the plugin is using a resizing module
+         * @example 
+         * const modifyHandler = function (tag) {
+         *      imagePlugin.onModifyMode.call(this, tag, null);
+         *      imagePlugin.openModify.call(this, true);
+         *      imagePlugin.update_image.call(this, true, false, true);
+         *  }.bind(this);
+         *  this.plugins.fileManager.checkInfo.call(this, 'image', ['img'], this.functions.onImageUpload, modifyHandler, true);
+         */
+        checkInfo: function (pluginName, tagNames, uploadEventHandler, modifyHandler, resizing) {
+            let tags = [];
+            for (let i in tagNames) {
+                tags = tags.concat([].slice.call(this.context.element.wysiwyg.getElementsByTagName(tagNames[i])));
+            }
+
+            const context = this.context[pluginName];
+            const infoList = context._infoList;
+            const setFileInfo = this.plugins.fileManager.setInfo.bind(this);
+
+            if (tags.length === infoList.length) {
+                // reset
+                if (this._componentsInfoReset) {
+                    for (let i = 0, len = tags.length; i < len; i++) {
+                        setFileInfo(pluginName, tags[i], uploadEventHandler, null, resizing);
+                    }
+                    return ;
+                } else {
+                    let infoUpdate = false;
+                    for (let i = 0, len = infoList.length, info; i < len; i++) {
+                        info = infoList[i];
+                        if (tags.filter(function (t) { return info.src === t.src && info.index.toString() === t.getAttribute('data-index'); }).length === 0) {
+                            infoUpdate = true;
+                            break;
+                        }
+                    }
+                    // pass
+                    if (!infoUpdate) return;
+                }
+            }
+
+            // check
+            const _resize_plugin = resizing ? this.context.resizing._resize_plugin : '';
+            if (resizing) this.context.resizing._resize_plugin = pluginName;
+            const currentTags = [];
+            const infoIndex = [];
+            for (let i = 0, len = infoList.length; i < len; i++) {
+                infoIndex[i] = infoList[i].index;
+            }
+            
+            for (let i = 0, len = tags.length, tag; i < len; i++) {
+                tag = tags[i];
+                if (!this.util.getParentElement(tag, this.util.isMediaComponent)) {
+                    currentTags.push(context._infoIndex);
+                    modifyHandler(tag);
+                } else if (!tag.getAttribute('data-index') || infoIndex.indexOf(tag.getAttribute('data-index') * 1) < 0) {
+                    currentTags.push(context._infoIndex);
+                    tag.removeAttribute('data-index');
+                    setFileInfo(pluginName, tag, uploadEventHandler, null, resizing);
+                } else {
+                    currentTags.push(tag.getAttribute('data-index') * 1);
+                }
+            }
+
+            for (let i = 0, dataIndex; i < infoList.length; i++) {
+                dataIndex = infoList[i].index;
+                if (currentTags.indexOf(dataIndex) > -1) continue;
+
+                infoList.splice(i, 1);
+                if (typeof uploadEventHandler === 'function') uploadEventHandler(null, dataIndex, 'delete', null, 0, this);
+                i--;
+            }
+
+            if (resizing) this.context.resizing._resize_plugin = _resize_plugin;
+        },
+
+        /**
+         * @description Create info object of file and add it to "_infoList" (this.context[pluginName]._infoList[])
+         * @param {String} pluginName Plugin name 
+         * @param {Element} element 
+         * @param {Function|null} uploadEventHandler Event handler to process updated file info (created in setInfo)
+         * @param {Object|null} file 
+         * @param {Boolean} resizing True if the plugin is using a resizing module
+         * @example 
+         * uploadCallBack {.. file = { name: fileList[i].name, size: fileList[i].size };
+         * this.plugins.fileManager.setInfo.call(this, 'image', oImg, this.functions.onImageUpload, file, true);
+         */
+        setInfo: function (pluginName, element, uploadEventHandler, file, resizing) {
+            const _resize_plugin = resizing ? this.context.resizing._resize_plugin : '';
+            if (resizing) this.context.resizing._resize_plugin = pluginName;
+    
+            const plguin = this.plugins[pluginName];
+            const context = this.context[pluginName];
+            const infoList = context._infoList;
+            let dataIndex = element.getAttribute('data-index');
+            let info = null;
+            let state = '';
+
+            if (!file) {
+                file = {
+                    'name': element.getAttribute('data-file-name') || (typeof element.src === 'string' ? element.src.split('/').pop() : ''),
+                    'size': element.getAttribute('data-file-size') || 0
+                };
+            }
+    
+            // create
+            if (!dataIndex || this._componentsInfoInit) {
+                state = 'create';
+                dataIndex = context._infoIndex++;
+    
+                element.setAttribute('data-index', dataIndex);
+                element.setAttribute('data-file-name', file.name);
+                element.setAttribute('data-file-size', file.size);
+    
+                info = {
+                    src: element.src,
+                    index: dataIndex * 1,
+                    name: file.name,
+                    size: file.size
+                };
+    
+                infoList.push(info);
+            } else { // update
+                state = 'update';
+                dataIndex *= 1;
+    
+                for (let i = 0, len = infoList.length; i < len; i++) {
+                    if (dataIndex === infoList[i].index) {
+                        info = infoList[i];
+                        break;
+                    }
+                }
+    
+                if (!info) {
+                    dataIndex = context._infoIndex++;
+                    info = { index: dataIndex };
+                    infoList.push(info);
+                }
+    
+                info.src = element.src;
+                info.name = element.getAttribute("data-file-name");
+                info.size = element.getAttribute("data-file-size") * 1;
+            }
+    
+            // method bind
+            info.element = element;
+            info.delete = plguin.destroy.bind(this, element);
+            info.select = function (element) {
+                element.scrollIntoView(true);
+                this._w.setTimeout(plguin.select.bind(this, element));
+            }.bind(this, element);
+    
+            if (resizing) {
+                if (!element.getAttribute('origin-size') && element.naturalWidth) {
+                    element.setAttribute('origin-size', element.naturalWidth + ',' + element.naturalHeight);
+                }
+    
+                if (!element.getAttribute('data-origin')) {
+                    const container = this.util.getParentElement(element, this.util.isMediaComponent);
+                    const cover = this.util.getParentElement(element, 'FIGURE');
+        
+                    const w = this.plugins.resizing._module_getSizeX.call(this, context, element, cover, container);
+                    const h = this.plugins.resizing._module_getSizeY.call(this, context, element, cover, container);
+                    element.setAttribute('data-origin', w + ',' + h);
+                    element.setAttribute('data-size', w + ',' + h);
+                }
+        
+                if (!element.style.width) {
+                    const size = (element.getAttribute('data-size') || element.getAttribute('data-origin') || '').split(',');
+                    plguin.onModifyMode.call(this, element, null);
+                    plguin.applySize.call(this, size[0], size[1]);
+                }
+        
+                this.context.resizing._resize_plugin = _resize_plugin;
+            }
+
+            if (typeof uploadEventHandler === 'function') uploadEventHandler(element, dataIndex, state, info, --context._uploadFileLength < 0 ? 0 : context._uploadFileLength, this);
+        },
+
+        /**
+         * @description Delete info object at "_infoList"
+         * @param {String} pluginName Plugin name 
+         * @param {Number} index index of info object (this.context[pluginName]._infoList[].index)
+         * @param {Function|null} uploadEventHandler Event handler to process updated file info (created in setInfo)
+         */
+        deleteInfo: function (pluginName, index, uploadEventHandler) {
+            if (index >= 0) {
+                const infoList = this.context[pluginName]._infoList;
+    
+                for (let i = 0, len = infoList.length; i < len; i++) {
+                    if (index === infoList[i].index) {
+                        infoList.splice(i, 1);
+                        if (typeof uploadEventHandler === 'function') uploadEventHandler(null, index, 'delete', null, 0, this);
+                        return;
+                    }
+                }
+            }
+        },
+
+        /**
+         * @description Reset info object and "_infoList = []", "_infoIndex = 0"
+         * @param {String} pluginName Plugin name 
+         * @param {Function|null} uploadEventHandler Event handler to process updated file info (created in setInfo)
+         */
+        resetInfo: function (pluginName, uploadEventHandler) {
+            const context = this.context[pluginName];
+
+            if (typeof uploadEventHandler === 'function') {
+                const infoList = context._infoList;
+                for (let i = 0, len = infoList.length; i < len; i++) {
+                    uploadEventHandler(null, infoList[i].index, 'delete', null, 0, this);
+                }
+            }
+
+            context._infoList = [];
+            context._infoIndex = 0;
+        }
+    };
+
+    if (typeof noGlobal === typeof undefined) {
+        if (!window.SUNEDITOR_MODULES) {
+            Object.defineProperty(window, 'SUNEDITOR_MODULES', {
+                enumerable: true,
+                writable: false,
+                configurable: false,
+                value: {}
+            });
+        }
+
+        Object.defineProperty(window.SUNEDITOR_MODULES, 'fileManager', {
+            enumerable: true,
+            writable: false,
+            configurable: false,
+            value: fileManager
+        });
+    }
+
+    return fileManager;
+}));
+
+/***/ }),
+/* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -376,7 +800,13 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
             },
             videoBox: {
                 title: 'Insert Video',
+                file: 'Select from files',
                 url: 'Media embed URL, YouTube'
+            },
+            audioBox: {
+                title: 'Insert Audio',
+                file: 'Select from files',
+                url: 'Audio URL'
             },
             caption: 'Insert description',
             close: 'Close',
@@ -431,17 +861,27 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
 
     if (typeof noGlobal === typeof undefined) {
         if (!window.SUNEDITOR_LANG) {
-            window.SUNEDITOR_LANG = {};
+            Object.defineProperty(window, 'SUNEDITOR_LANG', {
+                enumerable: true,
+                writable: false,
+                configurable: false,
+                value: {}
+            });
         }
 
-        window.SUNEDITOR_LANG.en = lang;
+        Object.defineProperty(window.SUNEDITOR_LANG, 'en', {
+            enumerable: true,
+            writable: true,
+            configurable: true,
+            value: lang
+        });
     }
 
     return lang;
 }));
 
 /***/ }),
-/* 3 */
+/* 5 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -656,7 +1096,7 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
 });
 
 /***/ }),
-/* 4 */
+/* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -783,7 +1223,7 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
             resize_div_container = null, resize_button = null, resize_handles = null;
         },
     
-        /** resize controller, button (image, iframe) */
+        /** resize controller, button (image, iframe, video) */
         setController_resize: function () {
             const resize_container = this.util.createElement('DIV');
             
@@ -909,9 +1349,9 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
             if (!cover) cover = contextPlugin._cover;
             if (!container) container = contextPlugin._container;
     
-            if (!container || !cover || !element) return '';
+            if (!element) return '';
     
-            return !/%$/.test(element.style.width) ? element.style.width : (this.util.getNumber(container.style.width, 2) || 100) + '%';
+            return !/%$/.test(element.style.width) ? element.style.width : ((container && this.util.getNumber(container.style.width, 2)) || 100) + '%';
         },
     
         /**
@@ -927,9 +1367,9 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
             if (!cover) cover = contextPlugin._cover;
             if (!container) container = contextPlugin._container;
     
-            if (!container || !cover || !element) return '';
+            if (!container || !cover) return (element && element.style.height) || '';
     
-            return this.util.getNumber(cover.style.paddingBottom, 0) > 0 && !this.context.resizing._rotateVertical ? cover.style.height : (!/%$/.test(element.style.height) || !/%$/.test(element.style.width) ? element.style.height : (this.util.getNumber(container.style.height, 2) || 100) + '%');
+            return this.util.getNumber(cover.style.paddingBottom, 0) > 0 && !this.context.resizing._rotateVertical ? cover.style.height : (!/%$/.test(element.style.height) || !/%$/.test(element.style.width) ? element.style.height : ((container && this.util.getNumber(container.style.height, 2)) || 100) + '%');
         },
 
         /**
@@ -1100,7 +1540,7 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
     
             // align icon
             const alignList = contextResizing.alignMenuList;
-            this.util.changeElement(contextResizing.alignButton.querySelector('svg'), contextResizing.alignIcons[align]);
+            this.util.changeElement(contextResizing.alignButton.firstElementChild, contextResizing.alignIcons[align]);
             for (let i = 0, len = alignList.length; i < len; i++) {
                 if (alignList[i].getAttribute('data-value') === align) this.util.addClass(alignList[i], 'on');
                 else this.util.removeClass(alignList[i], 'on');
@@ -1131,7 +1571,6 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
                 }
             }
     
-            this._resizingName = plugin;
             this.util.toggleDisabledButtons(true, this.resizingDisabledButtons);
             this.controllersOn(contextResizing.resizeContainer, contextResizing.resizeButton, this.util.toggleDisabledButtons.bind(this, false, this.resizingDisabledButtons), targetElement, plugin);
     
@@ -1179,43 +1618,6 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
             }.bind(this);
     
             this.addDocEvent('mousedown', this.plugins.resizing._closeAlignMenu);
-        },
-    
-        /**
-         * @description Return HTML string of caption(FIGCAPTION) element
-         * @returns {String}
-         */
-        create_caption: function () {
-            const caption = this.util.createElement('FIGCAPTION');
-            caption.setAttribute('contenteditable', true);
-            caption.innerHTML = '<div>' + this.lang.dialogBox.caption + '</div>';
-            return caption;
-        },
-    
-        /**
-         * @description Cover the target element with a FIGURE element.
-         * @param {Element} element Target element
-         */
-        set_cover: function (element) {
-            const cover = this.util.createElement('FIGURE');
-            cover.appendChild(element);
-    
-            return cover;
-        },
-    
-        /**
-         * @description Create a container for the resizing component and insert the element.
-         * @param {Element} cover Cover element (FIGURE)
-         * @param {String} className Class name of container (fixed: se-component)
-         * @returns {Element} Created container element
-         */
-        set_container: function (cover, className) {
-            const container = this.util.createElement('DIV');
-            container.className = 'se-component ' + className;
-            container.setAttribute('contenteditable', false);
-            container.appendChild(cover);
-    
-            return container;
         },
     
         /**
@@ -1301,12 +1703,7 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
                     currentModule.openModify.call(this, true);
                     currentContext._captionChecked = currentContext.captionCheckEl.checked = caption;
     
-                    if (pluginName === 'image') {
-                        currentModule.update_image.call(this, false, false, false);
-                    } else if (pluginName === 'video') {
-                        this.context.dialog.updateModal = true;
-                        currentModule.submitAction.call(this);
-                    }
+                    currentModule.update_image.call(this, false, false, false);
     
                     if (caption) {
                         const captionText = this.util.getChildElement(currentContext._caption, function (current) {
@@ -1577,23 +1974,33 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
 
     if (typeof noGlobal === typeof undefined) {
         if (!window.SUNEDITOR_MODULES) {
-            window.SUNEDITOR_MODULES = {};
+            Object.defineProperty(window, 'SUNEDITOR_MODULES', {
+                enumerable: true,
+                writable: false,
+                configurable: false,
+                value: {}
+            });
         }
 
-        window.SUNEDITOR_MODULES.resizing = resizing;
+        Object.defineProperty(window.SUNEDITOR_MODULES, 'resizing', {
+            enumerable: true,
+            writable: false,
+            configurable: false,
+            value: resizing
+        });
     }
 
     return resizing;
 }));
 
 /***/ }),
-/* 5 */
+/* 7 */
 /***/ (function(module, exports) {
 
 module.exports = require("react");
 
 /***/ }),
-/* 6 */
+/* 8 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -1676,11 +2083,11 @@ __webpack_require__.r(__webpack_exports__);
     },
 
     /**
-     * @overriding core
+     * @Override core
      */
     active: function (element) {
         const targetButton = this.context.align.targetButton;
-        const target = targetButton.querySelector('svg');
+        const target = targetButton.firstElementChild;
 
         if (!element) {
             this.util.changeElement(target, this.context.align.icons.left);
@@ -1698,7 +2105,7 @@ __webpack_require__.r(__webpack_exports__);
     },
 
     /**
-     * @overriding submenu
+     * @Override submenu
      */
     on: function () {
         const alignContext = this.context.align;
@@ -1748,7 +2155,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 7 */
+/* 9 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -1814,7 +2221,7 @@ __webpack_require__.r(__webpack_exports__);
         dialog.className = 'se-dialog-content';
         dialog.style.display = 'none';
         dialog.innerHTML = '' +
-        '<form class="editor_math">' +
+        '<form>' +
             '<div class="se-dialog-header">' +
                 '<button type="button" data-command="close" class="se-btn se-dialog-close" aria-label="Close" title="' + lang.dialogBox.close + '">' +
                     this.icons.cancel +
@@ -2045,7 +2452,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 8 */
+/* 10 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2071,7 +2478,7 @@ __webpack_require__.r(__webpack_exports__);
     },
 
     /**
-     * @overriding core
+     * @Override core
      */
     active: function (element) {
         if (!element) {
@@ -2085,7 +2492,7 @@ __webpack_require__.r(__webpack_exports__);
     },
 
     /**
-     * @overriding core
+     * @Override core
      */
     action: function () {
         const currentBlockquote = this.util.getParentElement(this.getSelectionNode(), 'blockquote');
@@ -2099,7 +2506,7 @@ __webpack_require__.r(__webpack_exports__);
 });
 
 /***/ }),
-/* 9 */
+/* 11 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2175,7 +2582,7 @@ __webpack_require__.r(__webpack_exports__);
     },
 
      /**
-     * @overriding core
+     * @Override core
      */
     active: function (element) {
         const target = this.context.font.targetText;
@@ -2196,7 +2603,7 @@ __webpack_require__.r(__webpack_exports__);
     },
 
      /**
-     * @overriding submenu
+     * @Override submenu
      */
     on: function () {
         const fontContext = this.context.font;
@@ -2238,12 +2645,12 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 10 */
+/* 12 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _modules_colorPicker__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(3);
+/* harmony import */ var _modules_colorPicker__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(5);
 /*
  * wysiwyg web editor
  *
@@ -2297,7 +2704,7 @@ __webpack_require__.r(__webpack_exports__);
     },
 
      /**
-     * @overriding submenu
+     * @Override submenu
      */
     on: function () {
         const contextPicker = this.context.colorPicker;
@@ -2312,7 +2719,7 @@ __webpack_require__.r(__webpack_exports__);
     },
 
      /**
-     * @overriding _colorPicker
+     * @Override _colorPicker
      */
     onChangeInput: function (e) {
         this.plugins.colorPicker.setCurrentColor.call(this, e.target.value);
@@ -2347,7 +2754,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 11 */
+/* 13 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2411,7 +2818,7 @@ __webpack_require__.r(__webpack_exports__);
     },
 
      /**
-     * @overriding core
+     * @Override core
      */
     active: function (element) {
         if (!element) {
@@ -2425,7 +2832,7 @@ __webpack_require__.r(__webpack_exports__);
     },
 
      /**
-     * @overriding submenu
+     * @Override submenu
      */
     on: function () {
         const fontSizeContext = this.context.fontSize;
@@ -2467,7 +2874,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 12 */
+/* 14 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2548,7 +2955,7 @@ __webpack_require__.r(__webpack_exports__);
     },
 
      /**
-     * @overriding core
+     * @Override core
      */
     active: function (element) {
         let formatTitle = this.lang.toolbar.formats;
@@ -2584,7 +2991,7 @@ __webpack_require__.r(__webpack_exports__);
     },
 
      /**
-     * @overriding submenu
+     * @Override submenu
      */
     on: function () {
         const formatContext = this.context.formatBlock;
@@ -2746,12 +3153,12 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 13 */
+/* 15 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _modules_colorPicker__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(3);
+/* harmony import */ var _modules_colorPicker__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(5);
 /*
  * wysiwyg web editor
  *
@@ -2806,7 +3213,7 @@ __webpack_require__.r(__webpack_exports__);
     },
 
      /**
-     * @overriding submenu
+     * @Override submenu
      */
     on: function () {
         const contextPicker = this.context.colorPicker;
@@ -2821,7 +3228,7 @@ __webpack_require__.r(__webpack_exports__);
     },
 
      /**
-     * @overriding _colorPicker
+     * @Override _colorPicker
      */
     onChangeInput: function (e) {
         this.plugins.colorPicker.setCurrentColor.call(this, e.target.value);
@@ -2856,7 +3263,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 14 */
+/* 16 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2950,7 +3357,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 15 */
+/* 17 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -3019,7 +3426,7 @@ __webpack_require__.r(__webpack_exports__);
     },
 
      /**
-     * @overriding submenu
+     * @Override submenu
      */
     on: function () {
         const lineHeightContext = this.context.lineHeight;
@@ -3061,7 +3468,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 16 */
+/* 18 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -3128,11 +3535,11 @@ __webpack_require__.r(__webpack_exports__);
     },
 
      /**
-     * @overriding core
+     * @Override core
      */
     active: function (element) {
         const button = this.context.list.targetButton;
-        const icon = button.querySelector('svg');
+        const icon = button.firstElementChild;
         const util = this.util;
 
         if (!element) {
@@ -3156,7 +3563,7 @@ __webpack_require__.r(__webpack_exports__);
     },
 
      /**
-     * @overriding submenu
+     * @Override submenu
      */
     on: function () {
         const listContext = this.context.list;
@@ -3512,7 +3919,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 17 */
+/* 19 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -3602,7 +4009,7 @@ __webpack_require__.r(__webpack_exports__);
     },
 
      /**
-     * @overriding submenu
+     * @Override submenu
      */
     on: function () {
         const paragraphContext = this.context.paragraphStyle;
@@ -3653,7 +4060,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 18 */
+/* 20 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -3680,6 +4087,7 @@ __webpack_require__.r(__webpack_exports__);
             _tableXY: [],
             _maxWidth: true,
             _fixedColumn: false,
+            cellControllerTop: context.options.tableCellControllerPosition === 'top',
             resizeText: null,
             headerButton: null,
             mergeButton: null,
@@ -3719,7 +4127,7 @@ __webpack_require__.r(__webpack_exports__);
         tableController.addEventListener('mousedown', function (e) { e.stopPropagation(); }, false);
 
         /** set resizing */
-        let resizeDiv = this.setController_tableEditor.call(core);
+        let resizeDiv = this.setController_tableEditor.call(core, context.table.cellControllerTop);
         context.table.resizeDiv = resizeDiv;
         context.table.splitMenu = resizeDiv.querySelector('.se-btn-group-sub');
         context.table.mergeButton = resizeDiv.querySelector('._se_table_merge_button');
@@ -3790,14 +4198,13 @@ __webpack_require__.r(__webpack_exports__);
         return tableResize;
     },
 
-    setController_tableEditor: function () {
+    setController_tableEditor: function (cellControllerTop) {
         const lang = this.lang;
         const icons = this.icons;
         const tableResize = this.util.createElement('DIV');
 
         tableResize.className = 'se-controller se-controller-table-cell';
-        tableResize.innerHTML = '' +
-            '<div class="se-arrow se-arrow-up"></div>' +
+        tableResize.innerHTML = (cellControllerTop ? '' : '<div class="se-arrow se-arrow-up"></div>') +
             '<div class="se-btn-group">' +
                 '<button type="button" data-command="insert" data-value="row" data-option="up" class="se-btn se-tooltip _se_table_insert_row_a">' +
                     icons.insert_row_above +
@@ -3964,26 +4371,23 @@ __webpack_require__.r(__webpack_exports__);
     /** table edit controller */
     call_controller_tableEdit: function (tdElement) {
         const tablePlugin = this.plugins.table;
+        const contextTable = this.context.table;
 
         if (!this.getSelection().isCollapsed && !tablePlugin._selectedCell) {
             this.controllersOff();
             this.util.removeClass(tdElement, 'se-table-selected-cell');
             return;
         }
-        
-        const contextTable = this.context.table;
-        const tableController = contextTable.tableController;
-        
-        tablePlugin.setPositionControllerDiv.call(this, tdElement, tablePlugin._shift);
 
-        const tableElement = contextTable._element;
+        const tableElement = contextTable._element || this.plugins.table._selectedTable || this.util.getParentElement(tdElement, 'TABLE');
+        tablePlugin.setPositionControllerTop.call(this, tableElement);
         contextTable._maxWidth = this.util.hasClass(tableElement, 'se-table-size-100') || tableElement.style.width === '100%' || (!tableElement.style.width && !this.util.hasClass(tableElement, 'se-table-size-auto'));
         contextTable._fixedColumn = this.util.hasClass(tableElement, 'se-table-layout-fixed') || tableElement.style.tableLayout === 'fixed';
         tablePlugin.setTableStyle.call(this, contextTable._maxWidth ? 'width|column' : 'width');
 
-        tablePlugin.setPositionControllerTop.call(this, tableElement);
-
-        if (!tablePlugin._shift) this.controllersOn(contextTable.resizeDiv, tableController, tablePlugin.init.bind(this), tdElement, 'table');
+        tablePlugin.setPositionControllerDiv.call(this, tdElement, tablePlugin._shift);
+        
+        if (!tablePlugin._shift) this.controllersOn(contextTable.resizeDiv, contextTable.tableController, tablePlugin.init.bind(this), tdElement, 'table');
     },
 
     setPositionControllerTop: function (tableElement) {
@@ -3999,20 +4403,29 @@ __webpack_require__.r(__webpack_exports__);
         const resizeDiv = contextTable.resizeDiv;
         
         this.plugins.table.setCellInfo.call(this, tdElement, reset);
-
+        
+        resizeDiv.style.visibility = 'hidden';
         resizeDiv.style.display = 'block';
 
-        const offset = this.util.getOffset(tdElement, this.context.element.wysiwygFrame);
-        resizeDiv.style.left = (offset.left - this.context.element.wysiwygFrame.scrollLeft) + 'px';
-        resizeDiv.style.top = (offset.top + tdElement.offsetHeight + 12) + 'px';
-
-        const overLeft = this.context.element.wysiwygFrame.offsetWidth - (resizeDiv.offsetLeft + resizeDiv.offsetWidth);
-        if (overLeft < 0) {
-            resizeDiv.style.left = (resizeDiv.offsetLeft + overLeft) + 'px';
-            resizeDiv.firstElementChild.style.left = (20 - overLeft) + 'px';
+        if (contextTable.cellControllerTop) {
+            const offset = this.util.getOffset(contextTable._element, this.context.element.wysiwygFrame);
+            resizeDiv.style.top = (offset.top - resizeDiv.offsetHeight - 2) + 'px';
+            resizeDiv.style.left = (offset.left + contextTable.tableController.offsetWidth) + 'px';
         } else {
-            resizeDiv.firstElementChild.style.left = '20px';
+            const offset = this.util.getOffset(tdElement, this.context.element.wysiwygFrame);
+            resizeDiv.style.left = (offset.left - this.context.element.wysiwygFrame.scrollLeft) + 'px';
+            resizeDiv.style.top = (offset.top + tdElement.offsetHeight + 12) + 'px';
+    
+            const overLeft = this.context.element.wysiwygFrame.offsetWidth - (resizeDiv.offsetLeft + resizeDiv.offsetWidth);
+            if (overLeft < 0) {
+                resizeDiv.style.left = (resizeDiv.offsetLeft + overLeft) + 'px';
+                resizeDiv.firstElementChild.style.left = (20 - overLeft) + 'px';
+            } else {
+                resizeDiv.firstElementChild.style.left = '20px';
+            }
         }
+
+        resizeDiv.style.visibility = '';
     },
 
     setCellInfo: function (tdElement, reset) {
@@ -4740,7 +5153,7 @@ __webpack_require__.r(__webpack_exports__);
         let icon, span, sizeIcon, text;
 
         if (styles.indexOf('width') > -1) {
-            icon =  contextTable.resizeButton.querySelector('svg');
+            icon =  contextTable.resizeButton.firstElementChild;
             span = contextTable.resizeText;
 
             if (!contextTable._maxWidth) {
@@ -5029,7 +5442,6 @@ __webpack_require__.r(__webpack_exports__);
         }
 
         this._wd.addEventListener('mouseup', tablePlugin._bindOffSelect, false);
-
         tablePlugin._initBind = tablePlugin.init.bind(this);
         this._wd.addEventListener('touchmove', tablePlugin._initBind, false);
     },
@@ -5101,7 +5513,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 19 */
+/* 21 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -5177,7 +5589,7 @@ __webpack_require__.r(__webpack_exports__);
 });
 
 /***/ }),
-/* 20 */
+/* 22 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -5276,7 +5688,7 @@ __webpack_require__.r(__webpack_exports__);
     },
 
      /**
-     * @overriding submenu
+     * @Override submenu
      */
     on: function () {
         const util = this.util;
@@ -5347,15 +5759,19 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 21 */
+/* 23 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _modules_dialog__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(1);
 /* harmony import */ var _modules_dialog__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_modules_dialog__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _modules_resizing__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(4);
-/* harmony import */ var _modules_resizing__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_modules_resizing__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var _modules_component__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(2);
+/* harmony import */ var _modules_component__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_modules_component__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var _modules_resizing__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(6);
+/* harmony import */ var _modules_resizing__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(_modules_resizing__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var _modules_fileManager__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(3);
+/* harmony import */ var _modules_fileManager__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(_modules_fileManager__WEBPACK_IMPORTED_MODULE_3__);
 /*
  * wysiwyg web editor
  *
@@ -5368,30 +5784,32 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
+
+
 /* harmony default export */ __webpack_exports__["default"] = ({
     name: 'image',
     display: 'dialog',
     add: function (core) {
-        core.addModule([_modules_dialog__WEBPACK_IMPORTED_MODULE_0___default.a, _modules_resizing__WEBPACK_IMPORTED_MODULE_1___default.a]);
+        core.addModule([_modules_dialog__WEBPACK_IMPORTED_MODULE_0___default.a, _modules_component__WEBPACK_IMPORTED_MODULE_1___default.a, _modules_resizing__WEBPACK_IMPORTED_MODULE_2___default.a, _modules_fileManager__WEBPACK_IMPORTED_MODULE_3___default.a]);
         
         const context = core.context;
         const contextImage = context.image = {
-            _imagesInfo: [],
-            _imageIndex: 0,
+            _infoList: [], // @Override fileManager
+            _infoIndex: 0, // @Override fileManager
+            _uploadFileLength: 0, // @Override fileManager
             sizeUnit: context.option._imageSizeUnit,
             _altText: '',
             _linkElement: null,
             _linkValue: '',
             _align: 'none',
             _floatClassRegExp: '__se__float\\-[a-z]+',
-            _uploadFileLength: 0,
-            _xmlHttp: null,
-            // @overriding resizing properties
+            // @require @Override component
+            _element: null,
+            _cover: null,
+            _container: null,
+            // @Override resizing properties
             inputX: null,
             inputY: null,
-            _container: null,
-            _cover: null,
-            _element: null,
             _element_w: 1,
             _element_h: 1,
             _element_l: 0,
@@ -5419,7 +5837,7 @@ __webpack_require__.r(__webpack_exports__);
         contextImage.modal = image_dialog;
         contextImage.imgInputFile = image_dialog.querySelector('._se_image_file');
         contextImage.imgUrlFile = image_dialog.querySelector('.se-input-url');
-        contextImage.focusElement = (contextImage.imgInputFile || contextImage.imgUrlFile);
+        contextImage.focusElement = contextImage.imgInputFile || contextImage.imgUrlFile;
         contextImage.altText = image_dialog.querySelector('._se_image_alt');
         contextImage.imgLink = image_dialog.querySelector('._se_image_link');
         contextImage.imgLinkNewWindowCheck = image_dialog.querySelector('._se_image_link_check');
@@ -5428,7 +5846,7 @@ __webpack_require__.r(__webpack_exports__);
         /** add event listeners */
         image_dialog.querySelector('.se-dialog-tabs').addEventListener('click', this.openTab.bind(core));
         image_dialog.querySelector('.se-btn-primary').addEventListener('click', this.submit.bind(core));
-        image_dialog.querySelector('.se-dialog-files-remove').addEventListener('click', this._removeSelectedFiles.bind(core, contextImage.imgInputFile, contextImage.imgUrlFile));
+        if (contextImage.imgInputFile) image_dialog.querySelector('.se-dialog-files-edge-button').addEventListener('click', this._removeSelectedFiles.bind(core, contextImage.imgInputFile, contextImage.imgUrlFile));
         if (contextImage.imgInputFile && contextImage.imgUrlFile) contextImage.imgInputFile.addEventListener('change', this._fileInputChange.bind(contextImage));
         
         contextImage.proportion = {};
@@ -5478,30 +5896,30 @@ __webpack_require__.r(__webpack_exports__);
                 '<button type="button" class="_se_tab_link active" data-tab-link="image">' + lang.toolbar.image + '</button>' +
                 '<button type="button" class="_se_tab_link" data-tab-link="url">' + lang.toolbar.link + '</button>' +
             '</div>' +
-            '<form class="editor_image" method="post" enctype="multipart/form-data">' +
+            '<form method="post" enctype="multipart/form-data">' +
                 '<div class="_se_tab_content _se_tab_content_image">' +
                     '<div class="se-dialog-body"><div style="border-bottom: 1px dashed #ccc;">';
-
-            if (option.imageFileInput) {
-                html += '' +
-                        '<div class="se-dialog-form">' +
-                            '<label>' + lang.dialogBox.imageBox.file + '</label>' +
-                            '<div class="se-dialog-form-files">' +
-                                '<input class="se-input-form _se_image_file" type="file" accept="image/*" multiple="multiple" />' +
-                                '<button type="button" data-command="filesRemove" class="se-btn se-dialog-files-remove" title="' + lang.controller.remove + '">' + this.icons.cancel + '</button>' +
-                            '</div>' +
-                        '</div>' ;
-            }
-
-            if (option.imageUrlInput) {
-                html += '' +
-                        '<div class="se-dialog-form">' +
-                            '<label>' + lang.dialogBox.imageBox.url + '</label>' +
-                            '<input class="se-input-form se-input-url" type="text" />' +
-                        '</div>';
-            }
-
-            html += '</div>' +
+                    
+                    if (option.imageFileInput) {
+                        html += '' +
+                            '<div class="se-dialog-form">' +
+                                '<label>' + lang.dialogBox.imageBox.file + '</label>' +
+                                '<div class="se-dialog-form-files">' +
+                                    '<input class="se-input-form _se_image_file" type="file" accept="image/*" multiple="multiple" />' +
+                                    '<button type="button" data-command="filesRemove" class="se-btn se-dialog-files-edge-button" title="' + lang.controller.remove + '">' + this.icons.cancel + '</button>' +
+                                '</div>' +
+                            '</div>' ;
+                    }
+        
+                    if (option.imageUrlInput) {
+                        html += '' +
+                            '<div class="se-dialog-form">' +
+                                '<label>' + lang.dialogBox.imageBox.url + '</label>' +
+                                '<input class="se-input-form se-input-url" type="text" />' +
+                            '</div>';
+                    }
+        
+                    html += '</div>' +
                         '<div class="se-dialog-form">' +
                             '<label>' + lang.dialogBox.imageBox.altText + '</label><input class="se-input-form _se_image_alt" type="text" />' +
                         '</div>';
@@ -5574,7 +5992,60 @@ __webpack_require__.r(__webpack_exports__);
     },
 
     /**
-     * @overriding dialog
+     * @Override @Required fileManager
+     */
+    fileTags: ['img'],
+
+    /**
+     * @Override core, fileManager, resizing
+     */
+    select: function (element) {
+        this.plugins.image.onModifyMode.call(this, element, this.plugins.resizing.call_controller_resize.call(this, element, 'image'));
+    },
+
+    /**
+     * @Override fileManager, resizing
+     */
+    destroy: function (element) {
+        const imageEl = element || this.context.image._element;
+        const imageContainer = this.util.getParentElement(imageEl, this.util.isMediaComponent) || imageEl;
+        const dataIndex = imageEl.getAttribute('data-index') * 1;
+        let focusEl = (imageContainer.previousElementSibling || imageContainer.nextElementSibling);
+        
+        const emptyDiv = imageContainer.parentNode;
+        this.util.removeItem(imageContainer);
+        this.plugins.image.init.call(this);
+        this.controllersOff();
+
+        if (emptyDiv !== this.context.element.wysiwyg) this.util.removeItemAllParents(emptyDiv, function (current) { return current.childNodes.length === 0; }, null);
+
+        // focus
+        this.focusEdge(focusEl);
+        
+        // event
+        this.plugins.fileManager.deleteInfo.call('image', dataIndex, this.functions.onImageUpload);
+
+        // history stack
+        this.history.push(false);
+    },
+
+    /**
+     * @Required @Override dialog
+     */
+    on: function (update) {
+        const contextImage = this.context.image;
+        
+        if (!update) {
+            contextImage.inputX.value = contextImage._origin_w = this.context.option.imageWidth === contextImage._defaultSizeX ? '' : this.context.option.imageWidth;
+            contextImage.inputY.value = contextImage._origin_h = this.context.option.imageHeight === contextImage._defaultSizeY ? '' : this.context.option.imageHeight;
+            if (contextImage.imgInputFile) contextImage.imgInputFile.setAttribute('multiple', 'multiple');
+        } else {
+            if (contextImage.imgInputFile) contextImage.imgInputFile.removeAttribute('multiple');
+        }
+    },
+
+    /**
+     * @Required @Override dialog
      */
     open: function () {
         this.plugins.dialog.open.call(this, 'image', 'image' === this.currentControllerName);
@@ -5619,146 +6090,147 @@ __webpack_require__.r(__webpack_exports__);
         return false;
     },
 
-    submitAction: function (fileList) {
-        if (fileList.length > 0) {
-            let fileSize = 0;
-            const files = [];
-            for (let i = 0, len = fileList.length; i < len; i++) {
-                if (/image/i.test(fileList[i].type)) {
-                    files.push(fileList[i]);
-                    fileSize += fileList[i].size;
-                }
-            }
+    submit: function (e) {
+        const contextImage = this.context.image;
+        const imagePlugin = this.plugins.image;
 
-            const limitSize = this.context.option.imageUploadSizeLimit;
-            if (limitSize > 0) {
-                let infoSize = 0;
-                const imagesInfo = this.context.image._imagesInfo;
-                for (let i = 0, len = imagesInfo.length; i < len; i++) {
-                    infoSize += imagesInfo[i].size * 1;
-                }
+        e.preventDefault();
+        e.stopPropagation();
 
-                if ((fileSize + infoSize) > limitSize) {
-                    const err = '[SUNEDITOR.imageUpload.fail] Size of uploadable total images: ' + (limitSize/1000) + 'KB';
-                    if (this._imageUploadError(err, {
-                        'limitSize': limitSize,
-                        'currentSize': infoSize,
-                        'uploadSize': fileSize
-                    })) {
-                        this.functions.noticeOpen(err);
-                    }
+        contextImage._linkValue = contextImage.imgLink.value;
+        contextImage._altText = contextImage.altText.value;
+        contextImage._align = contextImage.modal.querySelector('input[name="suneditor_image_radio"]:checked').value;
+        contextImage._captionChecked = contextImage.captionCheckEl.checked;
+        if (contextImage._resizing) contextImage._proportionChecked = contextImage.proportion.checked;
 
-                    this.closeLoading();
-                    return;
-                }
-            }
-
-            const contextImage = this.context.image;
-            contextImage._uploadFileLength = files.length;
-            const imageUploadUrl = this.context.option.imageUploadUrl;
-            const imageUploadHeader = this.context.option.imageUploadHeader;
-            const filesLen = this.context.dialog.updateModal ? 1 : files.length;
-
-            const info = {
-                linkValue: contextImage._linkValue,
-                linkNewWindow: contextImage.imgLinkNewWindowCheck.checked,
-                inputWidth: contextImage.inputX.value,
-                inputHeight: contextImage.inputY.value,
-                align: contextImage._align,
-                isUpdate: this.context.dialog.updateModal,
-                currentImage: contextImage._element
-            };
-
-            if (!this._imageUploadBefore(files, info)) return;
-
-            if (typeof imageUploadUrl === 'string' && imageUploadUrl.length > 0) {
-                const formData = new FormData();
-
-                for (let i = 0; i < filesLen; i++) {
-                    formData.append('file-' + i, files[i]);
-                }
-
-                contextImage._xmlHttp = this.util.getXMLHttpRequest();
-                contextImage._xmlHttp.onreadystatechange = this.plugins.image.callBack_imgUpload.bind(this, info);
-                contextImage._xmlHttp.open('post', imageUploadUrl, true);
-                if(imageUploadHeader !== null && typeof imageUploadHeader === 'object' && this._w.Object.keys(imageUploadHeader).length > 0){
-                    for(let key in imageUploadHeader){
-                        contextImage._xmlHttp.setRequestHeader(key, imageUploadHeader[key]);
-                    }
-                }
-                contextImage._xmlHttp.send(formData);
-            }
-            else {
-                for (let i = 0; i < filesLen; i++) {
-                    this.plugins.image.setup_reader.call(this, files[i], info.linkValue, info.linkNewWindow, info.inputWidth, info.inputHeight, info.align, i, filesLen - 1);
-                }
-            }
-        }
-    },
-
-    onRender_imgInput: function () {
         try {
-            this.plugins.image.submitAction.call(this, this.context.image.imgInputFile.files);
-        } catch (e) {
-            throw Error('[SUNEDITOR.imageUpload.fail] cause : "' + e.message + '"');
-        } finally {
-            this.closeLoading();
-        }
-    },
-
-    setup_reader: function (file, imgLinkValue, newWindowCheck, width, height, align, index, filesLen) {
-        const reader = new FileReader();
-        
-        if (this.context.dialog.updateModal) {
-            this.context.image._element.setAttribute('data-file-name', file.name);
-            this.context.image._element.setAttribute('data-file-size', file.size);
-        }
-
-        reader.onload = function (update, updateElement, file) {
-            try {
-                this.context.image.inputX.value = width;
-                this.context.image.inputY.value = height;
-                if (update) this.plugins.image.update_src.call(this, reader.result, updateElement, file);
-                else this.plugins.image.create_image.call(this, reader.result, imgLinkValue, newWindowCheck, width, height, align, file);
-
-                if (index === filesLen) this.closeLoading();
-            } catch (e) {
-                this.closeLoading();
-                throw Error('[SUNEDITOR.imageFileRendering.fail] cause : "' + e.message + '"');
+            if (this.context.dialog.updateModal) {
+                imagePlugin.update_image.call(this, false, false, false);
             }
-        }.bind(this, this.context.dialog.updateModal, this.context.image._element, file);
+            
+            if (contextImage.imgInputFile && contextImage.imgInputFile.files.length > 0) {
+                imagePlugin.submitAction.call(this, this.context.image.imgInputFile.files);
+            } else if (contextImage.imgUrlFile && contextImage.imgUrlFile.value.trim().length > 0) {
+                imagePlugin.onRender_imgUrl.call(this);
+            }
+        } catch (error) {
+            throw Error('[SUNEDITOR.image.submit.fail] cause : "' + error.message + '"');
+        } finally {
+            this.plugins.dialog.close.call(this);
+        }
 
-        reader.readAsDataURL(file);
+        return false;
     },
 
-    callBack_imgUpload: function (info) {
-        if (this.context.image._xmlHttp.readyState === 4) {
-            if (this.context.image._xmlHttp.status === 200) {
-                
-                if (!this._imageUploadHandler(this.context.image._xmlHttp, info)) {
-                    const response = JSON.parse(this.context.image._xmlHttp.responseText);
+    submitAction: function (fileList) {
+        if (fileList.length === 0) return;
 
-                    if (response.errorMessage) {
-                        if (this._imageUploadError(response.errorMessage, response.result)) {
-                            this.functions.noticeOpen(response.errorMessage);
-                        }
+        let fileSize = 0;
+        const files = [];
+        for (let i = 0, len = fileList.length; i < len; i++) {
+            if (/image/i.test(fileList[i].type)) {
+                files.push(fileList[i]);
+                fileSize += fileList[i].size;
+            }
+        }
+
+        const limitSize = this.context.option.imageUploadSizeLimit;
+        if (limitSize > 0) {
+            let infoSize = 0;
+            const imagesInfo = this.context.image._infoList;
+            for (let i = 0, len = imagesInfo.length; i < len; i++) {
+                infoSize += imagesInfo[i].size * 1;
+            }
+
+            if ((fileSize + infoSize) > limitSize) {
+                const err = '[SUNEDITOR.imageUpload.fail] Size of uploadable total images: ' + (limitSize/1000) + 'KB';
+                if (this.functions.onImageUploadError !== 'function' || this.functions.onImageUploadError(err, { 'limitSize': limitSize, 'currentSize': infoSize, 'uploadSize': fileSize }, this)) {
+                    this.functions.noticeOpen(err);
+                }
+                return;
+            }
+        }
+
+        const contextImage = this.context.image;
+        contextImage._uploadFileLength = files.length;
+        const imageUploadUrl = this.context.option.imageUploadUrl;
+        const filesLen = this.context.dialog.updateModal ? 1 : files.length;
+
+        const info = {
+            linkValue: contextImage._linkValue,
+            linkNewWindow: contextImage.imgLinkNewWindowCheck.checked,
+            inputWidth: contextImage.inputX.value,
+            inputHeight: contextImage.inputY.value,
+            align: contextImage._align,
+            isUpdate: this.context.dialog.updateModal,
+            element: contextImage._element
+        };
+
+        if (typeof this.functions.onImageUploadBefore === 'function' && !this.functions.onImageUploadBefore(files, info, this)) return;
+
+        // server upload
+        if (typeof imageUploadUrl === 'string' && imageUploadUrl.length > 0) {
+            const formData = new FormData();
+            for (let i = 0; i < filesLen; i++) {
+                formData.append('file-' + i, files[i]);
+            }
+            this.plugins.fileManager.upload.call(this, imageUploadUrl, this.context.option.imageUploadHeader, formData, this.plugins.image.callBack_imgUpload.bind(this, info), this.functions.onImageUploadError);
+        } else { // base64
+            this.plugins.image.setup_reader.call(this, files, info.linkValue, info.linkNewWindow, info.inputWidth, info.inputHeight, info.align, filesLen - 1, info.isUpdate);
+        }
+    },
+
+    callBack_imgUpload: function (info, xmlHttp) {
+        if (typeof this.functions.imageUploadHandler === 'function') {
+            this.functions.imageUploadHandler(xmlHttp, info, this);
+        } else {
+            const response = JSON.parse(xmlHttp.responseText);
+
+            if (response.errorMessage) {
+                if (this.functions.onImageUploadError !== 'function' || this.functions.onImageUploadError(response.errorMessage, response, this)) {
+                    this.functions.noticeOpen(response.errorMessage);
+                }
+            } else {
+                const fileList = response.result;
+                for (let i = 0, len = fileList.length, file; i < len; i++) {
+                    file = { name: fileList[i].name, size: fileList[i].size };
+                    if (info.isUpdate) {
+                        this.plugins.image.update_src.call(this, fileList[i].url, info.element, file);
+                        break;
                     } else {
-                        const fileList = response.result;
-                        for (let i = 0, len = fileList.length, file; i < len; i++) {
-                            file = {name: fileList[i].name, size: fileList[i].size};
-                            if (info.isUpdate) this.plugins.image.update_src.call(this, fileList[i].url, info.currentImage, file);
-                            else this.plugins.image.create_image.call(this, fileList[i].url, info.linkValue, info.linkNewWindow, info.inputWidth, info.inputHeight, info.align, file);
-                        }
+                        this.plugins.image.create_image.call(this, fileList[i].url, info.linkValue, info.linkNewWindow, info.inputWidth, info.inputHeight, info.align, file);
                     }
                 }
+            }
+        }
+    },
 
-                this.closeLoading();
+    setup_reader: function (files, imgLinkValue, newWindowCheck, width, height, align, filesLen, isUpdate) {
+        try {
+            const reader = new FileReader();
+    
+            for (let i = 0, file; i <= filesLen; i++) {
+                file = files[i];
+    
+                if (isUpdate) {
+                    this.context.image._element.setAttribute('data-file-name', file.name);
+                    this.context.image._element.setAttribute('data-file-size', file.size);
+                }
+        
+                reader.onload = function (update, updateElement, file) {
+                    this.context.image.inputX.value = width;
+                    this.context.image.inputY.value = height;
+                    if (update) this.plugins.image.update_src.call(this, reader.result, updateElement, file);
+                    else this.plugins.image.create_image.call(this, reader.result, imgLinkValue, newWindowCheck, width, height, align, file);
+    
+                    if (i === filesLen) this.closeLoading();
+                }.bind(this, isUpdate, this.context.image._element, file);
+        
+                reader.readAsDataURL(file);
             }
-            // error
-            else {
-                this.closeLoading();
-                throw Error('[SUNEDITOR.imageUpload.fail] status: ' + this.context.image._xmlHttp.status + ', responseText: ' + this.context.image._xmlHttp.responseText);
-            }
+        } catch (e) {
+            this.closeLoading();
+            throw Error('[SUNEDITOR.image.setup_reader.fail] cause : "' + e.message + '"');
         }
     },
 
@@ -5767,11 +6239,12 @@ __webpack_require__.r(__webpack_exports__);
         if (contextImage.imgUrlFile.value.trim().length === 0) return false;
 
         try {
+            this.showLoading();
             const file = {name: contextImage.imgUrlFile.value.split('/').pop(), size: 0};
             if (this.context.dialog.updateModal) this.plugins.image.update_src.call(this, contextImage.imgUrlFile.value, contextImage._element, file);
             else this.plugins.image.create_image.call(this, contextImage.imgUrlFile.value, contextImage._linkValue, contextImage.imgLinkNewWindowCheck.checked, contextImage.inputX.value, contextImage.inputY.value, contextImage._align, file);
         } catch (e) {
-            throw Error('[SUNEDITOR.imageURLRendering.fail] cause : "' + e.message + '"');
+            throw Error('[SUNEDITOR.image.URLRendering.fail] cause : "' + e.message + '"');
         } finally {
             this.closeLoading();
         }
@@ -5793,7 +6266,7 @@ __webpack_require__.r(__webpack_exports__);
     },
 
     /**
-     * @overriding resizing
+     * @Override resizing
      * @param {String} xy 'x': width, 'y': height
      * @param {KeyboardEvent} e Event object
      */
@@ -5807,208 +6280,32 @@ __webpack_require__.r(__webpack_exports__);
     },
 
     /**
-     * @overriding resizing
+     * @Override resizing
      */
     setRatio: function () {
         this.plugins.resizing._module_setRatio.call(this, this.context.image);
     },
 
-    submit: function (e) {
-        const contextImage = this.context.image;
+    /**
+     * @Override fileManager
+     */
+    checkFileInfo: function () {
         const imagePlugin = this.plugins.image;
-        this.showLoading();
 
-        e.preventDefault();
-        e.stopPropagation();
-
-        contextImage._linkValue = contextImage.imgLink.value;
-        contextImage._altText = contextImage.altText.value;
-        contextImage._align = contextImage.modal.querySelector('input[name="suneditor_image_radio"]:checked').value;
-        contextImage._captionChecked = contextImage.captionCheckEl.checked;
-        if (contextImage._resizing) contextImage._proportionChecked = contextImage.proportion.checked;
-
-        try {
-            if (this.context.dialog.updateModal) {
-                imagePlugin.update_image.call(this, false, false, false);
-            }
-            
-            if (contextImage.imgInputFile && contextImage.imgInputFile.files.length > 0) {
-                imagePlugin.onRender_imgInput.call(this);
-            } else if (contextImage.imgUrlFile && contextImage.imgUrlFile.value.trim().length > 0) {
-                imagePlugin.onRender_imgUrl.call(this);
-            } else {
-                this.closeLoading();
-            }
-        } catch (error) {
-            this.closeLoading();
-            throw Error('[SUNEDITOR.image.submit.fail] cause : "' + error.message + '"');
-        } finally {
-            this.plugins.dialog.close.call(this);
-        }
-
-        return false;
-    },
-
-    setImagesInfo: function (img, file) {
-        const _resize_plugin = this.context.resizing._resize_plugin;
-        this.context.resizing._resize_plugin = 'image';
-
-        const imagesInfo = this.context.image._imagesInfo;
-        let dataIndex = img.getAttribute('data-index');
-        let info = null;
-        let state = '';
-
-        // create
-        if (!dataIndex || this._componentsInfoInit) {
-            state = 'create';
-            dataIndex = this.context.image._imageIndex++;
-
-            img.setAttribute('data-index', dataIndex);
-            img.setAttribute('data-file-name', file.name);
-            img.setAttribute('data-file-size', file.size);
-
-            info = {
-                src: img.src,
-                index: dataIndex * 1,
-                name: file.name,
-                size: file.size
-            };
-
-            imagesInfo.push(info);
-        } else { // update
-            state = 'update';
-            dataIndex *= 1;
-
-            for (let i = 0, len = imagesInfo.length; i < len; i++) {
-                if (dataIndex === imagesInfo[i].index) {
-                    info = imagesInfo[i];
-                    break;
-                }
-            }
-
-            if (!info) {
-                dataIndex = this.context.image._imageIndex++;
-                info = { index: dataIndex };
-                imagesInfo.push(info);
-            }
-
-            info.src = img.src;
-            info.name = img.getAttribute("data-file-name");
-            info.size = img.getAttribute("data-file-size") * 1;
-        }
-
-        // method bind
-        info.element = img;
-        info.delete = this.plugins.image.destroy.bind(this, img);
-        info.select = function () {
-            img.scrollIntoView(true);
-            this._w.setTimeout(function () {
-                this.plugins.image.onModifyMode.call(this, img, this.plugins.resizing.call_controller_resize.call(this, img, 'image'));
-            }.bind(this));
+        const modifyHandler = function (tag) {
+            imagePlugin.onModifyMode.call(this, tag, null);
+            imagePlugin.openModify.call(this, true);
+            imagePlugin.update_image.call(this, true, false, true);
         }.bind(this);
 
-        if (!img.getAttribute('origin-size')) {
-            img.setAttribute('origin-size', img.naturalWidth + ',' + img.naturalHeight);
-        }
-        if (!img.getAttribute('data-origin')) {
-            const container = this.util.getParentElement(img, this.util.isMediaComponent);
-            const cover = this.util.getParentElement(img, 'FIGURE');
-
-            const w = this.plugins.resizing._module_getSizeX.call(this, this.context.image, img, cover, container);
-            const h = this.plugins.resizing._module_getSizeY.call(this, this.context.image, img, cover, container);
-            img.setAttribute('data-origin', w + ',' + h);
-            img.setAttribute('data-size', w + ',' + h);
-        }
-
-        if (!img.style.width) {
-            const size = (img.getAttribute('data-size') || img.getAttribute('data-origin') || '').split(',');
-            this.plugins.image.onModifyMode.call(this, img, null);
-            this.plugins.image.applySize.call(this, (size[0] || this.context.option.imageWidth), (size[1] || this.context.option.imageHeight));
-        }
-
-        this.context.resizing._resize_plugin = _resize_plugin;
-        this._imageUpload(img, dataIndex, state, info, --this.context.image._uploadFileLength < 0 ? 0 : this.context.image._uploadFileLength);
+        this.plugins.fileManager.checkInfo.call(this, 'image', ['img'], this.functions.onImageUpload, modifyHandler, true);
     },
 
     /**
-     * @overriding core
+     * @Override fileManager
      */
-    checkComponentInfo: function () {
-        const images = [].slice.call(this.context.element.wysiwyg.getElementsByTagName('IMG'));
-        const imagePlugin = this.plugins.image;
-        const imagesInfo = this.context.image._imagesInfo;
-
-        if (images.length === imagesInfo.length) {
-            // reset
-            if (this._componentsInfoReset) {
-                for (let i = 0, len = images.length, img; i < len; i++) {
-                    img = images[i];
-                    imagePlugin.setImagesInfo.call(this, img, {
-                        'name': img.getAttribute('data-file-name') || img.src.split('/').pop(),
-                        'size': img.getAttribute('data-file-size') || 0
-                    });
-                }
-                return;
-            } else {
-                let infoUpdate = false;
-                for (let i = 0, len = imagesInfo.length, info; i < len; i++) {
-                    info = imagesInfo[i];
-                    if (images.filter(function (img) { return info.src === img.src && info.index.toString() === img.getAttribute('data-index'); }).length === 0) {
-                        infoUpdate = true;
-                        break;
-                    }
-                }
-                // pass
-                if (!infoUpdate) return;
-            }
-        }
-
-        // check images
-        const _resize_plugin = this.context.resizing._resize_plugin;
-        this.context.resizing._resize_plugin = 'image';
-        const currentImages = [];
-        const infoIndex = [];
-        for (let i = 0, len = imagesInfo.length; i < len; i++) {
-            infoIndex[i] = imagesInfo[i].index;
-        }
-        
-        for (let i = 0, len = images.length, img; i < len; i++) {
-            img = images[i];
-            if (!this.util.getParentElement(img, this.util.isMediaComponent)) {
-                currentImages.push(this.context.image._imageIndex);
-                imagePlugin.onModifyMode.call(this, img, null);
-                imagePlugin.openModify.call(this, true);
-                imagePlugin.update_image.call(this, true, false, true);
-            } else if (!img.getAttribute('data-index') || infoIndex.indexOf(img.getAttribute('data-index') * 1) < 0) {
-                currentImages.push(this.context.image._imageIndex);
-                img.removeAttribute('data-index');
-                imagePlugin.setImagesInfo.call(this, img, {
-                    'name': img.getAttribute('data-file-name') || img.src.split('/').pop(),
-                    'size': img.getAttribute('data-file-size') || 0
-                });
-            } else {
-                currentImages.push(img.getAttribute('data-index') * 1);
-            }
-        }
-
-        for (let i = 0, dataIndex; i < imagesInfo.length; i++) {
-            dataIndex = imagesInfo[i].index;
-            if (currentImages.indexOf(dataIndex) > -1) continue;
-
-            imagesInfo.splice(i, 1);
-            this._imageUpload(null, dataIndex, 'delete', null, 0);
-            i--;
-        }
-
-        this.context.resizing._resize_plugin = _resize_plugin;
-    },
-
-    /**
-     * @overriding core
-     */
-    resetComponentInfo: function () {
-        this.context.image._imagesInfo = [];
-        this.context.image._imageIndex = 0;
+    resetFileInfo: function () {
+        this.plugins.fileManager.resetInfo.call(this, 'image', this.functions.onImageUpload);
     },
 
     create_image: function (src, linkValue, linkNewWindow, width, height, align, file) {
@@ -6025,12 +6322,12 @@ __webpack_require__.r(__webpack_exports__);
             oImg.setAttribute('data-proportion', contextImage._proportionChecked);
         }
 
-        const cover = this.plugins.resizing.set_cover.call(this, oImg);
-        const container = this.plugins.resizing.set_container.call(this, cover, 'se-image-container');
+        const cover = this.plugins.component.set_cover.call(this, oImg);
+        const container = this.plugins.component.set_container.call(this, cover, 'se-image-container');
 
         // caption
         if (contextImage._captionChecked) {
-            contextImage._caption = this.plugins.resizing.create_caption.call(this);
+            contextImage._caption = this.plugins.component.create_caption.call(this);
             contextImage._caption.setAttribute('contenteditable', false);
             cover.appendChild(contextImage._caption);
         }
@@ -6046,11 +6343,7 @@ __webpack_require__.r(__webpack_exports__);
         this.plugins.image.setAlign.call(this, align, oImg, cover, container);
 
         this.insertComponent(container, true);
-        this.plugins.image.setImagesInfo.call(this, oImg, file || {
-            'name': oImg.getAttribute('data-file-name') || oImg.src.split('/').pop(),
-            'size': oImg.getAttribute('data-file-size') || 0
-        });
-
+        this.plugins.fileManager.setInfo.call(this, 'image', oImg, this.functions.onImageUpload, file, true);
         this.context.resizing._resize_plugin = '';
     },
 
@@ -6065,14 +6358,14 @@ __webpack_require__.r(__webpack_exports__);
         if (cover === null) {
             isNewContainer = true;
             imageEl = contextImage._element.cloneNode(true);
-            cover = this.plugins.resizing.set_cover.call(this, imageEl);
+            cover = this.plugins.component.set_cover.call(this, imageEl);
         }
 
         if (container === null) {
             cover = cover.cloneNode(true);
             imageEl = cover.querySelector('img');
             isNewContainer = true;
-            container = this.plugins.resizing.set_container.call(this, cover, 'se-image-container');
+            container = this.plugins.component.set_container.call(this, cover, 'se-image-container');
         } else if (isNewContainer) {
             container.innerHTML = '';
             container.appendChild(cover);
@@ -6092,15 +6385,18 @@ __webpack_require__.r(__webpack_exports__);
         imageEl.alt = contextImage._altText;
         
         // caption
+        let modifiedCaption = false;
         if (contextImage._captionChecked) {
             if (!contextImage._caption) {
-                contextImage._caption = this.plugins.resizing.create_caption.call(this);
+                contextImage._caption = this.plugins.component.create_caption.call(this);
                 cover.appendChild(contextImage._caption);
+                modifiedCaption = true;
             }
         } else {
             if (contextImage._caption) {
                 this.util.removeItem(contextImage._caption);
                 contextImage._caption = null;
+                modifiedCaption = true;
             }
         }
 
@@ -6139,7 +6435,7 @@ __webpack_require__.r(__webpack_exports__);
         }
 
         // transform
-        if (!contextImage._onlyPercentage && changeSize) {
+        if (modifiedCaption || (!contextImage._onlyPercentage && changeSize)) {
             if (!init && (/\d+/.test(imageEl.style.height) || (this.context.resizing._rotateVertical && contextImage._captionChecked))) {
                 if (/%$/.test(contextImage.inputX.value) || /%$/.test(contextImage.inputY.value)) {
                     this.plugins.resizing.resetTransform.call(this, imageEl);
@@ -6165,10 +6461,7 @@ __webpack_require__.r(__webpack_exports__);
 
         // set imagesInfo
         if (init) {
-            this.plugins.image.setImagesInfo.call(this, imageEl, {
-                'name': imageEl.getAttribute('data-file-name') || imageEl.src.split('/').pop(),
-                'size': imageEl.getAttribute('data-file-size') || 0
-            });
+            this.plugins.fileManager.setInfo.call(this, 'image', imageEl, this.functions.onImageUpload, null, true);
         }
 
         if (openController) {
@@ -6183,11 +6476,11 @@ __webpack_require__.r(__webpack_exports__);
 
     update_src: function (src, element, file) {
         element.src = src;
-        this._w.setTimeout(this.plugins.image.setImagesInfo.bind(this, element, file));
+        this._w.setTimeout(this.plugins.fileManager.setInfo.bind(this, 'image', element, this.functions.onImageUpload, file, true));
     },
 
     /**
-     * @overriding resizing
+     * @Required @Override fileManager, resizing
      */
     onModifyMode: function (element, size) {
         if (!element) return;
@@ -6219,11 +6512,11 @@ __webpack_require__.r(__webpack_exports__);
     },
 
     /**
-     * @overriding resizing
+     * @Required @Override fileManager, resizing
      */
     openModify: function (notOpen) {
         const contextImage = this.context.image;
-        contextImage.imgUrlFile.value = contextImage._element.src;
+        if (contextImage.imgUrlFile) contextImage.imgUrlFile.value = contextImage._element.src;
         contextImage._altText = contextImage.altText.value = contextImage._element.alt;
         contextImage._linkValue = contextImage.imgLink.value = contextImage._linkElement === null ? '' : contextImage._linkElement.href;
         contextImage.imgLinkNewWindowCheck.checked = contextImage._linkElement && contextImage._linkElement.target === '_blank';
@@ -6239,29 +6532,20 @@ __webpack_require__.r(__webpack_exports__);
     },
 
     /**
-     * @overriding dialog
+     * @Override resizing
      */
-    on: function (update) {
-        const contextImage = this.context.image;
-        
-        if (!update) {
-            contextImage.inputX.value = contextImage._origin_w = this.context.option.imageWidth === contextImage._defaultSizeX ? '' : this.context.option.imageWidth;
-            contextImage.inputY.value = contextImage._origin_h = this.context.option.imageHeight === contextImage._defaultSizeY ? '' : this.context.option.imageHeight;
-            if (contextImage.imgInputFile) contextImage.imgInputFile.setAttribute('multiple', 'multiple');
-        } else {
-            if (contextImage.imgInputFile) contextImage.imgInputFile.removeAttribute('multiple');
-        }
-    },
-
     sizeRevert: function () {
         this.plugins.resizing._module_sizeRevert.call(this, this.context.image);
     },
 
+    /**
+     * @Override resizing
+     */
     applySize: function (w, h) {
         const contextImage = this.context.image;
 
-        if (!w) w = contextImage.inputX.value;
-        if (!h) h = contextImage.inputY.value;
+        if (!w) w = contextImage.inputX.value || this.context.option.imageWidth;
+        if (!h) h = contextImage.inputY.value || this.context.option.imageHeight;
         
         if ((contextImage._onlyPercentage && !!w) || /%$/.test(w)) {
             this.plugins.image.setPercentSize.call(this, w, h);
@@ -6276,7 +6560,7 @@ __webpack_require__.r(__webpack_exports__);
     },
 
     /**
-     * @overriding resizing
+     * @Override resizing
      */
     setSize: function (w, h, notResetPercentage, direction) {
         const contextImage = this.context.image;
@@ -6296,7 +6580,7 @@ __webpack_require__.r(__webpack_exports__);
     },
 
     /**
-     * @overriding resizing
+     * @Override resizing
      */
     setAutoSize: function () {
         const contextImage = this.context.image;
@@ -6318,7 +6602,7 @@ __webpack_require__.r(__webpack_exports__);
     },
     
     /**
-     * @overriding resizing
+     * @Override resizing
      */
     setOriginSize: function () {
         const contextImage = this.context.image;
@@ -6344,7 +6628,7 @@ __webpack_require__.r(__webpack_exports__);
     },
 
     /**
-     * @overriding resizing
+     * @Override resizing
      */
     setPercentSize: function (w, h) {
         const contextImage = this.context.image;
@@ -6369,7 +6653,7 @@ __webpack_require__.r(__webpack_exports__);
     },
 
     /**
-     * @overriding resizing
+     * @Override resizing
      */
     cancelPercentAttr: function () {
         const contextImage = this.context.image;
@@ -6386,7 +6670,7 @@ __webpack_require__.r(__webpack_exports__);
     },
 
     /**
-     * @overriding resizing
+     * @Override resizing
      */
     setAlign: function (align, element, cover, container) {
         const contextImage = this.context.image;
@@ -6428,49 +6712,14 @@ __webpack_require__.r(__webpack_exports__);
     },
 
     /**
-     * @overriding resizing
-     */
-    destroy: function (element) {
-        const imageEl = element || this.context.image._element;
-        const imageContainer = this.util.getParentElement(imageEl, this.util.isMediaComponent) || imageEl;
-        const dataIndex = imageEl.getAttribute('data-index') * 1;
-        let focusEl = (imageContainer.previousElementSibling || imageContainer.nextElementSibling);
-        
-        const emptyDiv = imageContainer.parentNode;
-        this.util.removeItem(imageContainer);
-        this.plugins.image.init.call(this);
-        this.controllersOff();
-
-        if (emptyDiv !== this.context.element.wysiwyg) this.util.removeItemAllParents(emptyDiv, function (current) { return current.childNodes.length === 0; }, null);
-
-        // focus
-        this.focusEdge(focusEl);
-        
-        // event
-        if (dataIndex >= 0) {
-            const imagesInfo = this.context.image._imagesInfo;
-
-            for (let i = 0, len = imagesInfo.length; i < len; i++) {
-                if (dataIndex === imagesInfo[i].index) {
-                    imagesInfo.splice(i, 1);
-                    this._imageUpload(null, dataIndex, 'delete', null, 0);
-                    return;
-                }
-            }
-        }
-
-        // history stack
-        this.history.push(false);
-    },
-
-    /**
-     * @overriding dialog
+     * @Override dialog
      */
     init: function () {
         const contextImage = this.context.image;
         if (contextImage.imgInputFile) contextImage.imgInputFile.value = '';
         if (contextImage.imgUrlFile) contextImage.imgUrlFile.value = '';
         if (contextImage.imgInputFile && contextImage.imgUrlFile) contextImage.imgUrlFile.removeAttribute('disabled');
+
         contextImage.altText.value = '';
         contextImage.imgLink.value = '';
         contextImage.imgLinkNewWindowCheck.checked = false;
@@ -6492,7 +6741,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 22 */
+/* 24 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -6616,7 +6865,7 @@ __webpack_require__.r(__webpack_exports__);
     },
 
     /**
-     * @overriding dialog
+     * @Override dialog
      */
     open: function () {
         this.plugins.dialog.open.call(this, 'link', 'link' === this.currentControllerName);
@@ -6681,7 +6930,7 @@ __webpack_require__.r(__webpack_exports__);
     },
 
     /**
-     * @overriding core
+     * @Override core
      */
     active: function (element) {
         if (!element) {
@@ -6699,7 +6948,7 @@ __webpack_require__.r(__webpack_exports__);
     },
 
     /**
-     * @overriding dialog
+     * @Override dialog
      */
     on: function (update) {
         if (!update) {
@@ -6774,7 +7023,7 @@ __webpack_require__.r(__webpack_exports__);
     },
 
     /**
-     * @overriding dialog
+     * @Override dialog
      */
     init: function () {
         const contextLink = this.context.link;
@@ -6788,15 +7037,19 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 23 */
+/* 25 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _modules_dialog__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(1);
 /* harmony import */ var _modules_dialog__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_modules_dialog__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _modules_resizing__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(4);
-/* harmony import */ var _modules_resizing__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_modules_resizing__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var _modules_component__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(2);
+/* harmony import */ var _modules_component__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_modules_component__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var _modules_resizing__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(6);
+/* harmony import */ var _modules_resizing__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(_modules_resizing__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var _modules_fileManager__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(3);
+/* harmony import */ var _modules_fileManager__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(_modules_fileManager__WEBPACK_IMPORTED_MODULE_3__);
 /*
  * wysiwyg web editor
  *
@@ -6809,28 +7062,32 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
+
+
 /* harmony default export */ __webpack_exports__["default"] = ({
     name: 'video',
     display: 'dialog',
     add: function (core) {
-        core.addModule([_modules_dialog__WEBPACK_IMPORTED_MODULE_0___default.a, _modules_resizing__WEBPACK_IMPORTED_MODULE_1___default.a]);
+        core.addModule([_modules_dialog__WEBPACK_IMPORTED_MODULE_0___default.a, _modules_component__WEBPACK_IMPORTED_MODULE_1___default.a, _modules_resizing__WEBPACK_IMPORTED_MODULE_2___default.a, _modules_fileManager__WEBPACK_IMPORTED_MODULE_3___default.a]);
 
         const context = core.context;
         const contextVideo = context.video = {
-            _videosInfo: [],
-            _videoIndex: 0,
+            _infoList: [], // @Override fileManager
+            _infoIndex: 0, // @Override fileManager
+            _uploadFileLength: 0, // @Override fileManager
             sizeUnit: context.option._videoSizeUnit,
             _align: 'none',
             _floatClassRegExp: '__se__float\\-[a-z]+',
             _youtubeQuery: context.option.youtubeQuery,
             _videoRatio: (context.option.videoRatio * 100) + '%',
             _defaultRatio: (context.option.videoRatio * 100) + '%',
-            // @overriding resizing properties
+            // @require @Override component
+            _element: null,
+            _cover: null,
+            _container: null,
+            // @Override resizing properties
             inputX: null,
             inputY: null,
-            _container: null,
-            _cover: null,
-            _element: null,
             _element_w: 1,
             _element_h: 1,
             _element_l: 0,
@@ -6853,10 +7110,14 @@ __webpack_require__.r(__webpack_exports__);
         /** video dialog */
         let video_dialog = this.setDialog.call(core);
         contextVideo.modal = video_dialog;
-        contextVideo.focusElement = video_dialog.querySelector('._se_video_url');
+        contextVideo.videoInputFile = video_dialog.querySelector('._se_video_file');
+        contextVideo.videoUrlFile = video_dialog.querySelector('.se-input-url');
+        contextVideo.focusElement = contextVideo.videoUrlFile || contextVideo.videoInputFile;
 
         /** add event listeners */
         video_dialog.querySelector('.se-btn-primary').addEventListener('click', this.submit.bind(core));
+        if (contextVideo.videoInputFile) video_dialog.querySelector('.se-dialog-files-edge-button').addEventListener('click', this._removeSelectedFiles.bind(core, contextVideo.videoInputFile, contextVideo.videoUrlFile));
+        if (contextVideo.videoInputFile && contextVideo.videoUrlFile) contextVideo.videoInputFile.addEventListener('change', this._fileInputChange.bind(contextVideo));
 
         contextVideo.proportion = {};
         contextVideo.videoRatioOption = {};
@@ -6897,18 +7158,33 @@ __webpack_require__.r(__webpack_exports__);
         dialog.className = 'se-dialog-content';
         dialog.style.display = 'none';
         let html = '' +
-            '<form class="editor_video">' +
+            '<form method="post" enctype="multipart/form-data">' +
                 '<div class="se-dialog-header">' +
                     '<button type="button" data-command="close" class="se-btn se-dialog-close" aria-label="Close" title="' + lang.dialogBox.close + '">' +
                         this.icons.cancel +
                     '</button>' +
                     '<span class="se-modal-title">' + lang.dialogBox.videoBox.title + '</span>' +
                 '</div>' +
-                '<div class="se-dialog-body">' +
-                    '<div class="se-dialog-form">' +
-                        '<label>' + lang.dialogBox.videoBox.url + '</label>' +
-                        '<input class="se-input-form _se_video_url" type="text" />' +
-                    '</div>';
+                '<div class="se-dialog-body">';
+
+                if (option.videoFileInput) {
+                    html += '' +
+                        '<div class="se-dialog-form">' +
+                            '<label>' + lang.dialogBox.videoBox.file + '</label>' +
+                            '<div class="se-dialog-form-files">' +
+                                '<input class="se-input-form _se_video_file" type="file" accept="video/*" multiple="multiple" />' +
+                                '<button type="button" data-command="filesRemove" class="se-btn se-dialog-files-edge-button" title="' + lang.controller.remove + '">' + this.icons.cancel + '</button>' +
+                            '</div>' +
+                        '</div>' ;
+                }
+    
+                if (option.videoUrlInput) {
+                    html += '' +
+                        '<div class="se-dialog-form">' +
+                            '<label>' + lang.dialogBox.videoBox.url + '</label>' +
+                            '<input class="se-input-form se-input-url" type="text" />' +
+                        '</div>';
+                }
 
             if (option.videoResizing) {
                 const ratioList = option.videoRatioList || [{name: '16:9', value: 0.5625}, {name: '4:3', value: 0.75}, {name: '21:9', value: 0.4285}];
@@ -6960,8 +7236,86 @@ __webpack_require__.r(__webpack_exports__);
         return dialog;
     },
 
+    _fileInputChange: function () {
+        if (!this.videoInputFile.value) this.videoUrlFile.removeAttribute('disabled');
+        else this.videoUrlFile.setAttribute('disabled', true);
+    },
+
+    _removeSelectedFiles: function (fileInput, urlInput) {
+        fileInput.value = '';
+        if (urlInput) urlInput.removeAttribute('disabled');
+    },
+
+    createVideoTag: function () {
+        const videoTag = this.util.createElement('VIDEO');
+        videoTag.setAttribute('controls', true);
+        return videoTag;
+    },
+
+    createIframeTag: function () {
+        const iframeTag = this.util.createElement('IFRAME');
+        iframeTag.frameBorder = '0';
+        iframeTag.allowFullscreen = true;
+        return iframeTag;
+    },
+
     /**
-     * @overriding dialog
+     * @Override @Required fileManager
+     */
+    fileTags: ['iframe', 'video'],
+
+    /**
+     * @Override core, resizing, fileManager
+     */
+    select: function (element) {
+        this.plugins.video.onModifyMode.call(this, element, this.plugins.resizing.call_controller_resize.call(this, element, 'video'));
+    },
+
+    /**
+     * @Override fileManager, resizing
+     */
+    destroy: function (element) {
+        const frame = element || this.context.video._element;
+        const container = this.context.video._container;
+        const dataIndex = frame.getAttribute('data-index') * 1;
+        let focusEl = (container.previousElementSibling || container.nextElementSibling);
+
+        const emptyDiv = container.parentNode;
+        this.util.removeItem(container);
+        this.plugins.video.init.call(this);
+        this.controllersOff();
+
+        if (emptyDiv !== this.context.element.wysiwyg) this.util.removeItemAllParents(emptyDiv, function (current) { return current.childNodes.length === 0; }, null);
+
+        // focus
+        this.focusEdge(focusEl);
+
+        // event
+        this.plugins.fileManager.deleteInfo.call('video', dataIndex, this.functions.onVideoUpload);
+
+        // history stack
+        this.history.push(false);
+    },
+
+    /**
+     * @Required @Override dialog
+     */
+    on: function (update) {
+        const contextVideo = this.context.video;
+
+        if (!update) {
+            contextVideo.inputX.value = contextVideo._origin_w = this.context.option.videoWidth === contextVideo._defaultSizeX ? '' : this.context.option.videoWidth;
+            contextVideo.inputY.value = contextVideo._origin_h = this.context.option.videoHeight === contextVideo._defaultSizeY ? '' : this.context.option.videoHeight;
+            contextVideo.proportion.disabled = true;
+        }
+
+        if (contextVideo._resizing) {
+            this.plugins.video.setVideoRatioSelect.call(this, contextVideo._origin_h || contextVideo._defaultRatio);
+        }
+    },
+
+    /**
+     * @Required @Override dialog
      */
     open: function () {
         this.plugins.dialog.open.call(this, 'video', 'video' === this.currentControllerName);
@@ -6977,7 +7331,7 @@ __webpack_require__.r(__webpack_exports__);
     },
 
     /**
-     * @overriding resizing
+     * @Override resizing
      * @param {String} xy 'x': width, 'y': height
      * @param {KeyboardEvent} e Event object
      */
@@ -6996,85 +7350,202 @@ __webpack_require__.r(__webpack_exports__);
     },
 
     /**
-     * @overriding resizing
+     * @Override resizing
      */
     setRatio: function () {
         this.plugins.resizing._module_setRatio.call(this, this.context.video);
     },
 
-    submitAction: function () {
-        if (this.context.video.focusElement.value.trim().length === 0) return false;
-        this.context.resizing._resize_plugin = 'video';
-
+    submit: function (e) {
         const contextVideo = this.context.video;
-        let oIframe = null;
-        let cover = null;
-        let container = null;
-        let url = contextVideo.focusElement.value.trim();
+        const videoPlugin = this.plugins.video;
+
+        e.preventDefault();
+        e.stopPropagation();
+
         contextVideo._align = contextVideo.modal.querySelector('input[name="suneditor_video_radio"]:checked').value;
 
-        /** iframe source */
-        if (/^<iframe.*\/iframe>$/.test(url)) {
-            oIframe = (new this._w.DOMParser()).parseFromString(url, 'text/html').querySelector('iframe');
+        try {
+            if (contextVideo.videoInputFile && contextVideo.videoInputFile.files.length > 0) {
+                videoPlugin.submitAction.call(this, this.context.video.videoInputFile.files);
+            } else if (contextVideo.videoUrlFile && contextVideo.videoUrlFile.value.trim().length > 0) {
+                videoPlugin.setup_url.call(this);
+            }
+        } catch (error) {
+            throw Error('[SUNEDITOR.video.submit.fail] cause : "' + error.message + '"');
+        } finally {
+            this.plugins.dialog.close.call(this);
         }
-        /** url */
-        else {
-            oIframe = this.util.createElement('IFRAME');
-            /** youtube */
-            if (/youtu\.?be/.test(url)) {
-                if (!/^http/.test(url)) url = 'https://' + url;
-                url = url.replace('watch?v=', '');
-                if (!/^\/\/.+\/embed\//.test(url)) {
-                    url = url.replace(url.match(/\/\/.+\//)[0], '//www.youtube.com/embed/').replace('&', '?&');
-                }
 
-                if (contextVideo._youtubeQuery.length > 0) {
-                    if (/\?/.test(url)) {
-                        const splitUrl = url.split('?');
-                        url = splitUrl[0] + '?' + contextVideo._youtubeQuery + '&' + splitUrl[1];
-                    } else {
-                        url += '?' + contextVideo._youtubeQuery;
+        return false;
+    },
+
+    submitAction: function (fileList) {
+        if (fileList.length === 0) return;
+
+        let fileSize = 0;
+        const files = [];
+        for (let i = 0, len = fileList.length; i < len; i++) {
+            if (/video/i.test(fileList[i].type)) {
+                files.push(fileList[i]);
+                fileSize += fileList[i].size;
+            }
+        }
+
+        const limitSize = this.context.option.videoUploadSizeLimit;
+        if (limitSize > 0) {
+            let infoSize = 0;
+            const videosInfo = this.context.video._infoList;
+            for (let i = 0, len = videosInfo.length; i < len; i++) {
+                infoSize += videosInfo[i].size * 1;
+            }
+
+            if ((fileSize + infoSize) > limitSize) {
+                const err = '[SUNEDITOR.videoUpload.fail] Size of uploadable total videos: ' + (limitSize/1000) + 'KB';
+                if (this.functions.onVideoUploadError !== 'function' || this.functions.onVideoUploadError(err, { 'limitSize': limitSize, 'currentSize': infoSize, 'uploadSize': fileSize }, this)) {
+                    this.functions.noticeOpen(err);
+                }
+                return;
+            }
+        }
+
+        const contextVideo = this.context.video;
+        contextVideo._uploadFileLength = files.length;
+        const videoUploadUrl = this.context.option.videoUploadUrl;
+        const filesLen = this.context.dialog.updateModal ? 1 : files.length;
+
+        const info = {
+            inputWidth: contextVideo.inputX.value,
+            inputHeight: contextVideo.inputY.value,
+            align: contextVideo._align,
+            isUpdate: this.context.dialog.updateModal,
+            element: contextVideo._element
+        };
+
+        if (typeof this.functions.onVideoUploadBefore === 'function' && !this.functions.onVideoUploadBefore(files, info, this)) return;
+
+        // server upload
+        if (typeof videoUploadUrl === 'string' && videoUploadUrl.length > 0) {
+            const formData = new FormData();
+            for (let i = 0; i < filesLen; i++) {
+                formData.append('file-' + i, files[i]);
+            }
+            this.plugins.fileManager.upload.call(this, videoUploadUrl, this.context.option.videoUploadHeader, formData, this.plugins.video.callBack_videoUpload.bind(this, info), this.functions.onVideoUploadError);
+        } else {
+            throw Error('[SUNEDITOR.videoUpload.fail] cause : There is no "videoUploadUrl" option.');
+        }
+    },
+
+    callBack_videoUpload: function (info, xmlHttp) {
+        if (typeof this.functions.videoUploadHandler === 'function') {
+            this.functions.videoUploadHandler(xmlHttp, info, this);
+        } else {
+            const response = JSON.parse(xmlHttp.responseText);
+
+            if (response.errorMessage) {
+                if (this.functions.onVideoUploadError !== 'function' || this.functions.onVideoUploadError(response.errorMessage, response, this)) {
+                    this.functions.noticeOpen(response.errorMessage);
+                }
+            } else {
+                const fileList = response.result;
+                const videoTag = this.plugins.video.createVideoTag.call(this);
+
+                for (let i = 0, len = fileList.length, file; i < len; i++) {
+                    file = { name: fileList[i].name, size: fileList[i].size };
+                    this.plugins.video.create_video.call(this, (info.isUpdate ? info.element : videoTag.cloneNode(false)), fileList[i].url, info.inputWidth, info.inputHeight, info.align, file, info.isUpdate);
+                }
+            }
+        }
+    },
+
+    setup_url: function () {
+        try {
+            this.showLoading();
+            const contextVideo = this.context.video;
+            let oIframe = null;
+            let url = contextVideo.videoUrlFile.value.trim();
+
+            if (url.length === 0) return false;
+
+            /** iframe source */
+            if (/^<iframe.*\/iframe>$/.test(url)) {
+                oIframe = (new this._w.DOMParser()).parseFromString(url, 'text/html').querySelector('iframe');
+            }
+            /** url */
+            else {
+                oIframe = this.plugins.video.createIframeTag.call(this);
+                /** youtube */
+                if (/youtu\.?be/.test(url)) {
+                    if (!/^http/.test(url)) url = 'https://' + url;
+                    url = url.replace('watch?v=', '');
+                    if (!/^\/\/.+\/embed\//.test(url)) {
+                        url = url.replace(url.match(/\/\/.+\//)[0], '//www.youtube.com/embed/').replace('&', '?&');
+                    }
+
+                    if (contextVideo._youtubeQuery.length > 0) {
+                        if (/\?/.test(url)) {
+                            const splitUrl = url.split('?');
+                            url = splitUrl[0] + '?' + contextVideo._youtubeQuery + '&' + splitUrl[1];
+                        } else {
+                            url += '?' + contextVideo._youtubeQuery;
+                        }
                     }
                 }
             }
-            oIframe.src = url;
-        }
 
+            this.plugins.video.create_video.call(this, oIframe, url, contextVideo.inputX.value, contextVideo.inputY.value, contextVideo._align, null, this.context.dialog.updateModal);
+        } catch (error) {
+            throw Error('[SUNEDITOR.video.upload.fail] cause : "' + error.message + '"');
+        } finally {
+            this.closeLoading();
+        }
+    },
+
+    create_video: function (oFrame, src, width, height, align, file, isUpdate) {
+        this.context.resizing._resize_plugin = 'video';
+        const contextVideo = this.context.video;
+        
+        let cover = null;
+        let container = null;
         let init = false;
+
         /** update */
-        if (this.context.dialog.updateModal) {
-            if (contextVideo._element.src !== oIframe.src) {
-                contextVideo._element.src = oIframe.src;
+        if (isUpdate) {
+            oFrame = contextVideo._element;
+            if (oFrame.src !== src) {
                 init = true;
+                const isYoutube = /youtu\.?be/.test(src);
+                if ((isYoutube && !/^iframe$/i.test(oFrame.nodeName)) || (!isYoutube && !/^videoo$/i.test(oFrame.nodeName))) {
+                    const newTag = isYoutube ? this.plugins.video.createIframeTag.call(this) : this.plugins.video.createVideoTag.call(this);
+                    newTag.src = src;
+                    oFrame.parentNode.replaceChild(newTag, oFrame);
+                    contextVideo._element = oFrame = newTag;
+                } else {
+                    oFrame.src = src;
+                }
             }
             container = contextVideo._container;
-            cover = this.util.getParentElement(contextVideo._element, 'FIGURE');
-            oIframe = contextVideo._element;
+            cover = this.util.getParentElement(oFrame, 'FIGURE');
         }
         /** create */
         else {
             init = true;
-            oIframe.frameBorder = '0';
-            oIframe.allowFullscreen = true;
-            contextVideo._element = oIframe;
-
-            /** cover */
-            cover = this.plugins.resizing.set_cover.call(this, oIframe);
-
-            /** container */
-            container = this.plugins.resizing.set_container.call(this, cover, 'se-video-container');
+            oFrame.src = src;
+            contextVideo._element = oFrame;
+            cover = this.plugins.component.set_cover.call(this, oFrame);
+            container = this.plugins.component.set_container.call(this, cover, 'se-video-container');
         }
 
         /** rendering */
         contextVideo._cover = cover;
         contextVideo._container = container;
 
-        const inputUpdate = (this.plugins.resizing._module_getSizeX.call(this, contextVideo) !== (contextVideo.inputX.value || contextVideo._defaultSizeX)) || (this.plugins.resizing._module_getSizeY.call(this, contextVideo) !== (contextVideo.inputY.value || contextVideo._videoRatio));
-        const changeSize = !this.context.dialog.updateModal || inputUpdate;
+        const inputUpdate = (this.plugins.resizing._module_getSizeX.call(this, contextVideo) !== (width || contextVideo._defaultSizeX)) || (this.plugins.resizing._module_getSizeY.call(this, contextVideo) !== (height || contextVideo._videoRatio));
+        const changeSize = !isUpdate || inputUpdate;
 
         if (contextVideo._resizing) {
             this.context.video._proportionChecked = contextVideo.proportion.checked;
-            oIframe.setAttribute('data-proportion', contextVideo._proportionChecked);
+            oFrame.setAttribute('data-proportion', contextVideo._proportionChecked);
         }
 
         // size
@@ -7084,44 +7555,26 @@ __webpack_require__.r(__webpack_exports__);
         }
 
         // align
-        if (!(isPercent && contextVideo._align === 'center')) {
-            this.plugins.video.setAlign.call(this, null, oIframe, cover, container);
+        if (!(isPercent && align === 'center')) {
+            this.plugins.video.setAlign.call(this, null, oFrame, cover, container);
         }
 
-        if (!this.context.dialog.updateModal) {
+        if (!isUpdate) {
             this.insertComponent(container, false);
         } else if (contextVideo._resizing && this.context.resizing._rotateVertical && changeSize) {
-            this.plugins.resizing.setTransformSize.call(this, oIframe, null, null);
+            this.plugins.resizing.setTransformSize.call(this, oFrame, null, null);
         }
 
         if (init) {
-            this.plugins.video.setVideosInfo.call(this, oIframe);
+            this.plugins.fileManager.setInfo.call(this, 'video', oFrame, this.functions.onVideoUpload, file, true);
         }
 
         this.context.resizing._resize_plugin = '';
 
         // history stack
-        if (this.context.dialog.updateModal) {
+        if (isUpdate) {
             this.history.push(false);
         }
-    },
-
-    submit: function (e) {
-        this.showLoading();
-
-        e.preventDefault();
-        e.stopPropagation();
-
-        try {
-            this.plugins.video.submitAction.call(this);
-        } finally {
-            this.plugins.dialog.close.call(this);
-            this.closeLoading();
-        }
-
-        this.focus();
-
-        return false;
     },
 
     _update_videoCover: function (oIframe) {
@@ -7137,8 +7590,8 @@ __webpack_require__.r(__webpack_exports__);
             }.bind(this.util));
 
         contextVideo._element = oIframe = oIframe.cloneNode(false);
-        const cover = contextVideo._cover = this.plugins.resizing.set_cover.call(this, oIframe);
-        const container = contextVideo._container = this.plugins.resizing.set_container.call(this, cover, 'se-video-container');
+        const cover = contextVideo._cover = this.plugins.component.set_cover.call(this, oIframe);
+        const container = contextVideo._container = this.plugins.component.set_container.call(this, cover, 'se-video-container');
 
         const figcaption = existElement.querySelector('figcaption');
         let caption = null;
@@ -7149,23 +7602,24 @@ __webpack_require__.r(__webpack_exports__);
         }
 
         const size = (oIframe.getAttribute('data-size') || oIframe.getAttribute('data-origin') || '').split(',');
-        this.plugins.video.applySize.call(this, (size[0] || this.context.option.videoWidth), (size[1] || this.context.option.videoHeight));
+        this.plugins.video.applySize.call(this, size[0], size[1]);
 
         existElement.parentNode.replaceChild(container, existElement);
         if (!!caption) existElement.parentNode.insertBefore(caption, container.nextElementSibling);
-        this.plugins.video.setVideosInfo.call(this, oIframe);
+        this.plugins.fileManager.setInfo.call(this, 'video', oIframe, this.functions.onVideoUpload, null, true);
     },
 
     /**
-     * @overriding resizing
+     * @Required @Override fileManager, resizing
      */
     onModifyMode: function (element, size) {
         const contextVideo = this.context.video;
         contextVideo._element = element;
         contextVideo._cover = this.util.getParentElement(element, 'FIGURE');
         contextVideo._container = this.util.getParentElement(element, this.util.isMediaComponent);
-
         contextVideo._align = element.getAttribute('data-align') || 'none';
+
+        if (/^video$/i.test(element.nodeName)) element.setAttribute('controls', true);
 
         if (size) {
             contextVideo._element_w = size.w;
@@ -7186,12 +7640,12 @@ __webpack_require__.r(__webpack_exports__);
     },
 
     /**
-     * @overriding resizing
+     * @Required @Override fileManager, resizing
      */
     openModify: function (notOpen) {
         const contextVideo = this.context.video;
 
-        contextVideo.focusElement.value = contextVideo._element.src;
+        if (contextVideo.videoUrlFile) contextVideo.videoUrlFile.value = contextVideo._element.src;
         contextVideo.modal.querySelector('input[name="suneditor_video_radio"][value="' + contextVideo._align + '"]').checked = true;
 
         if (contextVideo._resizing) {
@@ -7203,23 +7657,6 @@ __webpack_require__.r(__webpack_exports__);
         }
 
         if (!notOpen) this.plugins.dialog.open.call(this, 'video', true);
-    },
-
-    /**
-     * @overriding dialog
-     */
-    on: function (update) {
-        const contextVideo = this.context.video;
-
-        if (!update) {
-            contextVideo.inputX.value = contextVideo._origin_w = this.context.option.videoWidth === contextVideo._defaultSizeX ? '' : this.context.option.videoWidth;
-            contextVideo.inputY.value = contextVideo._origin_h = this.context.option.videoHeight === contextVideo._defaultSizeY ? '' : this.context.option.videoHeight;
-            contextVideo.proportion.disabled = true;
-        }
-
-        if (contextVideo._resizing) {
-            this.plugins.video.setVideoRatioSelect.call(this, contextVideo._origin_h || contextVideo._defaultRatio);
-        }
     },
     
     setVideoRatioSelect: function (value) {
@@ -7242,161 +7679,35 @@ __webpack_require__.r(__webpack_exports__);
         return ratioSelected;
     },
 
-    setVideosInfo: function (frame) {
-        const _resize_plugin = this.context.resizing._resize_plugin;
-        this.context.resizing._resize_plugin = 'video';
-
-        const videosInfo = this.context.video._videosInfo;
-        let dataIndex = frame.getAttribute('data-index');
-        let info = null;
-        let state = '';
-
-        // create
-        if (!dataIndex || this._componentsInfoInit) {
-            state = 'create';
-            dataIndex = this.context.video._videoIndex++;
-
-            frame.setAttribute('data-index', dataIndex);
-
-            info = {
-                src: frame.src,
-                index: dataIndex * 1
-            };
-
-            videosInfo.push(info);
-        } else { // update
-            state = 'update';
-            dataIndex *= 1;
-    
-            for (let i = 0, len = videosInfo.length; i < len; i++) {
-                if (dataIndex === videosInfo[i].index) {
-                    info = videosInfo[i];
-                    break;
-                }
-            }
-
-            if (!info) {
-                dataIndex = this.context.video._videoIndex++;
-                info = { index: dataIndex };
-                videosInfo.push(info);
-            }
-
-            info.src = frame.src;
-        }
-
-        // method bind
-        info.element = frame;
-        info.delete = this.plugins.video.destroy.bind(this, frame);
-        info.select = function () {
-            frame.scrollIntoView(true);
-            this._w.setTimeout(function () {
-                this.plugins.video.onModifyMode.call(this, frame, this.plugins.resizing.call_controller_resize.call(this, frame, 'video'));
-            }.bind(this));
-        }.bind(this);
-
-        if (!frame.getAttribute('data-origin')) {
-            const container = this.util.getParentElement(frame, this.util.isMediaComponent);
-            const cover = this.util.getParentElement(frame, 'FIGURE');
-
-            const w = this.plugins.resizing._module_getSizeX.call(this, this.context.video, frame, cover, container);
-            const h = this.plugins.resizing._module_getSizeY.call(this, this.context.video, frame, cover, container);
-            
-            frame.setAttribute('data-origin', w + ',' + h);
-            frame.setAttribute('data-size', w + ',' + h);
-        }
-
-        if (!frame.style.width) {
-            const size = (frame.getAttribute('data-size') || frame.getAttribute('data-origin') || '').split(',');
-            this.plugins.video.onModifyMode.call(this, frame, null);
-            this.plugins.video.applySize.call(this, (size[0] || this.context.option.videoWidth), (size[1] || this.context.option.videoHeight));
-        }
-
-        this.context.resizing._resize_plugin = _resize_plugin;
-        this._videoUpload(frame, dataIndex, state, info, 0);
+    /**
+     * @Override fileManager
+     */
+    checkFileInfo: function () {
+        this.plugins.fileManager.checkInfo.call(this, 'video', ['iframe', 'video'], this.functions.onVideoUpload, this.plugins.video._update_videoCover.bind(this), true);
     },
 
     /**
-     * @overriding core
+     * @Override fileManager
      */
-    checkComponentInfo: function () {
-        const videos = [].slice.call(this.context.element.wysiwyg.getElementsByTagName('IFRAME'));
-        const videoPlugin = this.plugins.video;
-        const videosInfo = this.context.video._videosInfo;
-
-        if (videos.length === videosInfo.length) {
-            // reset
-            if (this._componentsInfoReset) {
-                for (let i = 0, len = videos.length, frame; i < len; i++) {
-                    frame = videos[i];
-                    videoPlugin.setVideosInfo.call(this, frame);
-                }
-                return;
-            } else {
-                let infoUpdate = false;
-                for (let i = 0, len = videosInfo.length, info; i < len; i++) {
-                    info = videosInfo[i];
-                    if (videos.filter(function (frame) { return info.src === frame.src && info.index.toString() === frame.getAttribute('data-index'); }).length === 0) {
-                        infoUpdate = true;
-                        break;
-                    }
-                }
-                // pass
-                if (!infoUpdate) return;
-            }
-        }
-
-        const _resize_plugin = this.context.resizing._resize_plugin;
-        this.context.resizing._resize_plugin = 'video';
-        const currentVideos = [];
-        const infoIndex = [];
-        for (let i = 0, len = videosInfo.length; i < len; i++) {
-            infoIndex[i] = videosInfo[i].index;
-        }
-
-        for (let i = 0, len = videos.length, video, container; i < len; i++) {
-            video = videos[i];
-            container = this.util.getParentElement(video, this.util.isMediaComponent);
-            if (!container || container.getElementsByTagName('figcaption').length > 0) {
-                currentVideos.push(this.context.video._videoIndex);
-                videoPlugin._update_videoCover.call(this, video);
-            } else if (!video.getAttribute('data-index') || infoIndex.indexOf(video.getAttribute('data-index') * 1) < 0) {
-                currentVideos.push(this.context.video._videoIndex);
-                video.removeAttribute('data-index');
-                videoPlugin.setVideosInfo.call(this, video);
-            } else {
-                currentVideos.push(video.getAttribute('data-index') * 1);
-            }
-        }
-
-        for (let i = 0, dataIndex; i < videosInfo.length; i++) {
-            dataIndex = videosInfo[i].index;
-            if (currentVideos.indexOf(dataIndex) > -1) continue;
-
-            videosInfo.splice(i, 1);
-            this._videoUpload(null, dataIndex, 'delete', null, 0);
-            i--;
-        }
-
-        this.context.resizing._resize_plugin = _resize_plugin;
+    resetFileInfo: function () {
+        this.plugins.fileManager.resetInfo.call(this, 'video', this.functions.onVideoUpload);
     },
 
     /**
-     * @overriding core
+     * @Override resizing
      */
-    resetComponentInfo: function () {
-        this.context.video._videosInfo = [];
-        this.context.video._videoIndex = 0;
-    },
-
     sizeRevert: function () {
         this.plugins.resizing._module_sizeRevert.call(this, this.context.video);
     },
 
+    /**
+     * @Override resizing
+     */
     applySize: function (w, h) {
         const contextVideo = this.context.video;
 
-        if (!w) w = contextVideo.inputX.value;
-        if (!h) h = contextVideo.inputY.value;
+        if (!w) w = contextVideo.inputX.value || this.context.option.videoWidth;
+        if (!h) h = contextVideo.inputY.value || this.context.option.videoHeight;
         
         if (contextVideo._onlyPercentage || /%$/.test(w) || !w) {
             this.plugins.video.setPercentSize.call(this, (w || '100%'), (h || (/%$/.test(contextVideo._videoRatio) ? contextVideo._videoRatio : contextVideo._defaultRatio)));
@@ -7411,7 +7722,7 @@ __webpack_require__.r(__webpack_exports__);
     },
 
     /**
-     * @overriding resizing
+     * @Override resizing
      */
     setSize: function (w, h, notResetPercentage, direction) {
         const contextVideo = this.context.video;
@@ -7442,14 +7753,14 @@ __webpack_require__.r(__webpack_exports__);
     },
 
     /**
-     * @overriding resizing
+     * @Override resizing
      */
     setAutoSize: function () {
         this.plugins.video.setPercentSize.call(this, 100, this.context.video._defaultRatio);
     },
 
     /**
-     * @overriding resizing
+     * @Override resizing
      */
     setOriginSize: function (dataSize) {
         const contextVideo = this.context.video;
@@ -7476,7 +7787,7 @@ __webpack_require__.r(__webpack_exports__);
     },
 
     /**
-     * @overriding resizing
+     * @Override resizing
      */
     setPercentSize: function (w, h) {
         const contextVideo = this.context.video;
@@ -7499,7 +7810,7 @@ __webpack_require__.r(__webpack_exports__);
     },
 
     /**
-     * @overriding resizing
+     * @Override resizing
      */
     cancelPercentAttr: function () {
         const contextVideo = this.context.video;
@@ -7517,7 +7828,7 @@ __webpack_require__.r(__webpack_exports__);
     },
 
     /**
-     * @overriding resizing
+     * @Override resizing
      */
     setAlign: function (align, element, cover, container) {
         const contextVideo = this.context.video;
@@ -7562,50 +7873,16 @@ __webpack_require__.r(__webpack_exports__);
     },
 
     /**
-     * @overriding resizing
-     */
-    destroy: function (element) {
-        const frame = element || this.context.video._element;
-        const container = this.context.video._container;
-        const dataIndex = frame.getAttribute('data-index') * 1;
-        let focusEl = (container.previousElementSibling || container.nextElementSibling);
-
-        const emptyDiv = container.parentNode;
-        this.util.removeItem(container);
-        this.plugins.video.init.call(this);
-        this.controllersOff();
-
-        if (emptyDiv !== this.context.element.wysiwyg) this.util.removeItemAllParents(emptyDiv, function (current) { return current.childNodes.length === 0; }, null);
-
-        // focus
-        this.focusEdge(focusEl);
-
-        // event
-        if (dataIndex >= 0) {
-            const videosInfo = this.context.video._videosInfo;
-
-            for (let i = 0, len = videosInfo.length; i < len; i++) {
-                if (dataIndex === videosInfo[i].index) {
-                    videosInfo.splice(i, 1);
-                    this._videoUpload(null, dataIndex, 'delete', null, 0);
-                    break;
-                }
-            }
-        }
-
-        // history stack
-        this.history.push(false);
-    },
-
-    /**
-     * @overriding dialog
+     * @Override dialog
      */
     init: function () {
         const contextVideo = this.context.video;
-        contextVideo.focusElement.value = '';
+        if (contextVideo.videoInputFile) contextVideo.videoInputFile.value = '';
+        if (contextVideo.videoUrlFile) contextVideo.videoUrlFile.value = '';
+        if (contextVideo.videoInputFile && contextVideo.videoUrlFile) contextVideo.videoUrlFile.removeAttribute('disabled');
+
         contextVideo._origin_w = this.context.option.videoWidth;
         contextVideo._origin_h = this.context.option.videoHeight;
-
         contextVideo.modal.querySelector('input[name="suneditor_video_radio"][value="none"]').checked = true;
         
         if (contextVideo._resizing) {
@@ -7620,7 +7897,476 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 24 */
+/* 26 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _modules_dialog__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(1);
+/* harmony import */ var _modules_dialog__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_modules_dialog__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _modules_component__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(2);
+/* harmony import */ var _modules_component__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_modules_component__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var _modules_fileManager__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(3);
+/* harmony import */ var _modules_fileManager__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(_modules_fileManager__WEBPACK_IMPORTED_MODULE_2__);
+/*
+ * wysiwyg web editor
+ *
+ * suneditor.js
+ * Copyright 2017 JiHong Lee.
+ * MIT license.
+ */
+
+
+
+
+
+
+/* harmony default export */ __webpack_exports__["default"] = ({
+    name: 'audio',
+    display: 'dialog',
+    add: function (core) {
+        core.addModule([_modules_dialog__WEBPACK_IMPORTED_MODULE_0___default.a, _modules_component__WEBPACK_IMPORTED_MODULE_1___default.a, _modules_fileManager__WEBPACK_IMPORTED_MODULE_2___default.a]);
+
+        const context = core.context;
+        const contextAudio = context.audio = {
+            _infoList: [], // @Override fileManager
+            _infoIndex: 0, // @Override fileManager
+            _uploadFileLength: 0, // @Override fileManager
+            focusElement: null, // @Override // This element has focus when the dialog is opened.
+            targetSelect: null,
+            _origin_w: context.option.audioWidth,
+            _origin_h: context.option.audioHeight,
+            // @require @Override component
+            _element: null,
+            _cover: null,
+            _container: null,
+        };
+
+        /** dialog */
+        let audio_dialog = this.setDialog.call(core);
+        contextAudio.modal = audio_dialog;
+        contextAudio.audioInputFile = audio_dialog.querySelector('._se_audio_files');
+        contextAudio.audioUrlFile = audio_dialog.querySelector('.se-input-url');
+        contextAudio.focusElement = contextAudio.audioInputFile || contextAudio.audioUrlFile;
+
+        /** controller */
+        let audio_controller = this.setController.call(core);
+        contextAudio.controller = audio_controller;
+
+        audio_controller.addEventListener('mousedown', function (e) { e.stopPropagation(); }, false);
+
+        /** add event listeners */
+        audio_dialog.querySelector('.se-btn-primary').addEventListener('click', this.submit.bind(core));
+        if (contextAudio.audioInputFile) audio_dialog.querySelector('.se-dialog-files-edge-button').addEventListener('click', this._removeSelectedFiles.bind(core, context.audioInputFile, context.audioUrlFile));
+        if (contextAudio.audioInputFile && contextAudio.audioUrlFile) contextAudio.audioInputFile.addEventListener('change', this._fileInputChange.bind(contextAudio));
+        audio_controller.addEventListener('click', this.onClick_controller.bind(core));
+
+        /** append html */
+        context.dialog.modal.appendChild(audio_dialog);
+
+        /** append controller */
+        context.element.relative.appendChild(audio_controller);
+
+        /** empty memory */
+        audio_dialog = null, audio_controller = null;
+    },
+
+    /** HTML - dialog */
+    setDialog: function () {
+        const option = this.context.option;
+        const lang = this.lang;
+        const dialog = this.util.createElement('DIV');
+
+        dialog.className = 'se-dialog-content';
+        dialog.style.display = 'none';
+        let html = '' +
+            '<form method="post" enctype="multipart/form-data">' +
+                '<div class="se-dialog-header">' +
+                    '<button type="button" data-command="close" class="se-btn se-dialog-close" aria-label="Close" title="' + lang.dialogBox.close + '">' +
+                        this.icons.cancel +
+                    '</button>' +
+                    '<span class="se-modal-title">' + lang.dialogBox.audioBox.title + '</span>' +
+                '</div>' +
+                '<div class="se-dialog-body">';
+
+                if (option.audioFileInput) {
+                    html += '' +
+                        '<div class="se-dialog-form">' +
+                            '<label>' + lang.dialogBox.audioBox.file + '</label>' +
+                            '<div class="se-dialog-form-files">' +
+                                '<input class="se-input-form _se_audio_files" type="file" accept="audio/*" multiple="multiple" />' +
+                                '<button type="button" data-command="filesRemove" class="se-btn se-dialog-files-edge-button" title="' + lang.controller.remove + '">' + this.icons.cancel + '</button>' +
+                            '</div>' +
+                        '</div>';
+                }
+                 
+                if (option.audioUrlInput) {
+                    html += '' +
+                        '<div class="se-dialog-form">' +
+                            '<label>' + lang.dialogBox.audioBox.url + '</label>' +
+                            '<input class="se-input-form se-input-url" type="text" />' +
+                        '</div>';
+                }
+                    
+                html += '' +
+                '</div>' +
+                '<div class="se-dialog-footer">' +
+                    '<button type="submit" class="se-btn-primary" title="' + lang.dialogBox.submitButton + '"><span>' + lang.dialogBox.submitButton + '</span></button>' +
+                '</div>' +
+            '</form>';
+
+        dialog.innerHTML = html;
+
+        return dialog;
+    },
+
+    /** HTML - controller */
+    setController: function () {
+        const lang = this.lang;
+        const icons = this.icons;
+        const link_btn = this.util.createElement('DIV');
+
+        link_btn.className = 'se-controller se-controller-link';
+        link_btn.innerHTML = '' +
+            '<div class="se-arrow se-arrow-up"></div>' +
+            '<div class="link-content">' +
+                '<div class="se-btn-group">' +
+                    '<button type="button" data-command="update" tabindex="-1" class="se-tooltip">' +
+                        icons.edit +
+                        '<span class="se-tooltip-inner"><span class="se-tooltip-text">' + lang.controller.edit + '</span></span>' +
+                    '</button>' +
+                    '<button type="button" data-command="delete" tabindex="-1" class="se-tooltip">' +
+                        icons.delete +
+                        '<span class="se-tooltip-inner"><span class="se-tooltip-text">' + lang.controller.remove + '</span></span>' +
+                    '</button>' +
+                '</div>' +
+            '</div>';
+
+        return link_btn;
+    },
+
+    // Disable url input when uploading files
+    _fileInputChange: function () {
+        if (!this.audioInputFile.value) this.audioUrlFile.removeAttribute('disabled');
+        else this.audioUrlFile.setAttribute('disabled', true);
+    },
+
+    // Disable url input when uploading files
+    _removeSelectedFiles: function (fileInput, urlInput) {
+        fileInput.value = '';
+        if (urlInput) urlInput.removeAttribute('disabled');
+    },
+
+    // create new audio tag
+    _createAudioTag: function () {
+        const oAudio = this.util.createElement('AUDIO');
+        oAudio.setAttribute('controls', true);
+
+        const w = this.context.audio._origin_w;
+        const h = this.context.audio._origin_h;
+        oAudio.setAttribute('origin-size', w + ',' + h);
+        oAudio.style.cssText = (w ? ('width:' + w + '; ') : '') + (h ? ('height:' + h + ';') : '');
+
+        return oAudio;
+    },
+
+    /**
+     * @Required @Override fileManager
+     */
+    fileTags: ['audio'],
+
+    /**
+     * @Override core, fileManager, resizing
+     */
+    select: function (element) {
+        this.plugins.audio.onModifyMode.call(this, element);
+    },
+
+    /**
+     * @Override fileManager, resizing 
+     */
+    destroy: function (element) {
+        element = element || this.context.audio._element;
+        const container = this.util.getParentElement(element, this.util.isComponent) || element;
+        const dataIndex = element.getAttribute('data-index') * 1;
+        const focusEl = (container.previousElementSibling || container.nextElementSibling);
+
+        const emptyDiv = container.parentNode;
+        this.util.removeItem(container);
+        this.plugins.audio.init.call(this);
+        this.controllersOff();
+
+        if (emptyDiv !== this.context.element.wysiwyg) this.util.removeItemAllParents(emptyDiv, function (current) { return current.childNodes.length === 0; }, null);
+
+        // focus
+        this.focusEdge(focusEl);
+
+        // fileManager event
+        this.plugins.fileManager.deleteInfo.call(this, 'audio', dataIndex, this.functions.onAudioUpload);
+
+        // history stack
+        this.history.push(false);
+    },
+
+    /**
+     * @Override fileManager
+     */
+    checkFileInfo: function () {
+        this.plugins.fileManager.checkInfo.call(this, 'audio', ['audio'], this.functions.onAudioUpload, this.plugins.audio.updateCover.bind(this), false);
+    },
+
+    /**
+     * @Override fileManager
+     */
+    resetFileInfo: function () {
+        this.plugins.fileManager.resetInfo.call(this, 'audio', this.functions.onAudioUpload);
+    },
+
+    /**
+     * @Required @Override dialog
+     */
+    on: function (update) {
+        if (!update) {
+            this.plugins.audio.init.call(this);
+        } else if (this.context.audio._element) {
+            this.context.dialog.updateModal = true;
+            this.context.audio.audioUrlFile.value = this.context.audio._element.src;
+        }
+    },
+
+    /**
+     * @Required @Override dialog
+     */
+    open: function () {
+        this.plugins.dialog.open.call(this, 'audio', 'audio' === this.currentControllerName);
+    },
+
+    submit: function (e) {
+        const context = this.context.audio;
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        try {
+            if (context.audioInputFile && context.audioInputFile.files.length > 0) {
+                // upload files
+                this.plugins.audio.submitAction.call(this, context.audioInputFile.files);
+            } else if (context.audioUrlFile && context.audioUrlFile.value.trim().length > 0) {
+                // url
+                this.plugins.audio.setupUrl.call(this, context.audioUrlFile);
+            }
+        } catch (error) {
+            throw Error('[SUNEDITOR.audio.submit.fail] cause : "' + error.message + '"');
+        } finally {
+            this.plugins.dialog.close.call(this);
+        }
+
+        return false;
+    },
+
+    submitAction: function (fileList) {
+        if (fileList.length === 0) return;
+
+        let fileSize = 0;
+        const files = [];
+        for (let i = 0, len = fileList.length; i < len; i++) {
+            if (/audio/i.test(fileList[i].type)) {
+                files.push(fileList[i]);
+                fileSize += fileList[i].size;
+            }
+        }
+
+        const limitSize = this.context.option.audioUploadSizeLimit;
+        if (limitSize > 0) {
+            let infoSize = 0;
+            const audiosInfo = this.context.audio._infoList;
+            for (let i = 0, len = audiosInfo.length; i < len; i++) {
+                infoSize += audiosInfo[i].size * 1;
+            }
+
+            if ((fileSize + infoSize) > limitSize) {
+                const err = '[SUNEDITOR.audioUpload.fail] Size of uploadable total audios: ' + (limitSize/1000) + 'KB';
+                if (this.functions.onAudioUploadError !== 'function' || this.functions.onAudioUploadError(err, { 'limitSize': limitSize, 'currentSize': infoSize, 'uploadSize': fileSize }, this)) {
+                    this.functions.noticeOpen(err);
+                }
+                return;
+            }
+        }
+
+        const context = this.context.audio;
+        const audioPlugin = this.plugins.audio;
+
+        context._uploadFileLength = files.length;
+        const audioUploadUrl = this.context.option.audioUploadUrl;
+        const filesLen = this.context.dialog.updateModal ? 1 : files.length;
+
+        const info = {
+            isUpdate: this.context.dialog.updateModal,
+            element: context._element
+        };
+
+        if (typeof this.functions.onAudioUploadBefore === 'function' && !this.functions.onAudioUploadBefore(files, info, this)) return;
+
+        // create formData
+        const formData = new FormData();
+        for (let i = 0; i < filesLen; i++) {
+            formData.append('file-' + i, files[i]);
+        }
+
+        // server upload
+        this.plugins.fileManager.upload.call(this, audioUploadUrl, this.context.option.audioUploadHeader, formData, audioPlugin.callBack_upload.bind(this, info), this.functions.onAudioUploadError);
+    },
+
+    callBack_upload: function (info, xmlHttp) {
+        const response = JSON.parse(xmlHttp.responseText);
+
+        if (response.errorMessage) {
+            if (this.functions.onAudioUploadError !== 'function' || this.functions.onAudioUploadError(response.errorMessage, response, this)) {
+                this.functions.noticeOpen(response.errorMessage);
+            }
+        } else {
+            const fileList = response.result;
+            for (let i = 0, len = fileList.length, file, oAudio; i < len; i++) {
+                if (info.isUpdate) oAudio = info.element;
+                else oAudio = this.plugins.audio._createAudioTag.call(this);
+
+                file = { name: fileList[i].name, size: fileList[i].size };
+                this.plugins.audio.create_audio.call(this, oAudio, fileList[i].url, file, info.isUpdate);
+            }
+        }
+    },
+
+    setupUrl: function (urlFile) {
+        try {
+            this.showLoading();
+            const src = urlFile.value.trim();
+            if (src.length === 0) return false;
+
+            this.plugins.audio.create_audio.call(this, this.plugins.audio._createAudioTag.call(this), src, null, this.context.dialog.updateModal);
+        } catch (error) {
+            throw Error('[SUNEDITOR.audio.audio.fail] cause : "' + error.message + '"');
+        } finally {
+            this.closeLoading();
+        }
+    },
+
+    create_audio: function (element, src, file, isUpdate) {
+        const context = this.context.audio;
+        
+        // create new tag
+        if (!isUpdate) {
+            element.src = src;
+            const cover = this.plugins.component.set_cover.call(this, element);
+            const container = this.plugins.component.set_container.call(this, cover, '');
+            this.insertComponent(container, false);
+        } // update
+        else {
+            if (context._element) element = context._element;
+            if (element && element.src !== src) {
+                element.src = src;
+            } else {
+                return;
+            }
+        }
+
+        this.plugins.fileManager.setInfo.call(this, 'audio', element, this.functions.onAudioUpload, file, false);
+        this.history.push(false);
+    },
+
+    updateCover: function (element) {
+        const context = this.context.audio;
+        element.setAttribute('controls', true);
+        
+        // find component element
+        const existElement = this.util.getParentElement(element, this.util.isMediaComponent) || 
+            this.util.getParentElement(element, function (current) {
+                return this.isWysiwygDiv(current.parentNode);
+            }.bind(this.util));
+
+        // clone element
+        context._element = element = element.cloneNode(false);
+        const cover = this.plugins.component.set_cover.call(this, element);
+        const container = this.plugins.component.set_container.call(this, cover, 'se-audio-container');
+
+        existElement.parentNode.replaceChild(container, existElement);
+        this.plugins.fileManager.setInfo.call(this, 'audio', element, this.functions.onAudioUpload, null, false);
+    },
+
+    /**
+     * @Required @Override fileManager, resizing
+     */
+    onModifyMode: function (selectionTag) {
+        const context = this.context.audio;
+
+        const controller = context.controller;
+        const offset = this.util.getOffset(selectionTag, this.context.element.wysiwygFrame);
+        controller.style.top = (offset.top + selectionTag.offsetHeight + 10) + 'px';
+        controller.style.left = (offset.left - this.context.element.wysiwygFrame.scrollLeft) + 'px';
+
+        controller.style.display = 'block';
+
+        const overLeft = this.context.element.wysiwygFrame.offsetWidth - (controller.offsetLeft + controller.offsetWidth);
+        if (overLeft < 0) {
+            controller.style.left = (controller.offsetLeft + overLeft) + 'px';
+            controller.firstElementChild.style.left = (20 - overLeft) + 'px';
+        } else {
+            controller.firstElementChild.style.left = '20px';
+        }
+        
+        this.controllersOn(controller, selectionTag, this.plugins.audio.init.bind(this), 'audio');
+
+        this.util.addClass(selectionTag, 'active');
+        context._element = selectionTag;
+        context._cover = this.util.getParentElement(selectionTag, 'FIGURE');
+        context._container = this.util.getParentElement(selectionTag, this.util.isComponent);
+    },
+
+    /**
+     * @Required @Override fileManager, resizing
+     */
+    openModify: function (notOpen) {
+        if (this.context.audio.audioUrlFile) this.context.audio.audioUrlFile.value = this.context.audio._element.src;
+        if (!notOpen) this.plugins.dialog.open.call(this, 'audio', true);
+    },
+
+    onClick_controller: function (e) {
+        e.stopPropagation();
+
+        const command = e.target.getAttribute('data-command');
+        if (!command) return;
+
+        e.preventDefault();
+
+        if (/update/.test(command)) {
+            this.plugins.audio.openModify.call(this, false);
+        }
+        else { /** delete */
+            this.plugins.audio.destroy.call(this, this.context.audio._element);
+        }
+
+        this.controllersOff();
+    },
+
+    /**
+     * @Required @Override dialog
+     */
+    init: function () {
+        if (this.context.dialog.updateModal) return;
+        const context = this.context.audio;
+
+        if (context._element) this.util.removeClass(context._element, 'active');
+
+        if (context.audioInputFile) context.audioInputFile.value = '';
+        if (context.audioUrlFile) context.audioUrlFile.value = '';
+        if (context.audioInputFile && context.audioUrlFile) context.audioUrlFile.removeAttribute('disabled');
+
+        context.controller.style.display = 'none';
+        context._element = null;
+    }
+});
+
+/***/ }),
+/* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7724,7 +8470,13 @@ __webpack_require__.r(__webpack_exports__);
             },
             videoBox: {
                 title: 'Indsæt Video',
+                file: 'Indsæt fra fil',
                 url: 'Indlejr video / YouTube'
+            },
+            audioBox: {
+                title: 'Indsæt Audio',
+                file: 'Indsæt fra fil',
+                url: 'Indsæt fra URL'
             },
             caption: 'Indsæt beskrivelse',
             close: 'Luk',
@@ -7779,10 +8531,20 @@ __webpack_require__.r(__webpack_exports__);
 
     if (typeof noGlobal === typeof undefined) {
         if (!window.SUNEDITOR_LANG) {
-            window.SUNEDITOR_LANG = {};
+            Object.defineProperty(window, 'SUNEDITOR_LANG', {
+                enumerable: true,
+                writable: false,
+                configurable: false,
+                value: {}
+            });
         }
 
-        window.SUNEDITOR_LANG.da = lang;
+        Object.defineProperty(window.SUNEDITOR_LANG, 'da', {
+            enumerable: true,
+            writable: true,
+            configurable: true,
+            value: lang
+        });
     }
 
     return lang;
@@ -7790,7 +8552,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 25 */
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7891,7 +8653,13 @@ __webpack_require__.r(__webpack_exports__);
             },
             videoBox: {
                 title: 'Video enfügen',
+                file: 'Datei auswählen',
                 url: 'Video-URL, YouTube'
+            },
+            audioBox: {
+                title: 'Audio enfügen',
+                file: 'Datei auswählen',
+                url: 'Audio-URL'
             },
             caption: 'Beschreibung eingeben',
             close: 'Schließen',
@@ -7946,17 +8714,27 @@ __webpack_require__.r(__webpack_exports__);
 
     if (typeof noGlobal === typeof undefined) {
         if (!window.SUNEDITOR_LANG) {
-            window.SUNEDITOR_LANG = {};
+            Object.defineProperty(window, 'SUNEDITOR_LANG', {
+                enumerable: true,
+                writable: false,
+                configurable: false,
+                value: {}
+            });
         }
 
-        window.SUNEDITOR_LANG.de = lang;
+        Object.defineProperty(window.SUNEDITOR_LANG, 'de', {
+            enumerable: true,
+            writable: true,
+            configurable: true,
+            value: lang
+        });
     }
 
     return lang;
 }));
 
 /***/ }),
-/* 26 */
+/* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8057,8 +8835,14 @@ __webpack_require__.r(__webpack_exports__);
 			},
 			videoBox: {
 				title: 'Insertar Video',
+				file: 'Seleccionar desde los archivos',
 				url: '¿URL del vídeo? Youtube'
 			},
+			audioBox: {
+                title: 'Insertar Audio',
+                file: 'Seleccionar desde los archivos',
+                url: 'URL de la audio'
+            },
 			caption: 'Insertar descripción',
 			close: 'Cerrar',
 			submitButton: 'Enviar',
@@ -8112,17 +8896,27 @@ __webpack_require__.r(__webpack_exports__);
 
 	if (typeof noGlobal === typeof undefined) {
 		if (!window.SUNEDITOR_LANG) {
-			window.SUNEDITOR_LANG = {};
-		}
+            Object.defineProperty(window, 'SUNEDITOR_LANG', {
+                enumerable: true,
+                writable: false,
+                configurable: false,
+                value: {}
+            });
+        }
 
-		window.SUNEDITOR_LANG.es = lang;
+        Object.defineProperty(window.SUNEDITOR_LANG, 'es', {
+            enumerable: true,
+            writable: true,
+            configurable: true,
+            value: lang
+        });
 	}
 
 	return lang;
 }));
 
 /***/ }),
-/* 27 */
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8223,7 +9017,13 @@ __webpack_require__.r(__webpack_exports__);
             },
             videoBox: {
                 title: 'Insérer une Vidéo',
+                file: 'Sélectionner le fichier',
                 url: 'URL d’intégration du média, YouTube'
+            },
+            audioBox: {
+                title: 'Insertar une l\'audio',
+                file: 'Sélectionner le fichier',
+                url: 'Adresse URL du fichier'
             },
             caption: 'Insérer une description',
             close: 'Fermer',
@@ -8278,10 +9078,20 @@ __webpack_require__.r(__webpack_exports__);
 
     if (typeof noGlobal === typeof undefined) {
         if (!window.SUNEDITOR_LANG) {
-            window.SUNEDITOR_LANG = {};
+            Object.defineProperty(window, 'SUNEDITOR_LANG', {
+                enumerable: true,
+                writable: false,
+                configurable: false,
+                value: {}
+            });
         }
 
-        window.SUNEDITOR_LANG.fr = lang;
+        Object.defineProperty(window.SUNEDITOR_LANG, 'fr', {
+            enumerable: true,
+            writable: true,
+            configurable: true,
+            value: lang
+        });
     }
 
     return lang;
@@ -8289,7 +9099,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 28 */
+/* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8390,7 +9200,13 @@ __webpack_require__.r(__webpack_exports__);
             },
             videoBox: {
                 title: '動画を挿入',
+                file: 'ファイルの選択',
                 url: 'メディア埋め込まアドレス,YouTube'
+            },
+            audioBox: {
+                title: 'オーディオを挿入',
+                file: 'ファイルの選択',
+                url: 'オーディオアドレス'
             },
             caption: '説明付け',
             close: '閉じる',
@@ -8445,17 +9261,27 @@ __webpack_require__.r(__webpack_exports__);
 
     if (typeof noGlobal === typeof undefined) {
         if (!window.SUNEDITOR_LANG) {
-            window.SUNEDITOR_LANG = {};
+            Object.defineProperty(window, 'SUNEDITOR_LANG', {
+                enumerable: true,
+                writable: false,
+                configurable: false,
+                value: {}
+            });
         }
 
-        window.SUNEDITOR_LANG.ja = lang;
+        Object.defineProperty(window.SUNEDITOR_LANG, 'ja', {
+            enumerable: true,
+            writable: true,
+            configurable: true,
+            value: lang
+        });
     }
 
     return lang;
 }));
 
 /***/ }),
-/* 29 */
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8556,7 +9382,13 @@ __webpack_require__.r(__webpack_exports__);
             },
             videoBox: {
                 title: '동영상 삽입',
+                file: '파일 선택',
                 url: '미디어 임베드 주소, 유튜브'
+            },
+            audioBox: {
+                title: '오디오 삽입',
+                file: '파일 선택',
+                url: '오디오 파일 주소'
             },
             caption: '설명 넣기',
             close: '닫기',
@@ -8611,17 +9443,27 @@ __webpack_require__.r(__webpack_exports__);
 
     if (typeof noGlobal === typeof undefined) {
         if (!window.SUNEDITOR_LANG) {
-            window.SUNEDITOR_LANG = {};
+            Object.defineProperty(window, 'SUNEDITOR_LANG', {
+                enumerable: true,
+                writable: false,
+                configurable: false,
+                value: {}
+            });
         }
 
-        window.SUNEDITOR_LANG.ko = lang;
+        Object.defineProperty(window.SUNEDITOR_LANG, 'ko', {
+            enumerable: true,
+            writable: true,
+            configurable: true,
+            value: lang
+        });
     }
 
     return lang;
 }));
 
 /***/ }),
-/* 30 */
+/* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8723,7 +9565,13 @@ __webpack_require__.r(__webpack_exports__);
             },
             videoBox: {
                 title: 'Inserir vídeo',
+                file: 'Selecionar arquivos',
                 url: 'URL do YouTube'
+            },
+            audioBox: {
+                title: 'Inserir audio',
+                file: 'Selecionar arquivos',
+                url: 'URL da audio'
             },
             caption: 'Inserir descrição',
             close: 'Fechar',
@@ -8778,17 +9626,27 @@ __webpack_require__.r(__webpack_exports__);
 
     if (typeof noGlobal === typeof undefined) {
         if (!window.SUNEDITOR_LANG) {
-            window.SUNEDITOR_LANG = {};
+            Object.defineProperty(window, 'SUNEDITOR_LANG', {
+                enumerable: true,
+                writable: false,
+                configurable: false,
+                value: {}
+            });
         }
 
-        window.SUNEDITOR_LANG.pt_br = lang;
+        Object.defineProperty(window.SUNEDITOR_LANG, 'pt_br', {
+            enumerable: true,
+            writable: true,
+            configurable: true,
+            value: lang
+        });
     }
 
     return lang;
 }));
 
 /***/ }),
-/* 31 */
+/* 34 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8889,7 +9747,13 @@ __webpack_require__.r(__webpack_exports__);
             },
             videoBox: {
                 title: 'Вставить видео',
+                file: 'Выберите файл',
                 url: 'Ссылка на видео'
+            },
+            audioBox: {
+                title: 'Вставить аудио',
+                file: 'Выберите файл',
+                url: 'Адрес аудио'
             },
             caption: 'Добавить подпись',
             close: 'Закрыть',
@@ -8944,17 +9808,210 @@ __webpack_require__.r(__webpack_exports__);
 
     if (typeof noGlobal === typeof undefined) {
         if (!window.SUNEDITOR_LANG) {
-            window.SUNEDITOR_LANG = {};
+            Object.defineProperty(window, 'SUNEDITOR_LANG', {
+                enumerable: true,
+                writable: false,
+                configurable: false,
+                value: {}
+            });
         }
 
-        window.SUNEDITOR_LANG.ru = lang;
+        Object.defineProperty(window.SUNEDITOR_LANG, 'ru', {
+            enumerable: true,
+            writable: true,
+            configurable: true,
+            value: lang
+        });
     }
 
     return lang;
 }));
 
 /***/ }),
-/* 32 */
+/* 35 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+/*
+ * wysiwyg web editor
+ *
+ * suneditor.js
+ * Copyright 2017 JiHong Lee.
+ * MIT license.
+ */
+
+
+(function (global, factory) {
+    if ( true && typeof module.exports === 'object') {
+        module.exports = global.document ?
+            factory(global, true) :
+            function (w) {
+                if (!w.document) {
+                    throw new Error('SUNEDITOR_LANG una finestra con un documento');
+                }
+                return factory(w);
+            };
+    } else {
+        factory(global);
+    }
+}(typeof window !== 'undefined' ? window : this, function (window, noGlobal) {
+    const lang = {
+        code: 'it',
+        toolbar: {
+            default: 'Predefinita',
+            save: 'Salva',
+            font: 'Font',
+            formats: 'Formato',
+            fontSize: 'Grandezza',
+            bold: 'Grassetto',
+            underline: 'Sottolineato',
+            italic: 'Italico',
+            strike: 'Cancellato',
+            subscript: 'Apice',
+            superscript: 'Pedice',
+            removeFormat: 'Rimuovi Formattazione',
+            fontColor: 'Colore Testo',
+            hiliteColor: 'Colore Sottolineatura',
+            indent: 'Aumenta rientro',
+            outdent: 'Riduci rientro',
+            align: 'Allinea',
+            alignLeft: 'Sinistra',
+            alignRight: 'Destra',
+            alignCenter: 'Centrato',
+            alignJustify: 'Giustificato',
+            list: 'Lista',
+            orderList: 'Lista numerata',
+            unorderList: 'Lista Puntata',
+            horizontalRule: 'Linea Orizzontale',
+            hr_solid: 'Linea',
+            hr_dotted: 'Puntinato',
+            hr_dashed: 'Tratteggiato',
+            table: 'Tabella',
+            link: 'Link',
+            math: 'Matematica',
+            image: 'Immagine',
+            video: 'Video',
+            fullScreen: 'Tutto Schermo',
+            showBlocks: 'Visualizza Blocchi',
+            codeView: 'Visualizza Codice',
+            undo: 'Annulla',
+            redo: 'Ripristina',
+            preview: 'Anteprima',
+            print: 'Stampa',
+            tag_p: 'Paragrafo',
+            tag_div: 'DIV Normale',
+            tag_h: 'Intestazione',
+            tag_blockquote: 'Citazione',
+            tag_pre: 'Codice',
+            template: 'Template',
+            lineHeight: 'Altezza linea',
+            paragraphStyle: 'Stile Paragrafo',
+            textStyle: 'Stile Testo'
+        },
+        dialogBox: {
+            linkBox: {
+                title: 'Inserisci un Link',
+                url: 'Indirizzo in link',
+                text: 'Applica Testo da visualizzare',
+                newWindowCheck: 'Apri in una nuova finestra'
+            },
+            mathBox: {
+                title: 'Matematica',
+                inputLabel: 'Notazione matematica',
+                fontSizeLabel: 'Grandezza testo',
+                previewLabel: 'Anteprima'
+            },
+            imageBox: {
+                title: 'Inserisci Immagine',
+                file: 'Seleziona da file',
+                url: 'Indirizzo immagine',
+                altText: 'Testo alternativo (ALT)'
+            },
+            videoBox: {
+                title: 'Inserisci Video',
+                file: 'Seleziona da file',
+                url: 'Indirizzo video, YouTube'
+            },
+            audioBox: {
+                title: 'Insertar Audio',
+                file: 'Seleziona da file',
+                url: 'Indirizzo audio'
+            },
+            caption: 'Inserisci descrizione',
+            close: 'ClChiudiose',
+            submitButton: 'Invia',
+            revertButton: 'Annulla',
+            proportion: 'Proporzionale',
+            basic: 'Da impostazione',
+            left: 'Sinistra',
+            right: 'Destra',
+            center: 'Centrato',
+            width: 'Larghezza',
+            height: 'Altezza',
+            size: 'Peso',
+            ratio: 'Rapporto'
+        },
+        controller: {
+            edit: 'Modifica',
+            unlink: 'Elimina link',
+            remove: 'Rimuovi',
+            insertRowAbove: 'Inserisci linea sopra',
+            insertRowBelow: 'Inserisci linea sotto',
+            deleteRow: 'Cancella riga',
+            insertColumnBefore: 'Inserisci una colonna prima',
+            insertColumnAfter: 'Inserisci una colonna dopo',
+            deleteColumn: 'Cancella colonna',
+            fixedColumnWidth: 'Larghezza della colonna fissa',
+            resize100: 'Ridimensiona 100%',
+            resize75: 'Ridimensiona 75%',
+            resize50: 'Ridimensiona 50%',
+            resize25: 'Ridimensiona 25%',
+            autoSize: 'Ridimensione automatica',
+            mirrorHorizontal: 'Specchia, orizontale',
+            mirrorVertical: 'Specchia, verticale',
+            rotateLeft: 'Ruota a sinistra',
+            rotateRight: 'Ruota a destra',
+            maxSize: 'Dimensione massima',
+            minSize: 'Dimensione minima',
+            tableHeader: 'Intestazione Tabella',
+            mergeCells: 'Unisci celle',
+            splitCells: 'Dividi celle',
+            HorizontalSplit: 'Separa orizontale',
+            VerticalSplit: 'Separa verticale'
+        },
+        menu: {
+            spaced: 'Spaziatura',
+            bordered: 'Bordo',
+            neon: 'Luminoso',
+            translucent: 'Translucente',
+            shadow: 'Ombra'
+        }
+    };
+
+    if (typeof noGlobal === typeof undefined) {
+        if (!window.SUNEDITOR_LANG) {
+            Object.defineProperty(window, 'SUNEDITOR_LANG', {
+                enumerable: true,
+                writable: false,
+                configurable: false,
+                value: {}
+            });
+        }
+
+        Object.defineProperty(window.SUNEDITOR_LANG, 'it', {
+            enumerable: true,
+            writable: true,
+            configurable: true,
+            value: lang
+        });
+    }
+
+    return lang;
+}));
+
+
+/***/ }),
+/* 36 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9055,7 +10112,13 @@ __webpack_require__.r(__webpack_exports__);
             },
             videoBox: {
                 title: '插入视频',
+                file: '上传图片',
                 url: '嵌入网址'
+            },
+            audioBox: {
+                title: '插入音频',
+                file: '上传图片',
+                url: '音频网址'
             },
             caption: '标题',
             close: '取消',
@@ -9109,10 +10172,20 @@ __webpack_require__.r(__webpack_exports__);
 
     if (typeof noGlobal === typeof undefined) {
         if (!window.SUNEDITOR_LANG) {
-            window.SUNEDITOR_LANG = {};
+            Object.defineProperty(window, 'SUNEDITOR_LANG', {
+                enumerable: true,
+                writable: false,
+                configurable: false,
+                value: {}
+            });
         }
 
-        window.SUNEDITOR_LANG.zh_cn = lang;
+        Object.defineProperty(window.SUNEDITOR_LANG, 'zh_cn', {
+            enumerable: true,
+            writable: true,
+            configurable: true,
+            value: lang
+        });
     }
 
     return lang;
@@ -9120,7 +10193,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 33 */
+/* 37 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9133,7 +10206,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
-var ReactPropTypesSecret = __webpack_require__(34);
+var ReactPropTypesSecret = __webpack_require__(38);
 
 function emptyFunction() {}
 function emptyFunctionWithReset() {}
@@ -9191,7 +10264,7 @@ module.exports = function() {
 
 
 /***/ }),
-/* 34 */
+/* 38 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9210,7 +10283,7 @@ module.exports = ReactPropTypesSecret;
 
 
 /***/ }),
-/* 35 */
+/* 39 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -9238,7 +10311,7 @@ var formatting = [["undo", "redo"], ["bold", "underline", "italic", "strike", "s
   formatting: formatting
 });
 // EXTERNAL MODULE: external "react"
-var external_react_ = __webpack_require__(5);
+var external_react_ = __webpack_require__(7);
 var external_react_default = /*#__PURE__*/__webpack_require__.n(external_react_);
 
 // CONCATENATED MODULE: ./node_modules/suneditor/src/assets/defaultIcons.js
@@ -9314,6 +10387,7 @@ var external_react_default = /*#__PURE__*/__webpack_require__.n(external_react_)
    mirror_vertical: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.74 14.75"><g><path d="M20.15,13.1,4.41,19V13.1H20.15ZM4.41,4.25l15.74,5.9H4.41V4.25Z" transform="translate(-4.41 -4.25)"/></g></svg>',
    checked: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.75 12.1"><g><path d="M4.59,12.23l.12.18L9.43,17.5a.58.58,0,0,0,.84,0L20,7.45h0a.58.58,0,0,0,0-.84l-.85-.85a.58.58,0,0,0-.84,0H18.2l-8.12,8.41a.29.29,0,0,1-.42,0l-3.4-3.63a.58.58,0,0,0-.84,0l-.85.85a.6.6,0,0,0-.14.21.51.51,0,0,0,0,.44c.05.06.1.13.16.19Z" transform="translate(-4.38 -5.58)"/></g></svg>',
    line_break: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 21L14.9 3H17L9.1 21H7Z" /></svg>',
+   audio: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14,3.23V5.29C16.89,6.15 19,8.83 19,12C19,15.17 16.89,17.84 14,18.7V20.77C18,19.86 21,16.28 21,12C21,7.72 18,4.14 14,3.23M16.5,12C16.5,10.23 15.5,8.71 14,7.97V16C15.5,15.29 16.5,13.76 16.5,12M3,9V15H7L12,20V4L7,9H3Z" /></svg>',
    // Not currently used
    attachment: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8.38 15.68"><g><path d="M15.23,6h1v9.78a3.88,3.88,0,0,1-1.31,2.45,4,4,0,0,1-6.57-2.45V7A3,3,0,0,1,9.2,4.89a3,3,0,0,1,5,2.09v8.31a1.92,1.92,0,0,1-.58,1.39,2,2,0,0,1-1.39.58,1.92,1.92,0,0,1-1.39-.58,2,2,0,0,1-.58-1.39V8h1v7.32a1,1,0,0,0,.29.69,1,1,0,0,0,.69.28A.9.9,0,0,0,13,16a1,1,0,0,0,.29-.69V7a1.92,1.92,0,0,0-.58-1.39A2,2,0,0,0,11.27,5a1.92,1.92,0,0,0-1.39.58A2,2,0,0,0,9.33,7v8.31a3,3,0,1,0,5.9,0V6Z" transform="translate(-8.08 -3.78)"/></g></svg>',
    map: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 11.7 15.62"><g><path d="M12.05,12.42a2.93,2.93,0,1,1,2.07-5A2.88,2.88,0,0,1,15,9.49a3,3,0,0,1-.86,2.07,2.89,2.89,0,0,1-2.07.86Zm0-5.36a2.43,2.43,0,0,0-1.72,4.16,2.48,2.48,0,0,0,1.72.72,2.44,2.44,0,0,0,0-4.88Zm0-3.3A5.84,5.84,0,0,1,17.9,9.62a9.94,9.94,0,0,1-1.73,5A33.59,33.59,0,0,1,12.84,19a1.52,1.52,0,0,1-.23.2,1,1,0,0,1-.55.2h0a1,1,0,0,1-.55-.2,1.52,1.52,0,0,1-.23-.2,33.59,33.59,0,0,1-3.33-4.32,9.93,9.93,0,0,1-1.72-5,5.84,5.84,0,0,1,5.85-5.86ZM12,18.34l.08.05.06-.06a35.58,35.58,0,0,0,3.06-3.93,9.35,9.35,0,0,0,1.74-4.77,4.88,4.88,0,0,0-4.88-4.88A4.79,4.79,0,0,0,8.6,6.17,4.84,4.84,0,0,0,7.17,9.62,9.29,9.29,0,0,0,8.91,14.4,36,36,0,0,0,12,18.34Z" transform="translate(-6.2 -3.76)"/></g></svg>',
@@ -9323,7 +10397,7 @@ var external_react_default = /*#__PURE__*/__webpack_require__.n(external_react_)
    more_vertical: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3.94 15.75"><g><path d="M12.28,7.69a1.92,1.92,0,0,1-1.39-.58,2,2,0,0,1-.58-1.39,1.92,1.92,0,0,1,.58-1.39,2,2,0,0,1,1.39-.58,1.92,1.92,0,0,1,1.39.58,2,2,0,0,1,.58,1.39,1.92,1.92,0,0,1-.58,1.39,2,2,0,0,1-1.39.58Zm0,2a1.92,1.92,0,0,1,1.39.58,2,2,0,0,1,.58,1.39A1.92,1.92,0,0,1,13.67,13a2,2,0,0,1-1.39.58A1.92,1.92,0,0,1,10.89,13a2,2,0,0,1-.58-1.39,2,2,0,0,1,2-2Zm0,5.9a1.92,1.92,0,0,1,1.39.58,2,2,0,0,1,.58,1.39,1.92,1.92,0,0,1-.58,1.39,2,2,0,0,1-1.39.58,1.92,1.92,0,0,1-1.39-.58,2,2,0,0,1-.58-1.39,1.92,1.92,0,0,1,.58-1.39,1.94,1.94,0,0,1,1.39-.58Z" transform="translate(-10.31 -3.75)"/></g></svg>'
 });
 // EXTERNAL MODULE: ./node_modules/suneditor/src/lang/en.js
-var en = __webpack_require__(2);
+var en = __webpack_require__(4);
 var en_default = /*#__PURE__*/__webpack_require__.n(en);
 
 // CONCATENATED MODULE: ./node_modules/suneditor/src/lib/util.js
@@ -9365,8 +10439,8 @@ const util_util = {
      * @private
      */
     _HTMLConvertor: function (contents) {
-        const ec = {'&': '&amp;', '\u00A0': '&nbsp;', '\'': '&quot;', '<': '&lt;', '>': '&gt;'};
-        return contents.replace(/&|\u00A0|'|<|>/g, function (m) {
+        const ec = {'&': '&amp;', '\u00A0': '&nbsp;', '\'': '&apos;', '"': '&quot;', '<': '&lt;', '>': '&gt;'};
+        return contents.replace(/&|\u00A0|'|"|<|>/g, function (m) {
             return (typeof ec[m] === 'string') ? ec[m] : m;
         });
     },
@@ -10362,7 +11436,7 @@ const util_util = {
         try {
             item.remove();
         } catch (e) {
-            item.parentNode.removeChild(item);
+            if (item.parentNode) item.parentNode.removeChild(item);
         }
     },
 
@@ -10846,14 +11920,20 @@ const util_util = {
      * @private
      */
     _consistencyCheckOfHTML: function (documentFragment, htmlCheckWhitelistRegExp) {
+        /**
+         * It is can use ".children(util.getListChildren)" to exclude text nodes, but "documentFragment.children" is not supported in IE.
+         * So check the node type and exclude the text no (current.nodeType !== 1)
+         */
         // empty whitelist
         const emptyWhitelistTags = [];
         // wrong position
-        const wrongTags = this.getListChildren(documentFragment, function (current) {
+        const wrongTags = this.getListChildNodes(documentFragment, function (current) {
+            if (current.nodeType !== 1) return false;
             if (!htmlCheckWhitelistRegExp.test(current.nodeName) && current.childNodes.length === 0) {
                 emptyWhitelistTags.push(current);
                 return false;
             }
+
             return current.parentNode !== documentFragment &&
              (this.isFormatElement(current) || this.isComponent(current) || this.isList(current) || (((this.isMedia(current) && !this.isAnchor(current.parentNode)) || (this.isMedia(current.firstElementChild) && this.isAnchor(current))) && !this.getParentElement(current, this.isComponent))) &&
               !this.isRangeFormatElement(current.parentNode) && !this.isListCell(current.parentNode);
@@ -10879,7 +11959,8 @@ const util_util = {
         }
 
         // remove empty tags
-        const emptyTags = this.getListChildren(documentFragment, function (current) {
+        const emptyTags = this.getListChildNodes(documentFragment, function (current) {
+            if (current.nodeType !== 1) return false;
             return (!this.isTable(current) && !this.isListCell(current)) && (this.isFormatElement(current) || this.isRangeFormatElement(current) || this.isTextStyleElement(current)) && current.childNodes.length === 0 && !util_util.getParentElement(current, '.katex');
         }.bind(this));
 
@@ -10888,7 +11969,8 @@ const util_util = {
         }
 
         // wrong list
-        const wrongList = this.getListChildren(documentFragment, function (current) {
+        const wrongList = this.getListChildNodes(documentFragment, function (current) {
+            if (current.nodeType !== 1) return false;
             return this.isList(current.parentNode) && !this.isList(current) && !this.isListCell(current);
         }.bind(this));
 
@@ -10903,6 +11985,20 @@ const util_util = {
             
             t.parentNode.insertBefore(tp, t);
             this.removeItem(t);
+        }
+
+        // table cells without format
+        const withoutFormatCells = this.getListChildNodes(documentFragment, function (current) {
+            if (current.nodeType !== 1) return false;
+            return this.isCell(current) && !this.isFormatElement(current.firstElementChild);
+        }.bind(this));
+
+        for (let i = 0, len = withoutFormatCells.length, t, f; i < len; i++) {
+            t = withoutFormatCells[i];
+
+            f = this.createElement('DIV');
+            f.innerHTML = t.innerHTML;
+            t.innerHTML = f.outerHTML;
         }
     },
 
@@ -11138,8 +12234,7 @@ const util_util = {
         el.charWrapper = bottomBar.charWrapper;
         el.charCounter = bottomBar.charCounter;
 
-        editorArea.removeChild(el.wysiwygFrame);
-        editorArea.removeChild(el.code);
+        editorArea.innerHTML = '';
         editorArea.appendChild(wysiwygFrame);
         editorArea.appendChild(code);
 
@@ -11202,7 +12297,7 @@ const util_util = {
                 for (let f = 0, len = linkNames.length, path; f < len; f++) {
                     path = [];
 
-                    if (/^https?:\/\//.test(linkNames[f])) {
+                    if (/(^https?:\/\/)|(^data:text\/css,)/.test(linkNames[f])) {
                         path.push(linkNames[f]);
                     } else {
                         const CSSFileName = new RegExp('(^|.*[\\/])' + linkNames[f] + '(\\..+)?\.css(?:\\?.*|;.*)?$', 'i');
@@ -11320,7 +12415,7 @@ const util_util = {
         /** user options */
         options.lang = options.lang || en_default.a;
         /** Whitelist */
-        options._defaultTagsWhitelist = typeof options._defaultTagsWhitelist === 'string' ? options._defaultTagsWhitelist : 'br|p|div|pre|blockquote|h[1-6]|ol|ul|li|hr|figure|figcaption|img|iframe|audio|video|table|thead|tbody|tr|th|td|a|b|strong|var|i|em|u|ins|s|span|strike|del|sub|sup';
+        options._defaultTagsWhitelist = typeof options._defaultTagsWhitelist === 'string' ? options._defaultTagsWhitelist : 'br|p|div|pre|blockquote|h[1-6]|ol|ul|li|hr|figure|figcaption|img|iframe|audio|video|source|table|thead|tbody|tr|th|td|a|b|strong|var|i|em|u|ins|s|span|strike|del|sub|sup';
         options._editorTagsWhitelist = options._defaultTagsWhitelist + (typeof options.addTagsWhitelist === 'string' && options.addTagsWhitelist.length > 0 ? '|' + options.addTagsWhitelist : '');
         options.pasteTagsWhitelist = typeof options.pasteTagsWhitelist === 'string' ? options.pasteTagsWhitelist : options._editorTagsWhitelist;
         options.attributesWhitelist = (!options.attributesWhitelist || typeof options.attributesWhitelist !== 'object') ? null : options.attributesWhitelist;
@@ -11328,7 +12423,7 @@ const util_util = {
         options.mode = options.mode || 'classic'; // classic, inline, balloon, balloon-always
         options.toolbarWidth = options.toolbarWidth ? (lib_util.isNumber(options.toolbarWidth) ? options.toolbarWidth + 'px' : options.toolbarWidth) : 'auto';
         options.stickyToolbar = /balloon/i.test(options.mode) ? -1 : options.stickyToolbar === undefined ? 0 : (/^\d+/.test(options.stickyToolbar) ? lib_util.getNumber(options.stickyToolbar, 0) : -1);
-        // options.fullPage = options.fullPage;
+        options.fullPage = !!options.fullPage;
         options.iframe = options.fullPage || options.iframe;
         options.iframeCSSFileName = options.iframe ? typeof options.iframeCSSFileName === 'string' ? [options.iframeCSSFileName] : (options.iframeCSSFileName || ['suneditor']) : null;
         options.codeMirror = options.codeMirror ? options.codeMirror.src ? options.codeMirror : {src: options.codeMirror} : null;
@@ -11388,6 +12483,23 @@ const util_util = {
         options.videoRatio = (lib_util.getNumber(options.videoRatio, 4) || 0.5625);
         options.videoRatioList = !options.videoRatioList ? null : options.videoRatioList;
         options.youtubeQuery = (options.youtubeQuery || '').replace('?', '');
+        options.videoFileInput = !!options.videoFileInput;
+        options.videoUrlInput = (options.videoUrlInput === undefined || !options.videoFileInput) ? true : options.videoUrlInput;
+        options.videoUploadHeader = options.videoUploadHeader || null;
+        options.videoUploadUrl = options.videoUploadUrl || null;
+        options.videoUploadSizeLimit = /\d+/.test(options.videoUploadSizeLimit) ? lib_util.getNumber(options.videoUploadSizeLimit, 0) : null;
+        /** Audio */
+        options.audioWidth = !options.audioWidth ? '' : lib_util.isNumber(options.audioWidth) ? options.audioWidth + 'px' : options.audioWidth;
+        options.audioHeight = !options.audioHeight ? '' : lib_util.isNumber(options.audioHeight) ? options.audioHeight + 'px' : options.audioHeight;
+        options.audioFileInput = !!options.audioFileInput;
+        options.audioUrlInput = (options.audioUrlInput === undefined || !options.audioFileInput) ? true : options.audioUrlInput;
+        options.audioUploadHeader = options.audioUploadHeader || null;
+        options.audioUploadUrl = options.audioUploadUrl || null;
+        options.audioUploadSizeLimit = /\d+/.test(options.audioUploadSizeLimit) ? lib_util.getNumber(options.audioUploadSizeLimit, 0) : null;
+        /** Table */
+        options.tableCellControllerPosition = typeof options.tableCellControllerPosition === 'string' ? options.tableCellControllerPosition.toLowerCase() : 'cell';
+        /** Key actions */
+        options.tabDisable = !!options.tabDisable;
         /** Defining save button */
         options.callBackSave = !options.callBackSave ? null : options.callBackSave;
         /** Templates Array */
@@ -11460,6 +12572,7 @@ const util_util = {
             link: ['', lang.toolbar.link, 'link', 'dialog', icons.link],
             image: ['', lang.toolbar.image, 'image', 'dialog', icons.image],
             video: ['', lang.toolbar.video, 'video', 'dialog', icons.video],
+            audio: ['', lang.toolbar.audio, 'audio', 'dialog', icons.audio],
             math: ['', lang.toolbar.math, 'math', 'dialog', icons.math]
         };
     },
@@ -11898,7 +13011,7 @@ const _Context = function (element, cons, options) {
         notice_button.addEventListener('click', this.onClick_cancel.bind(core));
         
         /** append html */
-        context.element.relative.insertBefore(notice_div, context.element.editorArea);
+        context.element.editorArea.appendChild(notice_div);
         
         /** empty memory */
         notice_div = null;
@@ -11985,6 +13098,12 @@ const _Context = function (element, cons, options) {
          * @private
          */
         _ww: null,
+        
+        /**
+         * @description Closest ShadowRoot to editor if found
+         * @private
+         */
+        _shadowRoot: null,
 
         /**
          * @description Util object
@@ -12056,12 +13175,6 @@ const _Context = function (element, cons, options) {
          * @description container element
          */
         container: null,
-
-        /**
-         * @description current resizing component name
-         * @private
-         */
-        _resizingName: '',
 
         /**
          * @description current subment name
@@ -12215,64 +13328,39 @@ const _Context = function (element, cons, options) {
         _componentsInfoReset: false,
 
         /**
-         * @description An user event function before image uploaded
-         * @private
-         */
-        _imageUploadBefore: function (files, info) {
-            if (typeof functions.onImageUploadBefore === 'function') return functions.onImageUploadBefore(files, info, this);
-            return true;
-        },
-
-        /**
-         * @description An user event function when image info is changed
-         * @private
-         */
-        _imageUpload: function (targetElement, index, state, imageInfo, remainingFilesCount) {
-            if (typeof functions.onImageUpload === 'function') functions.onImageUpload(targetElement, index * 1, state, imageInfo, remainingFilesCount, this);
-        },
-
-        /**
-         * @description An user event function when image upload failed
-         * @private
-         */
-        _imageUploadError: function (errorMessage, result) {
-            if (typeof functions.onImageUploadError === 'function') return functions.onImageUploadError(errorMessage, result, this);
-            return true;
-        },
-
-        /**
-         * @description An user callback function of the image upload
-         * @private
-         */
-        _imageUploadHandler: function (response, info) {
-            if (typeof functions.imageUploadHandler === 'function') {
-                functions.imageUploadHandler(response, info, this);
-                return true;
-            } else {
-                return false;
-            }
-        },
-
-        /**
-         * @description An user event function when video info is changed
-         * @private
-         */
-        _videoUpload: function (targetElement, index, state, videoInfo, remainingFilesCount) {
-            if (typeof functions.onVideoUpload === 'function') functions.onVideoUpload(targetElement, index * 1, state, videoInfo, remainingFilesCount, this);
-        },
-
-        /**
          * @description Plugins array with "active" method.
          * "activePlugins" runs the "add" method when creating the editor.
          */
         activePlugins: null,
 
         /**
-         * @description Plugins array with "checkComponentInfo" and "resetComponentInfo" methods.
-         * "componentInfoPlugins" runs the "add" method when creating the editor.
-         * "checkComponentInfo" method is always call just before the "change" event.
+         * @description Array of "checkFileInfo" functions with the core bound
+         * (Plugins with "checkFileInfo" and "resetFileInfo" methods)
+         * "fileInfoPlugins" runs the "add" method when creating the editor.
+         * "checkFileInfo" method is always call just before the "change" event.
+         * @private
          */
-        componentInfoPlugins: null,
+        _fileInfoPluginsCheck: null,
+
+        /**
+         * @description Array of "resetFileInfo" functions with the core bound
+         * (Plugins with "checkFileInfo" and "resetFileInfo" methods)
+         * "checkFileInfo" method is always call just before the "functions.setOptions" method.
+         * @private
+         */
+        _fileInfoPluginsReset: null,
+
+        /**
+         * @description Variables for file component management
+         * @private
+         */
+        _fileManager: {
+            tags: null,
+            regExp: null,
+            queryString: null,
+            pluginRegExp: null,
+            pluginMap: null
+        },
 
         /**
          * @description Elements that need to change text or className for each selection change
@@ -12370,6 +13458,9 @@ const _Context = function (element, cons, options) {
                 moduleName = moduleArray[i].name;
                 if (!this.plugins[moduleName]) {
                     this.plugins[moduleName] = moduleArray[i];
+                }
+                if (!this.initPlugins[moduleName]) {
+                    this.initPlugins[moduleName] = true;
                     if (typeof this.plugins[moduleName].add === 'function') this.plugins[moduleName].add(this);
                 }
             }
@@ -12400,20 +13491,20 @@ const _Context = function (element, cons, options) {
             if (this._bindControllersOff) this.controllersOff();
 
             const submenuName = this._submenuName = element.getAttribute('data-command');
+            const submenu = this.submenu = element.nextElementSibling;
 
-            this.submenu = element.nextElementSibling;
-            this.submenu.style.top = '-10000px';
-            this.submenu.style.visibility = 'hidden';
-            this.submenu.style.display = 'block';
+            submenu.style.top = '-10000px';
+            submenu.style.visibility = 'hidden';
+            submenu.style.display = 'block';
             util.addClass(element, 'on');
             this.submenuActiveButton = element;
 
             const toolbar = this.context.element.toolbar;
             const toolbarW = toolbar.offsetWidth;
-            const menuW = this.submenu.offsetWidth;
+            const menuW = submenu.offsetWidth;
             const overLeft = toolbarW <= menuW ? 0 : toolbarW - (element.parentElement.offsetLeft + menuW);
-            if (overLeft < 0) this.submenu.style.left = overLeft + 'px';
-            else this.submenu.style.left = '1px';
+            if (overLeft < 0) submenu.style.left = overLeft + 'px';
+            else submenu.style.left = '1px';
 
 
             let t = 0;
@@ -12429,14 +13520,14 @@ const _Context = function (element, cons, options) {
                 t -= element.offsetHeight;
             }
 
-            const space = t + this.submenu.offsetHeight - context.element.wysiwyg.offsetHeight + 3;
+            const space = t + submenu.offsetHeight - context.element.wysiwyg.offsetHeight + 3;
             if (space > 0 && event._getPageBottomSpace() < space) {
-                this.submenu.style.top = (-1 * (this.submenu.offsetHeight + 3)) + 'px';
+                submenu.style.top = (-1 * (submenu.offsetHeight + 3)) + 'px';
             } else {
-                this.submenu.style.top = '';
+                submenu.style.top = '';
             }
 
-            this.submenu.style.visibility = '';
+            submenu.style.visibility = '';
             this._bindedSubmenuOff = this.submenuOff.bind(this);
             this.addDocEvent('mousedown', this._bindedSubmenuOff, false);
 
@@ -12471,17 +13562,17 @@ const _Context = function (element, cons, options) {
             if (this._bindedContainerOff) this._bindedContainerOff();
 
             const containerName = this._containerName = element.getAttribute('data-command');
+            const container = this.container = element.nextElementSibling;
 
-            this.container = element.nextElementSibling;
-            this.container.style.display = 'block';
+            container.style.display = 'block';
             util.addClass(element, 'on');
             this.containerActiveButton = element;
 
             const toolbarW = this.context.element.toolbar.offsetWidth;
-            const menuW = this.container.offsetWidth;
+            const menuW = container.offsetWidth;
             const overLeft = toolbarW <= menuW ? 0 : toolbarW - (element.parentElement.offsetLeft + menuW);
-            if (overLeft < 0) this.container.style.left = overLeft + 'px';
-            else this.container.style.left = '1px';
+            if (overLeft < 0) container.style.left = overLeft + 'px';
+            else container.style.left = '1px';
 
             this._bindedContainerOff = this.containerOff.bind(this);
             this.addDocEvent('mousedown', this._bindedContainerOff, false);
@@ -12514,20 +13605,19 @@ const _Context = function (element, cons, options) {
          * @param {*} arguments controller elements, functions..
          */
         controllersOn: function () {
-            if (this._bindControllersOff) {
-                const tempName = this._resizingName;
-                this._bindControllersOff();
-                this._resizingName = tempName;
-            }
+            if (this._bindControllersOff) this._bindControllersOff();
+            this.controllerArray = [];
 
             for (let i = 0, arg; i < arguments.length; i++) {
                 arg = arguments[i];
+                if (!arg) continue;
+                
                 if (typeof arg === 'string') {
                     this.currentControllerName = arg;
                     continue;
                 }
                 if (typeof arg === 'function') {
-                    this.controllerArray[i] = arg;
+                    this.controllerArray.push(arg);
                     continue;
                 }
                 if (!util.hasClass(arg, 'se-controller')) {
@@ -12535,7 +13625,7 @@ const _Context = function (element, cons, options) {
                     continue;
                 }
                 if (arg.style) arg.style.display = 'block';
-                this.controllerArray[i] = arg;
+                this.controllerArray.push(arg);
             }
 
             this._bindControllersOff = this.controllersOff.bind(this);
@@ -12551,9 +13641,8 @@ const _Context = function (element, cons, options) {
          * @param {KeyboardEvent|MouseEvent|null} e Event object when called from mousedown and keydown events registered in "core.controllersOn"
          */
         controllersOff: function (e) {
-            if (this._resizingName && e && e.type === 'keydown' && e.keyCode !== 27) return;
+            if (this._fileManager.pluginRegExp.test(this.currentControllerName) && e && e.type === 'keydown' && e.keyCode !== 27) return;
 
-            this._resizingName = '';
             this.currentControllerName = '';
             this.currentControllerTarget = null;
             this.effectNode = null;
@@ -12639,15 +13728,9 @@ const _Context = function (element, cons, options) {
         focusEdge: function (focusEl) {
             if (!focusEl) focusEl = context.element.wysiwyg.lastElementChild;
 
-            if (util.isComponent(focusEl)) {
-                const imageComponent = focusEl.querySelector('IMG');
-                const videoComponent = focusEl.querySelector('IFRAME');
-    
-                if (imageComponent) {
-                    this.selectComponent(imageComponent, 'image');
-                } else if (videoComponent) {
-                    this.selectComponent(videoComponent, 'video');
-                }
+            const fileComponentInfo = this.getFileComponent(focusEl);
+            if (fileComponentInfo) {
+                this.selectComponent(fileComponentInfo.component, fileComponentInfo.pluginName);
             } else if (focusEl) {
                 focusEl = util.getChildElement(focusEl, function (current) { return current.childNodes.length === 0 || current.nodeType === 3; }, true);
                 if (!focusEl) this.nativeFocus();
@@ -12728,7 +13811,7 @@ const _Context = function (element, cons, options) {
          * @returns {Object}
          */
         getSelection: function () {
-            return this._ww.getSelection();
+            return this._shadowRoot && this._shadowRoot.getSelection ? this._shadowRoot.getSelection() : this._ww.getSelection();
         },
 
         /**
@@ -13076,33 +14159,42 @@ const _Context = function (element, cons, options) {
         },
 
         /**
-         * @description The component(image, video) is selected and the resizing module is called.
-         * @param {Element} element Element tag (img or iframe)
-         * @param {String} componentName Component name (image or video)
+         * @description Gets the file component and that plugin name
+         * return: {component, pluginName} | null
+         * @param {Element} element Target element (figure tag, component div, file tag)
+         * @returns {Object|null}
          */
-        selectComponent: function (element, componentName) {
-            if (componentName === 'image') {
-                if (!core.plugins.image) return;
-
-                core.removeRange();
-                core.callPlugin('image', function () {
-                    const size = core.plugins.resizing.call_controller_resize.call(core, element, 'image');
-                    core.plugins.image.onModifyMode.call(core, element, size);
-                    
-                    if (!util.getParentElement(element, '.se-image-container')) {
-                        core.plugins.image.openModify.call(core, true);
-                        core.plugins.image.update_image.call(core, true, true, true);
-                    }
-                }, null);
-            } else if (componentName === 'video') {
-                if (!core.plugins.video) return;
-
-                core.removeRange();
-                core.callPlugin('video', function () {
-                    const size = core.plugins.resizing.call_controller_resize.call(core, element, 'video');
-                    core.plugins.video.onModifyMode.call(core, element, size);
-                }, null);
+        getFileComponent: function (element) {
+            let fileComponent, pluginName;
+            if (/^FIGURE$/i.test(element.nodeName) || /se-component/.test(element.className)) {
+                fileComponent = element.querySelector(core._fileManager.queryString);
             }
+            if (!fileComponent && element.nodeName && core._fileManager.regExp.test(element.nodeName)) {
+                fileComponent = element;
+            }
+
+            if (fileComponent) {
+                pluginName = core._fileManager.pluginMap[fileComponent.nodeName.toLowerCase()];
+                if (pluginName) {
+                    return {
+                        component: fileComponent,
+                        pluginName: pluginName
+                    };
+                }
+            }
+
+            return null;
+        },
+
+        /**
+         * @description The component(image, video) is selected and the resizing module is called.
+         * @param {Element} element Element tag (img, iframe, video)
+         * @param {String} pluginName Plugin name (image, video)
+         */
+        selectComponent: function (element, pluginName) {
+            const plugin = core.plugins[pluginName];
+            if (!plugin || !plugin.select) return;
+            this.callPlugin(pluginName, plugin.select.bind(this, element), null);
         },
 
         /**
@@ -13919,13 +15011,12 @@ const _Context = function (element, cons, options) {
             }
 
             if (range.collapsed && !isRemoveFormat) {
-                if (startCon.nodeType === 1 && !util.isBreak(startCon)) {
+                if (startCon.nodeType === 1 && !util.isBreak(startCon) && !util.isComponent(startCon)) {
                     let afterNode = null;
                     const focusNode = startCon.childNodes[startOff];
 
                     if (focusNode) {
                         if (!focusNode.nextSibling) {
-                            startCon.removeChild(focusNode);
                             afterNode = null;
                         } else {
                             afterNode = util.isBreak(focusNode) ? focusNode : focusNode.nextSibling;
@@ -14151,14 +15242,17 @@ const _Context = function (element, cons, options) {
                 }
 
                 // mid
-                for (let i = endLength - 1; i > 0; i--) {
+                for (let i = endLength - 1, renewedEndContainer; i > 0; i--) {
                     newNode = appendNode.cloneNode(false);
-                    this._nodeChange_middleLine(lineNodes[i], newNode, validation, isRemoveFormat, isRemoveNode, _removeCheck);
+                    renewedEndContainer = this._nodeChange_middleLine(lineNodes[i], newNode, validation, isRemoveFormat, isRemoveNode, _removeCheck, end.container);
+                    if (renewedEndContainer) end.container = renewedEndContainer;
                 }
 
                 // start
                 newNode = appendNode.cloneNode(false);
-                start = this._nodeChange_startLine(lineNodes[0], newNode, validation, startCon, startOff, isRemoveFormat, isRemoveNode, _removeCheck, _getMaintainedNode, _isMaintainedNode);
+                start = this._nodeChange_startLine(lineNodes[0], newNode, validation, startCon, startOff, isRemoveFormat, isRemoveNode, _removeCheck, _getMaintainedNode, _isMaintainedNode, end.container);
+
+                if (start.endContainer) end.container = start.endContainer;
 
                 if (endLength <= 0) {
                     end = start;
@@ -14669,10 +15763,11 @@ const _Context = function (element, cons, options) {
          * @param {Number} startOff The startOffset property of the selection object.
          * @param {Boolean} isRemoveFormat Is the remove all formats command?
          * @param {Boolean} isRemoveNode "newInnerNode" is remove node?
-         * @returns {Object} { container, offset }
+         * @returns {null|Node} If end container is renewed, returned renewed node
+         * @returns {Object} { container, offset, endContainer }
          * @private
          */
-        _nodeChange_startLine: function (element, newInnerNode, validation, startCon, startOff, isRemoveFormat, isRemoveNode, _removeCheck, _getMaintainedNode, _isMaintainedNode) {
+        _nodeChange_startLine: function (element, newInnerNode, validation, startCon, startOff, isRemoveFormat, isRemoveNode, _removeCheck, _getMaintainedNode, _isMaintainedNode, _endContainer) {
             // not add tag
             let parentCon = startCon.parentNode;
             while (!parentCon.nextSibling && !parentCon.previousSibling && !util.isFormatElement(parentCon.parentNode) && !util.isWysiwygDiv(parentCon.parentNode)) {
@@ -14715,7 +15810,7 @@ const _Context = function (element, cons, options) {
             (function recursionFunc(current, ancestor) {
                 const childNodes = current.childNodes;
 
-                for (let i = 0, len = childNodes.length, vNode; i < len; i++) {
+                for (let i = 0, len = childNodes.length, vNode, cloneChild; i < len; i++) {
                     const child = childNodes[i];
                     if (!child) continue;
                     let coverNode = ancestor;
@@ -14724,9 +15819,16 @@ const _Context = function (element, cons, options) {
                         if (child.nodeType === 1) {
                             if (util._isIgnoreNodeChange(child)) {
                                 newInnerNode = newInnerNode.cloneNode(false);
-                                pNode.appendChild(child.cloneNode(true));
+                                cloneChild = child.cloneNode(true);
+                                pNode.appendChild(cloneChild);
                                 pNode.appendChild(newInnerNode);
                                 nNodeArray.push(newInnerNode);
+
+                                // end container
+                                if (_endContainer && child.contains(_endContainer)) {
+                                    const endPath = util.getNodePath(_endContainer, child);
+                                    _endContainer = util.getNodeFromPath(endPath, cloneChild);
+                                }
                             } else {
                                 recursionFunc(child, child);
                             }
@@ -14877,7 +15979,8 @@ const _Context = function (element, cons, options) {
             if (isRemoveNode && !isRemoveFormat && !_removeCheck.v) {
                 return {
                     container: startCon,
-                    offset: startOff
+                    offset: startOff,
+                    endContainer: _endContainer
                 };
             }
 
@@ -14933,7 +16036,8 @@ const _Context = function (element, cons, options) {
 
             return {
                 container: container,
-                offset: offset
+                offset: offset,
+                endContainer: _endContainer
             };
         },
 
@@ -14944,11 +16048,17 @@ const _Context = function (element, cons, options) {
          * @param {Function} validation Check if the node should be stripped.
          * @param {Boolean} isRemoveFormat Is the remove all formats command?
          * @param {Boolean} isRemoveNode "newInnerNode" is remove node?
+         * @param {Node} _endContainer Offset node of last line already modified (end.container)
+         * @returns {null|Node} If end container is renewed, returned renewed node
          * @private
          */
-        _nodeChange_middleLine: function (element, newInnerNode, validation, isRemoveFormat, isRemoveNode, _removeCheck) {
+        _nodeChange_middleLine: function (element, newInnerNode, validation, isRemoveFormat, isRemoveNode, _removeCheck, _endContainer) {
             // not add tag
             if (!isRemoveNode) {
+                // end container path
+                let endPath = null;
+                if (_endContainer && element.contains(_endContainer)) endPath = util.getNodePath(_endContainer, element);
+
                 const tempNode = element.cloneNode(true);
                 const newNodeName = newInnerNode.nodeName;
                 const newCssText = newInnerNode.style.cssText;
@@ -14976,7 +16086,7 @@ const _Context = function (element, cons, options) {
 
                 if (len > 0 && i === len) {
                     element.innerHTML = tempNode.innerHTML;
-                    return;
+                    return endPath ? util.getNodeFromPath(endPath, element) : null;
                 }
             }
 
@@ -14989,7 +16099,7 @@ const _Context = function (element, cons, options) {
             (function recursionFunc(current, ancestor) {
                 const childNodes = current.childNodes;
 
-                for (let i = 0, len = childNodes.length, vNode; i < len; i++) {
+                for (let i = 0, len = childNodes.length, vNode, cloneChild; i < len; i++) {
                     let child = childNodes[i];
                     if (!child) continue;
                     let coverNode = ancestor;
@@ -14999,10 +16109,19 @@ const _Context = function (element, cons, options) {
                             pNode.appendChild(newInnerNode);
                             newInnerNode = newInnerNode.cloneNode(false);
                         }
-                        pNode.appendChild(child.cloneNode(true));
+                        
+                        cloneChild = child.cloneNode(true);
+                        pNode.appendChild(cloneChild);
                         pNode.appendChild(newInnerNode);
                         nNodeArray.push(newInnerNode);
                         ancestor = newInnerNode;
+
+                        // end container
+                        if (_endContainer && child.contains(_endContainer)) {
+                            const endPath = util.getNodePath(_endContainer, child);
+                            _endContainer = util.getNodeFromPath(endPath, cloneChild);
+                        }
+
                         continue;
                     } else {
                         vNode = validation(child);
@@ -15018,7 +16137,7 @@ const _Context = function (element, cons, options) {
             })(element, newInnerNode);
 
             // not remove tag
-            if (noneChange || (isRemoveNode && !isRemoveFormat && !_removeCheck.v)) return;
+            if (noneChange || (isRemoveNode && !isRemoveFormat && !_removeCheck.v)) return _endContainer;
 
             pNode.appendChild(newInnerNode);
 
@@ -15043,6 +16162,7 @@ const _Context = function (element, cons, options) {
 
             // node change
             element.parentNode.replaceChild(pNode, element);
+            return _endContainer;
         },
 
         /**
@@ -15687,7 +16807,7 @@ const _Context = function (element, cons, options) {
                 _var.innerHeight_fullScreen = (_w.innerHeight - toolbar.offsetHeight);
                 editorArea.style.height = _var.innerHeight_fullScreen + 'px';
 
-                util.changeElement(element.querySelector('svg'), icons.reduction);
+                util.changeElement(element.firstElementChild, icons.reduction);
 
                 if (options.iframe && options.height === 'auto') {
                     editorArea.style.overflow = 'auto';
@@ -15719,7 +16839,7 @@ const _Context = function (element, cons, options) {
                 if (this._isInline) event._showToolbarInline();
 
                 event.onScroll_window();
-                util.changeElement(element.querySelector('svg'), icons.expansion);
+                util.changeElement(element.firstElementChild, icons.expansion);
             }
         },
 
@@ -16130,8 +17250,8 @@ const _Context = function (element, cons, options) {
          * @private
          */
         _checkComponents: function () {
-            for (let i in this.componentInfoPlugins) {
-                this.componentInfoPlugins[i].checkComponentInfo.call(this);
+            for (let i in this._fileInfoPluginsCheck) {
+                this._fileInfoPluginsCheck[i]();
             }
         },
 
@@ -16140,8 +17260,8 @@ const _Context = function (element, cons, options) {
          * @private
          */
         _resetComponents: function () {
-            for (let i in this.componentInfoPlugins) {
-                this.componentInfoPlugins[i].resetComponentInfo.call(this);
+            for (let i in this._fileInfoPluginsReset) {
+                this._fileInfoPluginsReset[i]();
             }
         },
 
@@ -16177,6 +17297,20 @@ const _Context = function (element, cons, options) {
             this._wd = _d;
             if (options.iframe && options.height === 'auto') this._iframeAuto = this._wd.body;
             
+            if (!options.iframe && typeof _w.ShadowRoot === 'function') {
+                let child = context.element.wysiwygFrame;
+                while (child) {
+                    if (child.shadowRoot) {
+                        this._shadowRoot = child.shadowRoot;
+                        break;
+                    } else if (child instanceof _w.ShadowRoot) {
+                        this._shadowRoot = child;
+                        break;
+                    }
+                    child = child.parentNode;
+                }
+            }
+            
             this._allowHTMLComments = options._editorTagsWhitelist.indexOf('//') > -1;
             this._htmlCheckWhitelistRegExp = new _w.RegExp('^(' + options._editorTagsWhitelist.replace('|//', '') + ')$', 'i');
             this.editorTagsWhitelistRegExp = util.createTagsWhitelist(options._editorTagsWhitelist.replace('|//', '|__comment__'));
@@ -16195,7 +17329,7 @@ const _Context = function (element, cons, options) {
                 }
             }
             
-            this._attributesWhitelistRegExp = new _w.RegExp('((?:' + allAttr + 'contenteditable|colspan|rowspan|target|href|src|class|type|data-format|data-size|data-file-size|data-file-name|data-origin|data-align|data-image-link|data-rotate|data-proportion|data-percentage|origin-size)\s*=\s*"[^"]*")', 'ig');
+            this._attributesWhitelistRegExp = new _w.RegExp('((?:' + allAttr + 'contenteditable|colspan|rowspan|target|href|src|class|type|controls|data-format|data-size|data-file-size|data-file-name|data-origin|data-align|data-image-link|data-rotate|data-proportion|data-percentage|origin-size)\s*=\s*"[^"]*")', 'ig');
             this._attributesTagsWhitelist = tagsAttr;
 
             this.codeViewDisabledButtons = context.element.toolbar.querySelectorAll('.se-toolbar button:not([class~="se-code-view-enabled"])');
@@ -16215,22 +17349,43 @@ const _Context = function (element, cons, options) {
                 INDENT: context.tool.indent
             };
 
-            // Command plugins registration
+            // file components
+            this._fileInfoPluginsCheck = [];
+            this._fileInfoPluginsReset = [];
+
+            // Command and file plugins registration
             this.activePlugins = [];
-            this.componentInfoPlugins = [];
-            let c, button;
+            this._fileManager.tags = [];
+            this._fileManager.pluginMap = {};
+
+            let filePluginRegExp = [];
+            let plugin, button;
             for (let key in plugins) {
-                c = plugins[key];
+                plugin = plugins[key];
                 button = pluginCallButtons[key];
-                if (c.active && button) {
+                if (plugin.active && button) {
                     this.callPlugin(key, null, button);
                 }
-                if (typeof c.checkComponentInfo === 'function' && typeof c.resetComponentInfo === 'function') {
+                if (typeof plugin.checkFileInfo === 'function' && typeof plugin.resetFileInfo === 'function') {
                     this.callPlugin(key, null, button);
-                    this.componentInfoPlugins.push(c);
+                    this._fileInfoPluginsCheck.push(plugin.checkFileInfo.bind(this));
+                    this._fileInfoPluginsReset.push(plugin.resetFileInfo.bind(this));
+                }
+                if (plugin.fileTags) {
+                    this.callPlugin(key, null, button);
+                    this._fileManager.tags = this._fileManager.tags.concat(plugin.fileTags);
+                    filePluginRegExp.push(key);
+                    for (let tag in plugin.fileTags) {
+                        this._fileManager.pluginMap[plugin.fileTags[tag].toLowerCase()] = key;
+                    }
                 }
             }
 
+            this._fileManager.queryString = this._fileManager.tags.join(',');
+            this._fileManager.regExp = new _w.RegExp('^(' +  this._fileManager.tags.join('|') + ')$', 'i');
+            this._fileManager.pluginRegExp = new _w.RegExp('^(' +  filePluginRegExp.join('|') + ')$', 'i');
+            
+            // cache editor's element
             this._variable._originCssText = context.element.topArea.style.cssText;
             this._placeholder = context.element.placeholder;
             this._lineBreaker = context.element.lineBreaker;
@@ -16238,6 +17393,9 @@ const _Context = function (element, cons, options) {
 
             // Excute history function
             this.history = lib_history(this, event._onChange_historyStack);
+
+            // register notice module
+            this.addModule([_notice]);
 
             // Init, validate
             if (!options.iframe) this._initWysiwygArea(reload, _initHTML);
@@ -16325,7 +17483,7 @@ const _Context = function (element, cons, options) {
          * @private
          */
         _setDefaultFormat: function (formatName) {
-            if (!!this._resizingName) return;
+            if (this._fileManager.pluginRegExp.test(this.currentControllerName)) return;
 
             const range = this.getRange();
             const commonCon = range.commonAncestorContainer;
@@ -16333,7 +17491,8 @@ const _Context = function (element, cons, options) {
             const rangeEl = util.getRangeFormatElement(commonCon, null);
             let focusNode, offset, format;
 
-            if (util.getParentElement(commonCon, util.isComponent)) return;
+            const fileComponent = util.getParentElement(commonCon, util.isComponent);
+            if (fileComponent && !util.isTable(fileComponent)) return;
             if((util.isRangeFormatElement(startCon) || util.isWysiwygDiv(startCon)) && util.isComponent(startCon.childNodes[range.startOffset])) return;
 
             if (rangeEl) {
@@ -16363,7 +17522,9 @@ const _Context = function (element, cons, options) {
                     br = util.createTextNode(util.zeroWidthSpace);
                     commonCon.appendChild(br);
                 }
+
                 this.setRange(br, 1, br, 1);
+                return;
             }
 
             this.execCommand('formatBlock', false, (formatName || 'P'));
@@ -16385,9 +17546,8 @@ const _Context = function (element, cons, options) {
                 focusNode = zeroWidth;
             }
 
-            offset = focusNode.nodeType === 3 ? focusNode.textContent.length : 1;
             this.effectNode = null;
-            this.setRange(focusNode, offset, focusNode, offset);
+            this.nativeFocus();
         }
     };
 
@@ -16619,19 +17779,11 @@ const _Context = function (element, cons, options) {
             const targetElement = e.target;
             if (context.element.wysiwyg.getAttribute('contenteditable') === 'false') return;
 
-            if (/^FIGURE$/i.test(targetElement.nodeName)) {
-                const imageComponent = targetElement.querySelector('IMG');
-                const videoComponent = targetElement.querySelector('IFRAME');
-
-                if (imageComponent) {
-                    e.preventDefault();
-                    core.selectComponent(imageComponent, 'image');
-                    return;
-                } else if (videoComponent) {
-                    e.preventDefault();
-                    core.selectComponent(videoComponent, 'video');
-                    return;
-                }
+            const fileComponentInfo = core.getFileComponent(targetElement);
+            if (fileComponentInfo) {
+                e.preventDefault();
+                core.selectComponent(fileComponentInfo.component, fileComponentInfo.pluginName);
+                return;
             }
 
             const figcaption = util.getParentElement(targetElement, 'FIGCAPTION');
@@ -16658,17 +17810,21 @@ const _Context = function (element, cons, options) {
             const selectionNode = core.getSelectionNode();
             const formatEl = util.getFormatElement(selectionNode, null);
             const rangeEl = util.getRangeFormatElement(selectionNode, null);
-            if ((!formatEl || formatEl === rangeEl) && targetElement.getAttribute('contenteditable') !== 'false') {
-                if (util.isList(rangeEl)) {
-                    const oLi = util.createElement('LI');
-                    const prevLi = selectionNode.nextElementSibling;
-                    oLi.appendChild(selectionNode);
-                    rangeEl.insertBefore(oLi, prevLi);
-                } else if (!util.isWysiwygDiv(selectionNode) && !util.isComponent(selectionNode)) {
-                    core._setDefaultFormat(util.isRangeFormatElement(rangeEl) ? 'DIV' : 'P');
+            if (((!formatEl || formatEl === rangeEl) && targetElement.getAttribute('contenteditable') !== 'false')) {
+                const range = core.getRange();
+                if (util.getFormatElement(range.startContainer) === util.getFormatElement(range.endContainer)) {
+                    if (util.isList(rangeEl)) {
+                        const oLi = util.createElement('LI');
+                        const prevLi = selectionNode.nextElementSibling;
+                        oLi.appendChild(selectionNode);
+                        rangeEl.insertBefore(oLi, prevLi);
+                    } else if (!util.isWysiwygDiv(selectionNode) && !util.isComponent(selectionNode) && (!util.isTable(selectionNode) || util.isCell(selectionNode))) {
+                        core._setDefaultFormat(util.isRangeFormatElement(rangeEl) ? 'DIV' : 'P');
+                    }
+                    
+                    e.preventDefault();
+                    core.focus();
                 }
-                e.preventDefault();
-                core.focus();
             } else {
                 event._applyTagEffects();
             }
@@ -16888,19 +18044,25 @@ const _Context = function (element, cons, options) {
             let selectionNode = core.getSelectionNode();
             const range = core.getRange();
             const selectRange = !range.collapsed || range.startContainer !== range.endContainer;
-            const resizingName = core._resizingName;
+            const fileComponentName = core._fileManager.pluginRegExp.test(core.currentControllerName) ? core.currentControllerName : '';
             let formatEl = util.getFormatElement(selectionNode, null) || selectionNode;
             let rangeEl = util.getRangeFormatElement(formatEl, null);
 
             switch (keyCode) {
                 case 8: /** backspace key */
                     if (!selectRange) {
-                        if (resizingName) {
+                        if (fileComponentName) {
                             e.preventDefault();
                             e.stopPropagation();
-                            core.plugins[resizingName].destroy.call(core);
+                            core.plugins[fileComponentName].destroy.call(core);
                             break;
                         }
+                    }
+
+                    if (event._tableDelete()) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        break;
                     }
 
                     if (!util.isFormatElement(formatEl) && !context.element.wysiwyg.firstElementChild && !util.isComponent(selectionNode)) {
@@ -17032,14 +18194,12 @@ const _Context = function (element, cons, options) {
                     // component
                     if (!selectRange && range.startOffset === 0) {
                         if (util.isComponent(commonCon.previousSibling) || (commonCon.nodeType === 3 && !commonCon.previousSibling && range.startOffset === 0 && range.endOffset === 0 && util.isComponent(formatEl.previousSibling))) {
-                            let previousEl = formatEl.previousSibling;
-                            if (util.hasClass(previousEl, 'se-image-container') || /^IMG$/i.test(previousEl.nodeName)) {
-                                previousEl = /^IMG$/i.test(previousEl.nodeName) ? previousEl : previousEl.querySelector('img');
-                                core.selectComponent(previousEl, 'image');
-                                if(formatEl.textContent.length === 0) util.removeItem(formatEl);
-                            } else if (util.hasClass(previousEl, 'se-video-container')) {
-                                core.selectComponent(previousEl.querySelector('iframe'), 'video');
-                                if(formatEl.textContent.length === 0) util.removeItem(formatEl);
+                            const fileComponentInfo = core.getFileComponent(formatEl.previousSibling);
+                            if (fileComponentInfo) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                core.selectComponent(fileComponentInfo.component, fileComponentInfo.pluginName);
+                                if (formatEl.textContent.length === 0) util.removeItem(formatEl);
                             }
                             break;
                         }
@@ -17047,15 +18207,21 @@ const _Context = function (element, cons, options) {
 
                     break;
                 case 46: /** delete key */
-                    if (resizingName) {
+                    if (fileComponentName) {
                         e.preventDefault();
                         e.stopPropagation();
-                        core.plugins[resizingName].destroy.call(core);
+                        core.plugins[fileComponentName].destroy.call(core);
+                        break;
+                    }
+
+                    if (event._tableDelete()) {
+                        e.preventDefault();
+                        e.stopPropagation();
                         break;
                     }
 
                     // component
-                    if ((util.isFormatElement(selectionNode) || selectionNode.nextSibling === null) && range.startOffset === selectionNode.textContent.length) {
+                    if ((util.isFormatElement(selectionNode) || selectionNode.nextSibling === null || (util.onlyZeroWidthSpace(selectionNode.nextSibling) && selectionNode.nextSibling.nextSibling === null)) && range.startOffset === selectionNode.textContent.length) {
                         let nextEl = formatEl.nextElementSibling;
                         if (!nextEl) {
                             e.preventDefault();
@@ -17076,15 +18242,11 @@ const _Context = function (element, cons, options) {
                                 }
                             }
 
-                            // resizing component
-                            if (util.hasClass(nextEl, 'se-component') || /^(IMG|IFRAME)$/i.test(nextEl.nodeName)) {
+                            // component
+                            const fileComponentInfo = core.getFileComponent(nextEl);
+                            if (fileComponentInfo) {
                                 e.stopPropagation();
-                                if (util.hasClass(nextEl, 'se-image-container') || /^IMG$/i.test(nextEl.nodeName)) {
-                                    nextEl = /^IMG$/i.test(nextEl.nodeName) ? nextEl : nextEl.querySelector('img');
-                                    core.selectComponent(nextEl, 'image');
-                                } else if (util.hasClass(nextEl, 'se-video-container')) {
-                                    core.selectComponent(nextEl.querySelector('iframe'), 'video');
-                                }
+                                core.selectComponent(fileComponentInfo.component, fileComponentInfo.pluginName);
                             }
 
                             break;
@@ -17129,7 +18291,7 @@ const _Context = function (element, cons, options) {
 
                     break;
                 case 9: /** tab key */
-                    if (resizingName) break;
+                    if (fileComponentName || options.tabDisable) break;
                     e.preventDefault();
                     if (ctrl || alt || util.isWysiwygDiv(selectionNode)) break;
 
@@ -17333,10 +18495,10 @@ const _Context = function (element, cons, options) {
                         core.setRange(formatEl, 0, formatEl, 0);
                     }
 
-                    if (resizingName) {
+                    if (fileComponentName) {
                         e.preventDefault();
                         e.stopPropagation();
-                        const compContext = context[resizingName];
+                        const compContext = context[fileComponentName];
                         const container = compContext._container;
                         const sibling = container.previousElementSibling || container.nextElementSibling;
 
@@ -17350,15 +18512,15 @@ const _Context = function (element, cons, options) {
 
                         container.parentNode.insertBefore(newEl, container);
                         
-                        core.callPlugin(resizingName, function () {
-                            const size = core.plugins.resizing.call_controller_resize.call(core, compContext._element, resizingName);
-                            core.plugins[resizingName].onModifyMode.call(core, compContext._element, size);
+                        core.callPlugin(fileComponentName, function () {
+                            const size = (core.plugins.resizing && core.context[fileComponentName]._resizing !== undefined) ? core.plugins.resizing.call_controller_resize.call(core, compContext._element, fileComponentName) : null;
+                            core.plugins[fileComponentName].onModifyMode.call(core, compContext._element, size);
                         }, null);
                     }
                     
                     break;
                 case 27:
-                    if (resizingName) {
+                    if (fileComponentName) {
                         e.preventDefault();
                         e.stopPropagation();
                         core.controllersOff();
@@ -17410,7 +18572,7 @@ const _Context = function (element, cons, options) {
             }
 
             /** when format tag deleted */
-            if (keyCode === 8 && util.isWysiwygDiv(selectionNode) && selectionNode.textContent === '') {
+            if (keyCode === 8 && util.isWysiwygDiv(selectionNode) && selectionNode.textContent === '' && selectionNode.children.length === 0) {
                 e.preventDefault();
                 e.stopPropagation();
 
@@ -17595,12 +18757,65 @@ const _Context = function (element, cons, options) {
             context.element.code.style.height = context.element.code.scrollHeight + 'px';
         },
 
+        // FireFox - table delete
+        _tableDelete: function () {
+            const range = core.getRange();
+            const sCell = util.getRangeFormatElement(range.startContainer);
+            const eCell = util.getRangeFormatElement(range.endContainer);
+
+            if (util.isCell(sCell) && util.isCell(eCell) && !sCell.previousElementSibling && !eCell.nextElementSibling) {
+                const table = util.getParentElement(sCell, util.isComponent);
+                util.removeItem(table);
+                core.nativeFocus();
+                return true;
+            }
+
+            return false;
+        },
+
         onPaste_wysiwyg: function (e) {
-            const clipboardData = e.clipboardData;
+            const isIE = util.isIE;
+            const clipboardData = isIE ? _w.clipboardData : e.clipboardData;
             if (!clipboardData) return true;
 
-            const plainText = clipboardData.getData('text/plain').replace(/\n/g, '');
-            const cleanData = core.cleanHTML(clipboardData.getData('text/html'), core.pasteTagsWhitelistRegExp);
+            let plainText, cleanData;
+            if (isIE) {
+                plainText = clipboardData.getData('Text');
+                
+                const range = core.getRange();
+                const tempDiv = util.createElement('DIV');
+                const tempRange = {
+                    sc: range.startContainer,
+                    so: range.startOffset,
+                    ec: range.endContainer,
+                    eo: range.endOffset
+                };
+
+                tempDiv.setAttribute('contenteditable', true);
+                tempDiv.style.cssText = 'position:absolute; top:0; left:0; width:1px; height:1px; overflow:hidden;';
+                
+                context.element.relative.appendChild(tempDiv);
+                tempDiv.focus();
+                core._editorRange();
+
+                _w.setTimeout(function () {
+                    cleanData = tempDiv.innerHTML;
+                    util.removeItem(tempDiv);
+                    core.setRange(tempRange.sc, tempRange.so, tempRange.ec, tempRange.eo);
+                    event._setClipboardData(e, plainText, cleanData);
+                });
+
+                return true;
+            } else {
+                plainText = clipboardData.getData('text/plain');
+                cleanData = clipboardData.getData('text/html');
+                return event._setClipboardData(e, plainText, cleanData);
+            }
+        },
+
+        _setClipboardData: function (e, plainText, cleanData) {
+            cleanData = core.cleanHTML(cleanData, core.pasteTagsWhitelistRegExp);
+            plainText = plainText.replace(/\n/g, '');
             const maxCharCount = core._charCount(options.charCounterType === 'byte-html' ? cleanData : plainText);
 
             if (typeof functions.onPaste === 'function' && !functions.onPaste(e, cleanData, maxCharCount, core)) {
@@ -17619,9 +18834,7 @@ const _Context = function (element, cons, options) {
                 e.stopPropagation();
                 e.preventDefault();
                 functions.insertHTML(cleanData, true);
-            } else {
-                // history stack
-                core.history.push(true);
+                return false;
             }
         },
 
@@ -17640,15 +18853,17 @@ const _Context = function (element, cons, options) {
             const dataTransfer = e.dataTransfer;
             if (!dataTransfer) return true;
 
+            if (typeof functions.onDrop === 'function' && !functions.onDrop(e, dataTransfer, core)) {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }
+
             // files
             const files = dataTransfer.files;
             if (files.length > 0 && core.plugins.image) {
                 event._setDropLocationSelection(e);
-                core.callPlugin('image', function () {
-                    context.image.imgInputFile.files = files;
-                    core.plugins.image.onRender_imgInput.call(core);
-                    context.image.imgInputFile.files = null;
-                }, null);
+                core.callPlugin('image', core.plugins.image.submitAction.bind(core, files), null);
             // check char count
             } else if (!core._charCount(dataTransfer.getData('text/plain'))) {
                 e.preventDefault();
@@ -17662,8 +18877,6 @@ const _Context = function (element, cons, options) {
                     functions.insertHTML(cleanData, true);
                 }
             }
-
-            if (functions.onDrop) functions.onDrop(e, core);
         },
 
         onmouseMove_wysiwyg: function (e) {
@@ -17890,7 +19103,7 @@ const _Context = function (element, cons, options) {
          * - inputHeight: Value of height input
          * - align: Align Check Value
          * - isUpdate: Update image if true, create image if false
-         * - currentImage: If isUpdate is true, the currently selected image.
+         * - element: If isUpdate is true, the currently selected image.
          * @param {Object} core Core object
          */
         imageUploadHandler: null,
@@ -17899,54 +19112,93 @@ const _Context = function (element, cons, options) {
          * @description Called before the image is uploaded
          * If false is returned, no image upload is performed.
          * @param {Array} files Files array
-         * @param {Object} info Input information
+         * @param {Object} info info: {
+         * - linkValue: Link url value
+         * - linkNewWindow: Open in new window Check Value
+         * - inputWidth: Value of width input
+         * - inputHeight: Value of height input
+         * - align: Align Check Value
+         * - isUpdate: Update image if true, create image if false
+         * - element: If isUpdate is true, the currently selected image.
+         * }
          * @param {Object} core Core object
          * @returns {Boolean}
          */
         onImageUploadBefore: null,
+        /**
+         * @description Called before the video is uploaded
+         * If false is returned, no video(iframe, video) upload is performed.
+         * @param {Array} files Files array
+         * @param {Object} info info: {
+         * - inputWidth: Value of width input
+         * - inputHeight: Value of height input
+         * - align: Align Check Value
+         * - isUpdate: Update video if true, create video if false
+         * - element: If isUpdate is true, the currently selected video.
+         * }
+         * @param {Object} core Core object
+         * @returns {Boolean}
+         */
+        onVideoUploadBefore: null,
+        /**
+         * @description Called before the audio is uploaded
+         * If false is returned, no audio upload is performed.
+         * @param {Array} files Files array
+         * @param {Object} info info: {
+         * - isUpdate: Update audio if true, create audio if false
+         * - element: If isUpdate is true, the currently selected audio.
+         * }
+         * @param {Object} core Core object
+         * @returns {Boolean}
+         */
+        onAudioUploadBefore: null,
 
         /**
          * @description Called when the image is uploaded, updated, deleted
-         * @param {Element} targetElement Current img element
+         * @param {Element} targetElement Target element
          * @param {Number} index Uploaded index
          * @param {String} state Upload status ('create', 'update', 'delete')
-         * @param {Object} imageInfo Image info object
+         * @param {Object} info Image info object
          * - index: data index
          * - name: file name
          * - size: file size
          * - select: select function
          * - delete: delete function
-         * - element: img element
-         * - src: src attribute of img tag
+         * - element: target element
+         * - src: src attribute of tag
          * @param {Number} remainingFilesCount Count of remaining files to upload (0 when added as a url)
          * @param {Object} core Core object
          */
         onImageUpload: null,
+         /**
+         * @description Called when the video(iframe, video) is is uploaded, updated, deleted
+         * -- arguments is same "onImageUpload" --
+         */
+        onVideoUpload: null,
+         /**
+         * @description Called when the audio is is uploaded, updated, deleted
+         * -- arguments is same "onImageUpload" --
+         */
+        onAudioUpload: null,
 
         /**
          * @description Called when the image is upload failed
          * @param {String} errorMessage Error message
-         * @param {Object} result Result info Object
+         * @param {Object} result Response Object
          * @param {Object} core Core object
          * @returns {Boolean}
          */
         onImageUploadError: null,
-
         /**
-         * @description Called when the video(iframe) is is uploaded, updated, deleted
-         * @param {Element} targetElement Current iframe element
-         * @param {Number} index Uploaded index
-         * @param {String} state Upload status ('create', 'update', 'delete')
-         * @param {Object} videoInfo Video info object
-         * - index: data index
-         * - select: select function
-         * - delete: delete function
-         * - element: iframe element
-         * - src: src attribute of iframe tag
-         * @param {Number} remainingFilesCount Count of remaining files to upload (0 when added as a url)
-         * @param {Object} core Core object
+         * @description Called when the video(iframe, video) upload failed
+         * -- arguments is same "onImageUploadError" --
          */
-        onVideoUpload: null,
+        onVideoUploadError: null,
+        /**
+         * @description Called when the audio upload failed
+         * -- arguments is same "onImageUploadError" --
+         */
+        onAudioUploadError: null,
 
         /**
          * @description Add or reset option property
@@ -17954,6 +19206,7 @@ const _Context = function (element, cons, options) {
          */
         setOptions: function (_options) {
             event._removeEvent();
+            core._resetComponents();
 
             core.plugins = _options.plugins || core.plugins;
             const mergeOptions = [_options, _options].reduce(function (init, option) {
@@ -17970,6 +19223,7 @@ const _Context = function (element, cons, options) {
                 return init;
             }, {});
 
+            // set option
             const cons = lib_constructor._setOptions(mergeOptions, context, core.plugins, _options);
 
             if (cons.callButtons) {
@@ -18090,25 +19344,30 @@ const _Context = function (element, cons, options) {
          * - size: file size
          * - select: select function
          * - delete: delete function
-         * - element: img element
-         * - src: src attribute of img tag
+         * - element: target element
+         * - src: src attribute of tag
          * @returns {Array}
          */
         getImagesInfo: function () {
-            return context.image ? context.image._imagesInfo : [];
+            return context.image ? context.image._infoList : [];
         },
-
+        
         /**
-         * @description Gets uploaded videos informations
+         * @description Gets uploaded files(plugin using fileManager) information list.
+         * image: [img], video: [video, iframe], audio: [audio]
+         * When the argument value is 'image', it is the same function as "getImagesInfo".
          * - index: data index
+         * - name: file name
+         * - size: file size
          * - select: select function
          * - delete: delete function
-         * - element: iframe element
-         * - src: src attribute of iframe tag
+         * - element: target element
+         * - src: src attribute of tag
+         * @param {String} pluginName Plugin name (image, video, audio)
          * @returns {Array}
          */
-        getVideosInfo: function () {
-            return context.video ? context.video._videosInfo : [];
+        getFilesInfo: function (pluginName) {
+            return context[pluginName] ? context[pluginName]._infoList : [];
         },
 
         /**
@@ -18313,11 +19572,9 @@ const _Context = function (element, cons, options) {
     // functionss
     core.functions = functions;
 
-    // register notice module
-    core.addModule([_notice]);
-
     return functions;
 });
+
 // CONCATENATED MODULE: ./node_modules/suneditor/src/suneditor.js
 /*
  * wysiwyg web editor
@@ -18416,24 +19673,25 @@ var getPlugins = function getPlugins(_ref) {
   if (!isArray(buttonList)) throw new Error("Button List must be of type array");else {
     var pluginList = [];
     buttonList = flatten(buttonList);
-    if (buttonList.indexOf("align") >= 0) pluginList.push(__webpack_require__(6).default);
-    if (buttonList.indexOf("math") >= 0) pluginList.push(__webpack_require__(7).default);
-    if (buttonList.indexOf("blockquote") >= 0) pluginList.push(__webpack_require__(8).default);
-    if (buttonList.indexOf("font") >= 0) pluginList.push(__webpack_require__(9).default);
-    if (buttonList.indexOf("fontColor") >= 0) pluginList.push(__webpack_require__(10).default);
-    if (buttonList.indexOf("fontSize") >= 0) pluginList.push(__webpack_require__(11).default);
-    if (buttonList.indexOf("formatBlock") >= 0) pluginList.push(__webpack_require__(12).default);
-    if (buttonList.indexOf("hiliteColor") >= 0) pluginList.push(__webpack_require__(13).default);
-    if (buttonList.indexOf("horizontalRule") >= 0) pluginList.push(__webpack_require__(14).default);
-    if (buttonList.indexOf("lineHeight") >= 0) pluginList.push(__webpack_require__(15).default);
-    if (buttonList.indexOf("list") >= 0) pluginList.push(__webpack_require__(16).default);
-    if (buttonList.indexOf("paragraphStyle") >= 0) pluginList.push(__webpack_require__(17).default);
-    if (buttonList.indexOf("table") >= 0) pluginList.push(__webpack_require__(18).default);
-    if (buttonList.indexOf("template") >= 0) pluginList.push(__webpack_require__(19).default);
-    if (buttonList.indexOf("textStyle") >= 0) pluginList.push(__webpack_require__(20).default);
-    if (buttonList.indexOf("image") >= 0) pluginList.push(__webpack_require__(21).default);
-    if (buttonList.indexOf("link") >= 0) pluginList.push(__webpack_require__(22).default);
-    if (buttonList.indexOf("video") >= 0) pluginList.push(__webpack_require__(23).default);
+    if (buttonList.indexOf("align") >= 0) pluginList.push(__webpack_require__(8).default);
+    if (buttonList.indexOf("math") >= 0) pluginList.push(__webpack_require__(9).default);
+    if (buttonList.indexOf("blockquote") >= 0) pluginList.push(__webpack_require__(10).default);
+    if (buttonList.indexOf("font") >= 0) pluginList.push(__webpack_require__(11).default);
+    if (buttonList.indexOf("fontColor") >= 0) pluginList.push(__webpack_require__(12).default);
+    if (buttonList.indexOf("fontSize") >= 0) pluginList.push(__webpack_require__(13).default);
+    if (buttonList.indexOf("formatBlock") >= 0) pluginList.push(__webpack_require__(14).default);
+    if (buttonList.indexOf("hiliteColor") >= 0) pluginList.push(__webpack_require__(15).default);
+    if (buttonList.indexOf("horizontalRule") >= 0) pluginList.push(__webpack_require__(16).default);
+    if (buttonList.indexOf("lineHeight") >= 0) pluginList.push(__webpack_require__(17).default);
+    if (buttonList.indexOf("list") >= 0) pluginList.push(__webpack_require__(18).default);
+    if (buttonList.indexOf("paragraphStyle") >= 0) pluginList.push(__webpack_require__(19).default);
+    if (buttonList.indexOf("table") >= 0) pluginList.push(__webpack_require__(20).default);
+    if (buttonList.indexOf("template") >= 0) pluginList.push(__webpack_require__(21).default);
+    if (buttonList.indexOf("textStyle") >= 0) pluginList.push(__webpack_require__(22).default);
+    if (buttonList.indexOf("image") >= 0) pluginList.push(__webpack_require__(23).default);
+    if (buttonList.indexOf("link") >= 0) pluginList.push(__webpack_require__(24).default);
+    if (buttonList.indexOf("video") >= 0) pluginList.push(__webpack_require__(25).default);
+    if (buttonList.indexOf("audio") >= 0) pluginList.push(__webpack_require__(26).default);
     return pluginList;
   }
 };
@@ -18468,42 +19726,45 @@ var getLanguage = function getLanguage(lang) {
     case 'string':
       switch (lang) {
         case 'en':
-          return __webpack_require__(2);
+          return __webpack_require__(4);
 
         case 'da':
-          return __webpack_require__(24);
-
-        case 'de':
-          return __webpack_require__(25);
-
-        case 'es':
-          return __webpack_require__(26);
-
-        case 'fr':
           return __webpack_require__(27);
 
-        case 'ja':
+        case 'de':
           return __webpack_require__(28);
 
-        case 'ko':
+        case 'es':
           return __webpack_require__(29);
 
-        case 'pt_br':
+        case 'fr':
           return __webpack_require__(30);
 
-        case 'ru':
+        case 'ja':
           return __webpack_require__(31);
 
-        case 'zh_cn':
+        case 'ko':
           return __webpack_require__(32);
 
+        case 'pt_br':
+          return __webpack_require__(33);
+
+        case 'ru':
+          return __webpack_require__(34);
+
+        case 'it':
+          return __webpack_require__(35);
+
+        case 'zh_cn':
+          return __webpack_require__(36);
+
         default:
-          return __webpack_require__(2);
+          return __webpack_require__(4);
       }
 
   }
 
-  return __webpack_require__(2);
+  return __webpack_require__(4);
 };
 
 /* harmony default export */ var misc_getLanguage = (getLanguage);
@@ -18562,10 +19823,10 @@ var SunEditor_SunEditor = /*#__PURE__*/function (_Component) {
           setOptions = _this$props$setOption === void 0 ? {} : _this$props$setOption,
           _this$props$width = _this$props.width,
           width = _this$props$width === void 0 ? "100%" : _this$props$width;
-      var editor = suneditor.create(this.txtArea.current, {
-        width: width,
-        lang: misc_getLanguage(lang)
-      });
+      setOptions.lang = setOptions.lang || misc_getLanguage(lang);
+      setOptions.plugins = setOptions.plugins || misc_getPlugins(setOptions);
+      setOptions.width = setOptions.width || width;
+      var editor = suneditor.create(this.txtArea.current);
       var _this$props2 = this.props,
           name = _this$props2.name,
           insertHTML = _this$props2.insertHTML,
@@ -18593,11 +19854,25 @@ var SunEditor_SunEditor = /*#__PURE__*/function (_Component) {
           onBlur = _this$props2.onBlur,
           onFocus = _this$props2.onFocus,
           onLoad = _this$props2.onLoad,
+          onInput = _this$props2.onInput,
           onImageUploadBefore = _this$props2.onImageUploadBefore,
+          onVideoUploadBefore = _this$props2.onVideoUploadBefore,
+          onAudioUploadBefore = _this$props2.onAudioUploadBefore,
+          onVideoUpload = _this$props2.onVideoUpload,
+          onMouseDown = _this$props2.onMouseDown,
+          onAudioUpload = _this$props2.onAudioUpload,
+          onVideoUploadError = _this$props2.onVideoUploadError,
+          onAudioUploadError = _this$props2.onAudioUploadError,
           placeholder = _this$props2.placeholder;
       if (onChange || name) editor.onChange = function (content) {
         if (name) _this2.txtArea.current.value = content;
         if (onChange) onChange(content);
+      };
+      if (onScroll) editor.onMouseDown = function (e) {
+        return onMouseDown(e);
+      };
+      if (onInput) editor.onInput = function (e) {
+        return onInput(e);
       };
       if (onScroll) editor.onScroll = function (e) {
         return onScroll(e);
@@ -18623,6 +19898,12 @@ var SunEditor_SunEditor = /*#__PURE__*/function (_Component) {
       if (onImageUploadBefore) editor.onImageUploadBefore = function (files, info) {
         return onImageUploadBefore(files, info);
       };
+      if (onVideoUploadBefore) editor.onVideoUploadBefore = function (files, info) {
+        return onVideoUploadBefore(files, info);
+      };
+      if (onAudioUploadBefore) editor.onAudioUploadBefore = function (files, info) {
+        return onAudioUploadBefore(files, info);
+      };
       if (onDrop) editor.onDrop = function (e) {
         return onDrop(e);
       };
@@ -18632,11 +19913,22 @@ var SunEditor_SunEditor = /*#__PURE__*/function (_Component) {
       if (onImageUpload) editor.onImageUpload = function (targetImgElement, index, state, imageInfo, remainingFilesCount) {
         return onImageUpload(targetImgElement, index, state, imageInfo, remainingFilesCount);
       };
+      if (onVideoUpload) editor.onVideoUpload = function (targetElement, index, state, info, remainingFilesCount) {
+        return onVideoUpload(targetElement, index, state, info, remainingFilesCount);
+      };
+      if (onAudioUpload) editor.onAudioUpload = function (targetElement, index, state, info, remainingFilesCount) {
+        return onAudioUpload(targetElement, index, state, info, remainingFilesCount);
+      };
       if (onImageUploadError) editor.onImageUploadError = function (errorMessage, result) {
         return onImageUploadError(errorMessage, result);
       };
+      if (onVideoUploadError) editor.onVideoUploadError = function (errorMessage, result) {
+        return onVideoUploadError(errorMessage, result);
+      };
+      if (onAudioUploadError) editor.onAudioUploadError = function (errorMessage, result) {
+        return onAudioUploadError(errorMessage, result);
+      };
       if (placeholder) setOptions.placeholder = placeholder;
-      if (!setOptions.plugins) setOptions.plugins = misc_getPlugins(setOptions);
       editor.setOptions(setOptions);
 
       if (setContents) {
@@ -18644,7 +19936,6 @@ var SunEditor_SunEditor = /*#__PURE__*/function (_Component) {
         editor.core.focusEdge();
       }
 
-      ;
       if (setDefaultStyle) editor.setDefaultStyle(setDefaultStyle);
       if (insertHTML) editor.insertHTML(insertHTML);
       if (appendContents) editor.appendContents(appendContents);
@@ -18720,6 +20011,7 @@ SunEditor_SunEditor.propTypes = {
   onClick: prop_types_default.a.func,
   onKeyUp: prop_types_default.a.func,
   onKeyDown: prop_types_default.a.func,
+  onInput: prop_types_default.a.func,
   onDrop: prop_types_default.a.func,
   onBlur: prop_types_default.a.func,
   onFocus: prop_types_default.a.func,
@@ -18728,6 +20020,13 @@ SunEditor_SunEditor.propTypes = {
   onImageUploadBefore: prop_types_default.a.func,
   onImageUpload: prop_types_default.a.func,
   onImageUploadError: prop_types_default.a.func,
+  onVideoUploadBefore: prop_types_default.a.func,
+  onAudioUploadBefore: prop_types_default.a.func,
+  onVideoUpload: prop_types_default.a.func,
+  onMouseDown: prop_types_default.a.func,
+  onAudioUpload: prop_types_default.a.func,
+  onVideoUploadError: prop_types_default.a.func,
+  onAudioUploadError: prop_types_default.a.func,
   setOptions: prop_types_default.a.object,
   setContents: prop_types_default.a.string,
   name: prop_types_default.a.string,
