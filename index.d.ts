@@ -38,9 +38,9 @@ declare module 'suneditor-react' {
     onImageUploadBefore?: (files: Array<File>, info: object) => void;
     onVideoUploadBefore?: (files: Array<File>, info: object) => void;
     onAudioUploadBefore?: (files: Array<File>, info: object) => void;
-    onImageUploadError?: (errorMessage, result) => void;
-    onVideoUploadError?: (errorMessage, result) => void;
-    onAudioUploadError?: (errorMessage, result) => void;
+    onImageUploadError?: (errorMessage: Error, result: any) => void;
+    onVideoUploadError?: (errorMessage: Error, result: any) => void;
+    onAudioUploadError?: (errorMessage: Error, result: any) => void;
     
     setOptions?: SetOptions;
     setContents?: string;
