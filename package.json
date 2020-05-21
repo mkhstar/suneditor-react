@@ -7,6 +7,7 @@
     "url": "https://github.com/mkhstar/suneditor-react"
   },
   "main": "dist/main.js",
+  "types": "types",
   "scripts": {
     "build": "rm -rf dist && webpack",
     "start": "parcel src/index.html"
