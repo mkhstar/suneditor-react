@@ -19945,9 +19945,7 @@ var SunEditor_SunEditor = /*#__PURE__*/function (_Component) {
       if (show === true) this.editor.show();
       if (showToolbar === true) this.editor.toolbar.show();else this.editor.toolbar.hide();
       if (enableToolbar === true) this.editor.toolbar.enabled();else this.editor.toolbar.disabled();
-      setTimeout(function () {
-        if (autoFocus === false) _this2.editor.core.context.element.wysiwyg.blur();else if (autoFocus === true) _this2.editor.core.context.element.wysiwyg.focus();
-      }, 0);
+      if (autoFocus === false) this.editor.core.context.element.wysiwyg.blur();else if (autoFocus === true) this.editor.core.context.element.wysiwyg.focus();
     }
   }, {
     key: "componentDidUpdate",

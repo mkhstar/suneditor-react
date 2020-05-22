@@ -64,7 +64,8 @@ class SunEditor extends Component {
     if (onClick) this.editor.onClick = (e) => onClick(e);
     if (onKeyUp) this.editor.onKeyUp = (e) => onKeyUp(e);
     if (onKeyDown) this.editor.onKeyDown = (e) => onKeyDown(e);
-    if (onBlur) this.editor.onBlur = (e) => onBlur(e, this.editor.getContents());
+    if (onBlur)
+      this.editor.onBlur = (e) => onBlur(e, this.editor.getContents());
     if (onFocus) this.editor.onFocus = (e) => onFocus(e);
     if (onLoad) this.editor.onload = (c, reload) => onLoad(reload);
     if (onImageUploadBefore)
@@ -140,10 +141,9 @@ class SunEditor extends Component {
     if (enableToolbar === true) this.editor.toolbar.enabled();
     else this.editor.toolbar.disabled();
 
-    setTimeout(() => {
-      if (autoFocus === false) this.editor.core.context.element.wysiwyg.blur();
-      else if (autoFocus === true) this.editor.core.context.element.wysiwyg.focus();
-    }, 0);
+    if (autoFocus === false) this.editor.core.context.element.wysiwyg.blur();
+    else if (autoFocus === true)
+      this.editor.core.context.element.wysiwyg.focus();
   }
 
   componentDidUpdate(prevProps) {
