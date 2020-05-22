@@ -16,7 +16,7 @@ class SunEditor extends Component {
     setOptions.plugins = setOptions.plugins || getPlugins(setOptions);
     setOptions.width = setOptions.width || width;
 
-    const editor = suneditor.create(this.txtArea.current);
+    this.editor = suneditor.create(this.txtArea.current);
     const {
       name,
       insertHTML,
@@ -54,34 +54,34 @@ class SunEditor extends Component {
       placeholder,
     } = this.props;
     if (onChange || name)
-      editor.onChange = (content) => {
+      this.editor.onChange = (content) => {
         if (name) this.txtArea.current.value = content;
         if (onChange) onChange(content);
       };
-    if (onScroll) editor.onMouseDown = (e) => onMouseDown(e);
-    if (onInput) editor.onInput = (e) => onInput(e);
-    if (onScroll) editor.onScroll = (e) => onScroll(e);
-    if (onClick) editor.onClick = (e) => onClick(e);
-    if (onKeyUp) editor.onKeyUp = (e) => onKeyUp(e);
-    if (onKeyDown) editor.onKeyDown = (e) => onKeyDown(e);
-    if (onBlur) editor.onBlur = (e) => onBlur(e, editor.getContents());
-    if (onFocus) editor.onFocus = (e) => onFocus(e);
-    if (onLoad) editor.onload = (c, reload) => onLoad(reload);
+    if (onScroll) this.editor.onMouseDown = (e) => onMouseDown(e);
+    if (onInput) this.editor.onInput = (e) => onInput(e);
+    if (onScroll) this.editor.onScroll = (e) => onScroll(e);
+    if (onClick) this.editor.onClick = (e) => onClick(e);
+    if (onKeyUp) this.editor.onKeyUp = (e) => onKeyUp(e);
+    if (onKeyDown) this.editor.onKeyDown = (e) => onKeyDown(e);
+    if (onBlur) this.editor.onBlur = (e) => onBlur(e, this.editor.getContents());
+    if (onFocus) this.editor.onFocus = (e) => onFocus(e);
+    if (onLoad) this.editor.onload = (c, reload) => onLoad(reload);
     if (onImageUploadBefore)
-      editor.onImageUploadBefore = (files, info) =>
+      this.editor.onImageUploadBefore = (files, info) =>
         onImageUploadBefore(files, info);
     if (onVideoUploadBefore)
-      editor.onVideoUploadBefore = (files, info) =>
+      this.editor.onVideoUploadBefore = (files, info) =>
         onVideoUploadBefore(files, info);
     if (onAudioUploadBefore)
-      editor.onAudioUploadBefore = (files, info) =>
+      this.editor.onAudioUploadBefore = (files, info) =>
         onAudioUploadBefore(files, info);
-    if (onDrop) editor.onDrop = (e) => onDrop(e);
+    if (onDrop) this.editor.onDrop = (e) => onDrop(e);
     if (onPaste)
-      editor.onPaste = (e, cleanData, maxCharCount) =>
+      this.editor.onPaste = (e, cleanData, maxCharCount) =>
         onPaste(e, cleanData, maxCharCount);
     if (onImageUpload)
-      editor.onImageUpload = (
+      this.editor.onImageUpload = (
         targetImgElement,
         index,
         state,
@@ -96,7 +96,7 @@ class SunEditor extends Component {
           remainingFilesCount
         );
     if (onVideoUpload)
-      editor.onVideoUpload = (
+      this.editor.onVideoUpload = (
         targetElement,
         index,
         state,
@@ -105,7 +105,7 @@ class SunEditor extends Component {
       ) =>
         onVideoUpload(targetElement, index, state, info, remainingFilesCount);
     if (onAudioUpload)
-      editor.onAudioUpload = (
+      this.editor.onAudioUpload = (
         targetElement,
         index,
         state,
@@ -114,38 +114,36 @@ class SunEditor extends Component {
       ) =>
         onAudioUpload(targetElement, index, state, info, remainingFilesCount);
     if (onImageUploadError)
-      editor.onImageUploadError = (errorMessage, result) =>
+      this.editor.onImageUploadError = (errorMessage, result) =>
         onImageUploadError(errorMessage, result);
     if (onVideoUploadError)
-      editor.onVideoUploadError = (errorMessage, result) =>
+      this.editor.onVideoUploadError = (errorMessage, result) =>
         onVideoUploadError(errorMessage, result);
     if (onAudioUploadError)
-      editor.onAudioUploadError = (errorMessage, result) =>
+      this.editor.onAudioUploadError = (errorMessage, result) =>
         onAudioUploadError(errorMessage, result);
     if (placeholder) setOptions.placeholder = placeholder;
-    editor.setOptions(setOptions);
+    this.editor.setOptions(setOptions);
     if (setContents) {
-      editor.setContents(setContents);
-      editor.core.focusEdge();
+      this.editor.setContents(setContents);
+      this.editor.core.focusEdge();
     }
-    if (setDefaultStyle) editor.setDefaultStyle(setDefaultStyle);
-    if (insertHTML) editor.insertHTML(insertHTML);
-    if (appendContents) editor.appendContents(appendContents);
-    if (enable === true) editor.enabled();
-    if (disable === true) editor.disabled();
-    if (hide === true) editor.hide();
-    if (show === true) editor.show();
-    if (showToolbar === true) editor.toolbar.show();
-    else editor.toolbar.hide();
-    if (enableToolbar === true) editor.toolbar.enabled();
-    else editor.toolbar.disabled();
+    if (setDefaultStyle) this.editor.setDefaultStyle(setDefaultStyle);
+    if (insertHTML) this.editor.insertHTML(insertHTML);
+    if (appendContents) this.editor.appendContents(appendContents);
+    if (enable === true) this.editor.enabled();
+    if (disable === true) this.editor.disabled();
+    if (hide === true) this.editor.hide();
+    if (show === true) this.editor.show();
+    if (showToolbar === true) this.editor.toolbar.show();
+    else this.editor.toolbar.hide();
+    if (enableToolbar === true) this.editor.toolbar.enabled();
+    else this.editor.toolbar.disabled();
 
     setTimeout(() => {
-      if (autoFocus === false) editor.core.context.element.wysiwyg.blur();
-      else if (autoFocus === true) editor.core.context.element.wysiwyg.focus();
+      if (autoFocus === false) this.editor.core.context.element.wysiwyg.blur();
+      else if (autoFocus === true) this.editor.core.context.element.wysiwyg.focus();
     }, 0);
-
-    this.editor = editor; // Contributed by https://github.com/AramRafeq
   }
 
   componentDidUpdate(prevProps) {

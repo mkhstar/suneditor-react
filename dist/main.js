@@ -19826,7 +19826,7 @@ var SunEditor_SunEditor = /*#__PURE__*/function (_Component) {
       setOptions.lang = setOptions.lang || misc_getLanguage(lang);
       setOptions.plugins = setOptions.plugins || misc_getPlugins(setOptions);
       setOptions.width = setOptions.width || width;
-      var editor = suneditor.create(this.txtArea.current);
+      this.editor = suneditor.create(this.txtArea.current);
       var _this$props2 = this.props,
           name = _this$props2.name,
           insertHTML = _this$props2.insertHTML,
@@ -19864,91 +19864,90 @@ var SunEditor_SunEditor = /*#__PURE__*/function (_Component) {
           onVideoUploadError = _this$props2.onVideoUploadError,
           onAudioUploadError = _this$props2.onAudioUploadError,
           placeholder = _this$props2.placeholder;
-      if (onChange || name) editor.onChange = function (content) {
+      if (onChange || name) this.editor.onChange = function (content) {
         if (name) _this2.txtArea.current.value = content;
         if (onChange) onChange(content);
       };
-      if (onScroll) editor.onMouseDown = function (e) {
+      if (onScroll) this.editor.onMouseDown = function (e) {
         return onMouseDown(e);
       };
-      if (onInput) editor.onInput = function (e) {
+      if (onInput) this.editor.onInput = function (e) {
         return onInput(e);
       };
-      if (onScroll) editor.onScroll = function (e) {
+      if (onScroll) this.editor.onScroll = function (e) {
         return onScroll(e);
       };
-      if (onClick) editor.onClick = function (e) {
+      if (onClick) this.editor.onClick = function (e) {
         return onClick(e);
       };
-      if (onKeyUp) editor.onKeyUp = function (e) {
+      if (onKeyUp) this.editor.onKeyUp = function (e) {
         return onKeyUp(e);
       };
-      if (onKeyDown) editor.onKeyDown = function (e) {
+      if (onKeyDown) this.editor.onKeyDown = function (e) {
         return onKeyDown(e);
       };
-      if (onBlur) editor.onBlur = function (e) {
-        return onBlur(e, editor.getContents());
+      if (onBlur) this.editor.onBlur = function (e) {
+        return onBlur(e, _this2.editor.getContents());
       };
-      if (onFocus) editor.onFocus = function (e) {
+      if (onFocus) this.editor.onFocus = function (e) {
         return onFocus(e);
       };
-      if (onLoad) editor.onload = function (c, reload) {
+      if (onLoad) this.editor.onload = function (c, reload) {
         return onLoad(reload);
       };
-      if (onImageUploadBefore) editor.onImageUploadBefore = function (files, info) {
+      if (onImageUploadBefore) this.editor.onImageUploadBefore = function (files, info) {
         return onImageUploadBefore(files, info);
       };
-      if (onVideoUploadBefore) editor.onVideoUploadBefore = function (files, info) {
+      if (onVideoUploadBefore) this.editor.onVideoUploadBefore = function (files, info) {
         return onVideoUploadBefore(files, info);
       };
-      if (onAudioUploadBefore) editor.onAudioUploadBefore = function (files, info) {
+      if (onAudioUploadBefore) this.editor.onAudioUploadBefore = function (files, info) {
         return onAudioUploadBefore(files, info);
       };
-      if (onDrop) editor.onDrop = function (e) {
+      if (onDrop) this.editor.onDrop = function (e) {
         return onDrop(e);
       };
-      if (onPaste) editor.onPaste = function (e, cleanData, maxCharCount) {
+      if (onPaste) this.editor.onPaste = function (e, cleanData, maxCharCount) {
         return onPaste(e, cleanData, maxCharCount);
       };
-      if (onImageUpload) editor.onImageUpload = function (targetImgElement, index, state, imageInfo, remainingFilesCount) {
+      if (onImageUpload) this.editor.onImageUpload = function (targetImgElement, index, state, imageInfo, remainingFilesCount) {
         return onImageUpload(targetImgElement, index, state, imageInfo, remainingFilesCount);
       };
-      if (onVideoUpload) editor.onVideoUpload = function (targetElement, index, state, info, remainingFilesCount) {
+      if (onVideoUpload) this.editor.onVideoUpload = function (targetElement, index, state, info, remainingFilesCount) {
         return onVideoUpload(targetElement, index, state, info, remainingFilesCount);
       };
-      if (onAudioUpload) editor.onAudioUpload = function (targetElement, index, state, info, remainingFilesCount) {
+      if (onAudioUpload) this.editor.onAudioUpload = function (targetElement, index, state, info, remainingFilesCount) {
         return onAudioUpload(targetElement, index, state, info, remainingFilesCount);
       };
-      if (onImageUploadError) editor.onImageUploadError = function (errorMessage, result) {
+      if (onImageUploadError) this.editor.onImageUploadError = function (errorMessage, result) {
         return onImageUploadError(errorMessage, result);
       };
-      if (onVideoUploadError) editor.onVideoUploadError = function (errorMessage, result) {
+      if (onVideoUploadError) this.editor.onVideoUploadError = function (errorMessage, result) {
         return onVideoUploadError(errorMessage, result);
       };
-      if (onAudioUploadError) editor.onAudioUploadError = function (errorMessage, result) {
+      if (onAudioUploadError) this.editor.onAudioUploadError = function (errorMessage, result) {
         return onAudioUploadError(errorMessage, result);
       };
       if (placeholder) setOptions.placeholder = placeholder;
-      editor.setOptions(setOptions);
+      this.editor.setOptions(setOptions);
 
       if (setContents) {
-        editor.setContents(setContents);
-        editor.core.focusEdge();
+        this.editor.setContents(setContents);
+        this.editor.core.focusEdge();
       }
 
-      if (setDefaultStyle) editor.setDefaultStyle(setDefaultStyle);
-      if (insertHTML) editor.insertHTML(insertHTML);
-      if (appendContents) editor.appendContents(appendContents);
-      if (enable === true) editor.enabled();
-      if (disable === true) editor.disabled();
-      if (hide === true) editor.hide();
-      if (show === true) editor.show();
-      if (showToolbar === true) editor.toolbar.show();else editor.toolbar.hide();
-      if (enableToolbar === true) editor.toolbar.enabled();else editor.toolbar.disabled();
+      if (setDefaultStyle) this.editor.setDefaultStyle(setDefaultStyle);
+      if (insertHTML) this.editor.insertHTML(insertHTML);
+      if (appendContents) this.editor.appendContents(appendContents);
+      if (enable === true) this.editor.enabled();
+      if (disable === true) this.editor.disabled();
+      if (hide === true) this.editor.hide();
+      if (show === true) this.editor.show();
+      if (showToolbar === true) this.editor.toolbar.show();else this.editor.toolbar.hide();
+      if (enableToolbar === true) this.editor.toolbar.enabled();else this.editor.toolbar.disabled();
       setTimeout(function () {
-        if (autoFocus === false) editor.core.context.element.wysiwyg.blur();else if (autoFocus === true) editor.core.context.element.wysiwyg.focus();
+        if (autoFocus === false) _this2.editor.core.context.element.wysiwyg.blur();else if (autoFocus === true) _this2.editor.core.context.element.wysiwyg.focus();
       }, 0);
-      this.editor = editor; // Contributed by https://github.com/AramRafeq
     }
   }, {
     key: "componentDidUpdate",
