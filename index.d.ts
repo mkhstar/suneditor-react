@@ -3,6 +3,7 @@ import SetOptions from './types/SetOptions';
 
 export interface SunEditorReactProps {
   onChange?: (content: string) => void;
+  onInput?: (event: React.ChangeEvent) => void;
   onScroll?: (event: UIEvent) => void;
   onClick?: (event: MouseEvent) => void;
   onMouseDown?: (event: MouseEvent) => void;
