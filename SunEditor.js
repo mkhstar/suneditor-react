@@ -10,12 +10,12 @@ class SunEditor extends Component {
     this.txtArea = createRef();
   }
   componentDidMount() {
-    const { lang, setOptions = {}, width = "100%", heigth } = this.props;
+    const { lang, setOptions = {}, width = "100%", height } = this.props;
 
     setOptions.lang = setOptions.lang || getLanguage(lang);
     setOptions.plugins = setOptions.plugins || getPlugins(setOptions);
     setOptions.width = setOptions.width || width;
-    if (heigth) setOptions.heigth = heigth;
+    if (height) setOptions.height = height;
 
     this.editor = suneditor.create(this.txtArea.current);
     const {
@@ -169,8 +169,8 @@ class SunEditor extends Component {
     if (prevProps.lang !== this.props.lang) {
         this.editor.setOptions({lang: getLanguage(this.props.lang)});
     }
-    if (prevProps.heigth !== this.props.heigth) {
-        this.editor.setOptions({height: this.props.heigth});
+    if (prevProps.height !== this.props.height) {
+        this.editor.setOptions({height: this.props.height});
     }
     if (prevProps.width !== this.props.width) {
         this.editor.setOptions({width: this.props.width});

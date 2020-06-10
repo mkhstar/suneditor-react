@@ -80,7 +80,7 @@ render() {
 }
 ```
 
-**heigth**
+**height**
 
 **_Set Editor's height**
 
@@ -90,7 +90,7 @@ render() {
 // or percentage string
 // eg width={100} or width="100%"
 render() {
-	return <SunEditor heigth="100%" />
+	return <SunEditor height="100%" />
 }
 ```
 
