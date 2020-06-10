@@ -13,6 +13,9 @@ const getPlugins = ({ buttonList }) => {
     if (buttonList.indexOf("math") >= 0)
       pluginList.push(require("suneditor/src/plugins/dialog/math").default);
 
+    if (buttonList.indexOf("imageGallery") >= 0)
+      pluginList.push(require("suneditor/src/plugins/fileBrowser/imageGallery").default);
+
     if (buttonList.indexOf("blockquote") >= 0)
       pluginList.push(require("suneditor/src/plugins/command/blockquote").default);
     if (buttonList.indexOf("font") >= 0)

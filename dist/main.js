@@ -82,7 +82,7 @@ module.exports =
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 39);
+/******/ 	return __webpack_require__(__webpack_require__.s = 42);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -99,7 +99,7 @@ module.exports =
 if (false) { var throwOnDirectAccess, ReactIs; } else {
   // By explicitly using `prop-types` you are opting into new production behavior.
   // http://fb.me/prop-types-in-prod
-  module.exports = __webpack_require__(37)();
+  module.exports = __webpack_require__(40)();
 }
 
 
@@ -258,7 +258,7 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
             this.context.dialog.back.style.display = 'none';
             this.context.dialog.modalArea.style.display = 'none';
             this.context.dialog.updateModal = false;
-            this.plugins[kind].init.call(this);
+            if (typeof this.plugins[kind].init === 'function') this.plugins[kind].init.call(this);
             this.context.dialog.kind = '';
             this.modalForm = null;
             this.focus();
@@ -510,7 +510,7 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
             
             for (let i = 0, len = tags.length, tag; i < len; i++) {
                 tag = tags[i];
-                if (!this.util.getParentElement(tag, this.util.isMediaComponent)) {
+                if (!this.util.getParentElement(tag, this.util.isMediaComponent) || !/FIGURE/i.test(tag.parentElement.nodeName)) {
                     currentTags.push(context._infoIndex);
                     modifyHandler(tag);
                 } else if (!tag.getAttribute('data-index') || infoIndex.indexOf(tag.getAttribute('data-index') * 1) < 0) {
@@ -762,6 +762,7 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
             math: 'Math',
             image: 'Image',
             video: 'Video',
+            audio: 'Audio',
             fullScreen: 'Full screen',
             showBlocks: 'Show blocks',
             codeView: 'Code view',
@@ -777,7 +778,8 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
             template: 'Template',
             lineHeight: 'Line height',
             paragraphStyle: 'Paragraph style',
-            textStyle: 'Text style'
+            textStyle: 'Text style',
+            imageGallery: 'Image gallery'
         },
         dialogBox: {
             linkBox: {
@@ -807,6 +809,10 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
                 title: 'Insert Audio',
                 file: 'Select from files',
                 url: 'Audio URL'
+            },
+            browser: {
+                tags: 'Tags',
+                search: 'Search',
             },
             caption: 'Insert description',
             close: 'Close',
@@ -961,13 +967,11 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
             list += '' +
             '<form class="se-submenu-form-group">' +
                 '<input type="text" maxlength="9" class="_se_color_picker_input se-color-input"/>' +
-                '<button type="submit" class="se-btn-primary se-tooltip _se_color_picker_submit">' +
+                '<button type="submit" class="se-btn-primary _se_color_picker_submit" title="' + lang.dialogBox.submitButton + '">' +
                     core.icons.checked +
-                    '<span class="se-tooltip-inner"><span class="se-tooltip-text">' + lang.dialogBox.submitButton + '</span></span>' +
                 '</button>' +
-                '<button type="button" class="se-btn se-tooltip _se_color_picker_remove">' +
+                '<button type="button" class="se-btn _se_color_picker_remove" title="' + lang.toolbar.removeFormat + '">' +
                     core.icons.erase +
-                    '<span class="se-tooltip-inner"><span class="se-tooltip-text">' + lang.toolbar.removeFormat + '</span></span>' +
                 '</button>' +
             '</form>' +
             '</div>';
@@ -1570,9 +1574,11 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
                     contextPlugin._captionChecked = false;
                 }
             }
-    
-            this.util.toggleDisabledButtons(true, this.resizingDisabledButtons);
-            this.controllersOn(contextResizing.resizeContainer, contextResizing.resizeButton, this.util.toggleDisabledButtons.bind(this, false, this.resizingDisabledButtons), targetElement, plugin);
+
+            if (this.currentControllerName !== plugin) {
+                this.util.toggleDisabledButtons(true, this.resizingDisabledButtons);
+                this.controllersOn(contextResizing.resizeContainer, contextResizing.resizeButton, this.util.toggleDisabledButtons.bind(this, false, this.resizingDisabledButtons), targetElement, plugin);
+            }
     
             // button group
             const overLeft = this.context.element.wysiwygFrame.offsetWidth - l - contextResizing.resizeButton.offsetWidth;
@@ -1649,8 +1655,9 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
     
             switch (command) {
                 case 'auto':
+                    this.plugins.resizing.resetTransform.call(this, contextEl);
                     currentModule.setAutoSize.call(this);
-                    currentModule.onModifyMode.call(this, contextEl, this.plugins.resizing.call_controller_resize.call(this, contextEl, pluginName));
+                    this.selectComponent(contextEl, pluginName);
                     break;
                 case 'percent':
                     let percentY = this.plugins.resizing._module_getSizeY.call(this, currentContext);
@@ -1661,7 +1668,7 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
     
                     this.plugins.resizing.resetTransform.call(this, contextEl);
                     currentModule.setPercentSize.call(this, (value * 100), (this.util.getNumber(percentY, 0) === null || !/%$/.test(percentY)) ? '' : percentY);
-                    currentModule.onModifyMode.call(this, contextEl, this.plugins.resizing.call_controller_resize.call(this, contextEl, pluginName));
+                    this.selectComponent(contextEl, pluginName);
                     break;
                 case 'mirror':
                     const r = contextEl.getAttribute('data-rotate') || '0';
@@ -1688,7 +1695,7 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
                     contextResizing._rotateVertical = /^(90|270)$/.test(this._w.Math.abs(deg).toString());
                     this.plugins.resizing.setTransformSize.call(this, contextEl, null, null);
         
-                    currentModule.onModifyMode.call(this, contextEl, this.plugins.resizing.call_controller_resize.call(this, contextEl, pluginName));
+                    this.selectComponent(contextEl, pluginName);
                     break;
                 case 'onalign':
                     this.plugins.resizing.openAlignMenu.call(this);
@@ -1696,7 +1703,7 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
                 case 'align':
                     const alignValue = value === 'basic' ? 'none' : value;
                     currentModule.setAlign.call(this, alignValue, null, null, null);
-                    currentModule.onModifyMode.call(this, contextEl, this.plugins.resizing.call_controller_resize.call(this, contextEl, pluginName));
+                    this.selectComponent(contextEl, pluginName);
                     break;
                 case 'caption':
                     const caption = !currentContext._captionChecked;
@@ -1718,14 +1725,14 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
     
                         this.controllersOff();
                     } else {
-                        currentModule.onModifyMode.call(this, contextEl, this.plugins.resizing.call_controller_resize.call(this, contextEl, pluginName));
+                        this.selectComponent(contextEl, pluginName);
                         currentModule.openModify.call(this, true);
                     }
     
                     break;
                 case 'revert':
                     currentModule.setOriginSize.call(this);
-                    currentModule.onModifyMode.call(this, contextEl, this.plugins.resizing.call_controller_resize.call(this, contextEl, pluginName));
+                    this.selectComponent(contextEl, pluginName);
                     break;
                 case 'update':
                     currentModule.openModify.call(this);
@@ -1859,12 +1866,9 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
         onMouseDown_resize_handle: function (e) {
             const contextResizing = this.context.resizing;
             const direction = contextResizing._resize_direction = e.target.classList[0];
+
             e.stopPropagation();
             e.preventDefault();
-    
-            const pluginName = this.context.resizing._resize_plugin;
-            const contextEl = this.context[pluginName]._element;
-            const currentModule = this.plugins[pluginName];
     
             contextResizing._resizeClientX = e.clientX;
             contextResizing._resizeClientY = e.clientY;
@@ -1892,8 +1896,6 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
                     // history stack
                     if (change) this.history.push(false);
                 }
-                
-                currentModule.onModifyMode.call(this, contextEl, this.plugins.resizing.call_controller_resize.call(this, contextEl, contextResizing._resize_plugin));
             }.bind(this);
     
             const resizing_element_bind = this.plugins.resizing.resizing_element.bind(this, contextResizing, direction, this.context[contextResizing._resize_plugin]);
@@ -1967,8 +1969,9 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
                 }
             }
     
-            this.plugins[this.context.resizing._resize_plugin].setSize.call(this, w, h, false, direction);
-            this.plugins[this.context.resizing._resize_plugin].init.call(this);
+            const pluginName = this.context.resizing._resize_plugin;
+            this.plugins[pluginName].setSize.call(this, w, h, false, direction);
+            this.selectComponent(this.context[pluginName]._element, pluginName);
         }
     };
 
@@ -2001,6 +2004,365 @@ module.exports = require("react");
 
 /***/ }),
 /* 8 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+/*
+ * wysiwyg web editor
+ *
+ * suneditor.js
+ * Copyright 2017 JiHong Lee.
+ * MIT license.
+ */
+
+
+(function (global, factory) {
+    if ( true && typeof module.exports === 'object') {
+        module.exports = global.document ?
+            factory(global, true) :
+            function (w) {
+                if (!w.document) {
+                    throw new Error('SUNEDITOR_MODULES a window with a document');
+                }
+                return factory(w);
+            };
+    } else {
+        factory(global);
+    }
+}(typeof window !== 'undefined' ? window : this, function (window, noGlobal) {
+    const fileBrowser = {
+        name: 'fileBrowser',
+        _xmlHttp: null,
+        _loading: null,
+
+        /**
+         * @description Constructor
+         * @param {Object} core Core object 
+         */
+        add: function (core) {
+            const context = core.context;
+            context.fileBrowser = {
+                _closeSignal: false,
+                area: null,
+                header: null,
+                tagArea: null,
+                body: null,
+                list: null,
+                tagElements: null,
+                items: [],
+                selectedTags: [],
+                selectorHandler: null,
+                contextPlugin: '',
+                columnSize: 4
+            };
+
+            /** fileBrowser */
+            let browser_div = core.util.createElement('DIV');
+            browser_div.className = 'se-file-browser sun-editor-common';
+
+            let back = core.util.createElement('DIV');
+            back.className = 'se-file-browser-back';
+
+            let content = core.util.createElement('DIV');
+            content.className = 'se-file-browser-inner';
+            content.innerHTML = this.set_browser(core);
+
+            browser_div.appendChild(back);
+            browser_div.appendChild(content);
+            this._loading = browser_div.querySelector('.se-loading-box');
+
+            context.fileBrowser.area = browser_div;
+            context.fileBrowser.header = content.querySelector('.se-file-browser-header');
+            context.fileBrowser.titleArea = content.querySelector('.se-file-browser-title');
+            context.fileBrowser.tagArea = content.querySelector('.se-file-browser-tags');
+            context.fileBrowser.body = content.querySelector('.se-file-browser-body');
+            context.fileBrowser.list = content.querySelector('.se-file-browser-list');
+
+            /** add event listeners */
+            context.fileBrowser.tagArea.addEventListener('click', this.onClickTag.bind(core));
+            context.fileBrowser.list.addEventListener('click', this.onClickFile.bind(core));
+            content.addEventListener('mousedown', this._onMouseDown_browser.bind(core));
+            content.addEventListener('click', this._onClick_browser.bind(core));
+            
+            /** append html */
+            context.element.relative.appendChild(browser_div);
+            
+            /** empty memory */
+            browser_div = null, back = null, content = null;
+        },
+
+        set_browser: function (core) {
+            const lang = core.lang;
+
+            return '<div class="se-file-browser-content">' +
+                    '<div class="se-file-browser-header">' +
+                        '<button type="button" data-command="close" class="se-btn se-file-browser-close" class="close" aria-label="Close" title="' + lang.dialogBox.close + '">' +
+                        core.icons.cancel +
+                        '</button>' +
+                        '<span class="se-file-browser-title"></span>' +
+                        '<div class="se-file-browser-tags"></div>' +
+                    '</div>' +
+                    '<div class="se-file-browser-body">' +
+                        '<div class="se-loading-box sun-editor-common"><div class="se-loading-effect"></div></div>' +
+                        '<div class="se-file-browser-list"></div>' +
+                    '</div>' +
+                '</div>';
+        },
+
+        /**
+         * @description Event to control the behavior of closing the browser
+         * @param {MouseEvent} e Event object
+         * @private
+         */
+        _onMouseDown_browser: function (e) {
+            if (/se-file-browser-inner/.test(e.target.className)) {
+                this.context.fileBrowser._closeSignal = true;
+            } else {
+                this.context.fileBrowser._closeSignal = false;
+            }
+        },
+
+        /**
+         * @description Event to close the window when the outside area of the browser or close button is click
+         * @param {MouseEvent} e Event object
+         * @private
+         */
+        _onClick_browser: function (e) {
+            e.stopPropagation();
+
+            if (/close/.test(e.target.getAttribute('data-command')) || this.context.fileBrowser._closeSignal) {
+                this.plugins.fileBrowser.close.call(this);
+            }
+        },
+
+        /**
+         * @description Open a file browser plugin
+         * @param {String} pluginName Plugin name using the file browser
+         * @param {Function|null} selectorHandler When the function comes as an argument value, it substitutes "context.selectorHandler".
+         */
+        open: function (pluginName, selectorHandler)  {
+            if (this.plugins.fileBrowser._bindClose) {
+                this._d.removeEventListener('keydown', this.plugins.fileBrowser._bindClose);
+                this.plugins.fileBrowser._bindClose = null;
+            }
+
+            this.plugins.fileBrowser._bindClose = function (e) {
+                if (!/27/.test(e.keyCode)) return;
+                this.plugins.fileBrowser.close.call(this);
+            }.bind(this);
+            this._d.addEventListener('keydown', this.plugins.fileBrowser._bindClose);
+
+            const fileBrowserContext = this.context.fileBrowser;
+            fileBrowserContext.contextPlugin = pluginName;
+            fileBrowserContext.selectorHandler = selectorHandler;
+            
+            const pluginContext = this.context[pluginName];
+            const listClassName = pluginContext.listClass;
+            if (!this.util.hasClass(fileBrowserContext.list, listClassName)) {
+                fileBrowserContext.list.className = 'se-file-browser-list ' + listClassName;
+            }
+
+            if (this.context.option.popupDisplay === 'full') {
+                fileBrowserContext.area.style.position = 'fixed';
+            } else {
+                fileBrowserContext.area.style.position = 'absolute';
+            }
+            
+            fileBrowserContext.titleArea.textContent = pluginContext.title;
+            fileBrowserContext.area.style.display = 'block';
+
+            this.plugins.fileBrowser._drawFileList.call(this, this.context[pluginName].url);
+        },
+
+        _bindClose: null,
+        
+        /**
+         * @description Close a fileBrowser plugin
+         * The plugin's "init" method is called.
+         */
+        close: function () {
+            const fileBrowserPlugin = this.plugins.fileBrowser;
+
+            if (fileBrowserPlugin._xmlHttp) {
+                fileBrowserPlugin._xmlHttp.abort();
+            }
+
+            if (fileBrowserPlugin._bindClose) {
+                this._d.removeEventListener('keydown', fileBrowserPlugin._bindClose);
+                fileBrowserPlugin._bindClose = null;
+            }
+
+            const fileBrowserContext = this.context.fileBrowser;
+            fileBrowserContext.area.style.display = 'none';
+            fileBrowserContext.selectorHandler = null;
+            fileBrowserContext.selectedTags = [];
+            fileBrowserContext.items = [];
+            fileBrowserContext.list.innerHTML = fileBrowserContext.tagArea.innerHTML = fileBrowserContext.titleArea.textContent = '';
+
+            if (typeof this.plugins[fileBrowserContext.contextPlugin].init === 'function') this.plugins[fileBrowserContext.contextPlugin].init.call(this);
+            fileBrowserContext.contextPlugin = '';
+        },
+
+        /**
+         * @description Show file browser loading box
+         */
+        showBrowserLoading: function () {
+            this._loading.style.display = 'block';
+        },
+
+        /**
+         * @description Close file browser loading box
+         */
+        closeBrowserLoading: function () {
+            this._loading.style.display = 'none';
+        },
+
+        _drawFileList: function (url) {
+            const fileBrowserPlugin = this.plugins.fileBrowser;
+
+            const xmlHttp = fileBrowserPlugin._xmlHttp = this.util.getXMLHttpRequest();
+            xmlHttp.onreadystatechange = fileBrowserPlugin._callBackGet.bind(this, xmlHttp);
+            xmlHttp.open('get', url, true);
+            xmlHttp.send(null);
+
+            this.plugins.fileBrowser.showBrowserLoading();
+        },
+
+        _callBackGet: function (xmlHttp) {
+            if (xmlHttp.readyState === 4) {
+                this.plugins.fileBrowser._xmlHttp = null;
+                if (xmlHttp.status === 200) {
+                    try {
+                        this.plugins.fileBrowser._drawListItem.call(this, JSON.parse(xmlHttp.responseText).result, true);
+                    } catch (e) {
+                        throw Error('[SUNEDITOR.fileBrowser.drawList.fail] cause : "' + e.message + '"');
+                    } finally {
+                        this.plugins.fileBrowser.closeBrowserLoading();
+                        this.context.fileBrowser.body.style.maxHeight = (this._w.innerHeight - this.context.fileBrowser.header.offsetHeight - 50) + 'px';
+                    }
+                } else { // exception
+                    this.plugins.fileBrowser.closeBrowserLoading();
+                    if (xmlHttp.status !== 0) {
+                        const res = !xmlHttp.responseText ? xmlHttp : JSON.parse(xmlHttp.responseText);
+                        const err = '[SUNEDITOR.fileBrowser.get.serverException] status: ' + xmlHttp.status + ', response: ' + (res.errorMessage || xmlHttp.responseText);
+                        throw Error(err);
+                    }
+                }
+            }
+        },
+
+        _drawListItem: function (items, update) {
+            const fileBrowserContext = this.context.fileBrowser;
+            const pluginContext = this.context[fileBrowserContext.contextPlugin];
+
+            const _tags = [];
+            const len = items.length;
+            const columnSize = pluginContext.columnSize || fileBrowserContext.columnSize;
+            const splitSize = columnSize <= 1 ? 1 : (Math.round(len/columnSize) || 1);
+            const drawItemHandler = pluginContext.itemTemplateHandler;
+            
+            let tagsHTML = '';
+            let listHTML = '<div class="se-file-item-column">';
+            let columns = 1;
+            for (let i = 0, item, tag; i < len; i++) {
+                item = items[i];
+                listHTML += drawItemHandler(item);
+
+                if ((i + 1) % splitSize === 0 && columns < columnSize && (i + 1) < len) {
+                    columns++;
+                    listHTML += '</div><div class="se-file-item-column">';
+                }
+
+                if (update) {
+                    tag = item.tag;
+                    if (tag && _tags.indexOf(tag) === -1) {
+                        _tags.push(tag);
+                        tagsHTML += '<a title="' + tag + '">' + tag + '</a>';
+                    }
+                }
+            }
+            listHTML += '</div>';
+
+            fileBrowserContext.list.innerHTML = listHTML;
+
+            if (update) {
+                fileBrowserContext.items = items;
+                fileBrowserContext.tagArea.innerHTML = tagsHTML;
+                fileBrowserContext.tagElements = fileBrowserContext.tagArea.querySelectorAll('A');
+            }
+        },
+
+        onClickTag: function (e) {
+            const target = e.target;
+            if (!this.util.isAnchor(target)) return;
+
+            const tagName = target.textContent;
+            const fileBrowserPlugin = this.plugins.fileBrowser;
+            const fileBrowserContext = this.context.fileBrowser;
+
+            const selectTag = fileBrowserContext.tagArea.querySelector('a[title="' + tagName + '"]');
+            const selectedTags = fileBrowserContext.selectedTags;
+            const sTagIndex = selectedTags.indexOf(tagName);
+
+            if (sTagIndex > -1){
+                selectedTags.splice(sTagIndex, 1);
+                this.util.removeClass(selectTag, 'on');
+            } else {
+                selectedTags.push(tagName);
+                this.util.addClass(selectTag, 'on');
+            }
+
+            fileBrowserPlugin._drawListItem.call(this, selectedTags.length === 0 ? fileBrowserContext.items : fileBrowserContext.items.filter(function (item) {
+                return selectedTags.indexOf(item.tag) > -1;
+            }), false);
+        },
+
+        onClickFile: function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const fileBrowserContext = this.context.fileBrowser;
+            const listEl = fileBrowserContext.list;
+            let target = e.target;
+            let command = null;
+
+            while (listEl !== target.parentNode) {
+                command = target.getAttribute('data-command');
+                if (command) break;
+                target = target.parentNode;
+            }
+
+            if (!command) return;
+
+            (fileBrowserContext.selectorHandler || this.context[fileBrowserContext.contextPlugin].selectorHandler)(target);
+
+            this.plugins.fileBrowser.close.call(this);
+        }
+    };
+
+    if (typeof noGlobal === typeof undefined) {
+        if (!window.SUNEDITOR_MODULES) {
+            Object.defineProperty(window, 'SUNEDITOR_MODULES', {
+                enumerable: true,
+                writable: false,
+                configurable: false,
+                value: {}
+            });
+        }
+
+        Object.defineProperty(window.SUNEDITOR_MODULES, 'fileBrowser', {
+            enumerable: true,
+            writable: false,
+            configurable: false,
+            value: fileBrowser
+        });
+    }
+
+    return fileBrowser;
+}));
+
+/***/ }),
+/* 9 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2052,9 +2414,9 @@ __webpack_require__.r(__webpack_exports__);
         const icons = this.icons;
         const listDiv = this.util.createElement('DIV');
 
-        listDiv.className = 'se-list-layer';
+        listDiv.className = 'se-submenu se-list-layer se-list-align';
         listDiv.innerHTML = '' +
-            '<div class="se-submenu se-list-inner se-list-align">' +
+            '<div class="se-list-inner">' +
                 '<ul class="se-list-basic">' +
                     '<li>' +
                         '<button type="button" class="se-btn-list se-btn-align" data-command="justifyleft" data-value="left" title="' + lang.toolbar.alignLeft + '">' +
@@ -2155,7 +2517,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 9 */
+/* 10 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2452,7 +2814,79 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 10 */
+/* 11 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _modules_fileBrowser__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(8);
+/* harmony import */ var _modules_fileBrowser__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_modules_fileBrowser__WEBPACK_IMPORTED_MODULE_0__);
+/*
+ * wysiwyg web editor
+ *
+ * suneditor.js
+ * Copyright 2017 JiHong Lee.
+ * MIT license.
+ */
+
+
+
+
+/* harmony default export */ __webpack_exports__["default"] = ({
+    name: 'imageGallery',
+    /**
+     * @description Constructor
+     * @param {Object} core Core object 
+     */
+    add: function (core) {
+        core.addModule([_modules_fileBrowser__WEBPACK_IMPORTED_MODULE_0___default.a]);
+
+        const context = core.context;
+        context.imageGallery = {
+            title: core.lang.toolbar.imageGallery, // @Required @Override fileBrowser - File browser window title.
+            url: context.options.imageGalleryUrl, // @Required @Override fileBrowser - File server url.
+            listClass: 'se-image-list', // @Required @Override fileBrowser - Class name of list div.
+            itemTemplateHandler: this.drawItems, // @Required @Override fileBrowser - Function that defines the HTML of an file item.
+            selectorHandler: this.setImage.bind(core), // @Required @Override fileBrowser - Function that action when item click.
+            columnSize: 4 // @Option @Override fileBrowser - Number of "div.se-file-item-column" to be created (default: 4)
+        };
+    },
+    
+    /**
+     * @Required @Override fileBrowser
+     * @description Open a file browser.
+     * @param {Function|null} selectorHandler When the function comes as an argument value, it substitutes "context.selectorHandler".
+     */
+    open: function (selectorHandler) {
+        this.plugins.fileBrowser.open.call(this, 'imageGallery', selectorHandler);
+    },
+
+    /**
+     * @Required @Override fileBrowser
+     * @description Define the HTML of the item to be put in "div.se-file-item-column".
+     * Format: [
+     *      { src: "image src", name: "name(@option)", alt: "image alt(@option)", tag: "tag name(@option)" }
+     * ]
+     * @param {Object} item Item of the response data's array
+     */
+    drawItems: function (item) {
+        const srcName = item.src.split('/').pop();
+        return  '<div class="se-file-item-img"><img src="' + item.src + '" alt="' + (item.alt || srcName) + '" data-command="pick">' +
+                    '<div class="se-file-img-name se-file-name-back"></div>' +
+                    '<div class="se-file-img-name">' + (item.name || srcName) + '</div>' +
+                '</div>';
+    },
+
+    setImage: function (target) {
+        this.callPlugin('image', function () {
+            this.context.image._altText = target.alt;
+            this.plugins.image.create_image.call(this, target.src, '', false, this.context.image._origin_w, this.context.image._origin_h, 'none', null);
+        }.bind(this), null);
+    }
+});
+
+/***/ }),
+/* 12 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2506,7 +2940,7 @@ __webpack_require__.r(__webpack_exports__);
 });
 
 /***/ }),
-/* 11 */
+/* 13 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2536,7 +2970,7 @@ __webpack_require__.r(__webpack_exports__);
         let listDiv = this.setSubmenu.call(core);
 
         /** add event listeners */
-        listDiv.querySelector('.se-list-font-family').addEventListener('click', this.pickup.bind(core));
+        listDiv.querySelector('.se-list-inner').addEventListener('click', this.pickup.bind(core));
 
         context.font._fontList = listDiv.querySelectorAll('ul li button');
 
@@ -2552,7 +2986,7 @@ __webpack_require__.r(__webpack_exports__);
         const lang = this.lang;
         const listDiv = this.util.createElement('DIV');
 
-        listDiv.className = 'se-list-layer';
+        listDiv.className = 'se-submenu se-list-layer se-list-font-family';
 
         let font, text, i, len;
         let fontList = !option.font ?
@@ -2567,7 +3001,7 @@ __webpack_require__.r(__webpack_exports__);
                 'Verdana'
             ] : option.font;
 
-        let list = '<div class="se-submenu se-list-inner se-list-font-family">' +
+        let list = '<div class="se-list-inner">' +
                 '<ul class="se-list-basic">' +
                     '<li><button type="button" class="default_value se-btn-list" title="' + lang.toolbar.default + '">(' + lang.toolbar.default + ')</button></li>';
         for (i = 0, len = fontList.length; i < len; i++) {
@@ -2645,7 +3079,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 12 */
+/* 14 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2754,7 +3188,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 13 */
+/* 15 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2799,11 +3233,11 @@ __webpack_require__.r(__webpack_exports__);
         const lang = this.lang;
         const listDiv = this.util.createElement('DIV');
 
-        listDiv.className = 'se-submenu se-list-layer';
+        listDiv.className = 'se-submenu se-list-layer se-list-font-size';
 
         const sizeList = !option.fontSize ? [8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72] : option.fontSize;
 
-        let list = '<div class="se-list-inner se-list-font-size">' +
+        let list = '<div class="se-list-inner">' +
                 '<ul class="se-list-basic">' +
                     '<li><button type="button" class="default_value se-btn-list" title="' + lang.toolbar.default + '">(' + lang.toolbar.default + ')</button></li>';
         for (let i = 0, unit = option.fontSizeUnit, len = sizeList.length, size; i < len; i++) {
@@ -2874,7 +3308,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 14 */
+/* 16 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2918,12 +3352,12 @@ __webpack_require__.r(__webpack_exports__);
         const option = this.context.option;
         const lang_toolbar = this.lang.toolbar;
         const listDiv = this.util.createElement('DIV');
-        listDiv.className = 'se-submenu se-list-layer';
+        listDiv.className = 'se-submenu se-list-layer se-list-format';
 
         const defaultFormats = ['p', 'div', 'blockquote', 'pre', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'];
         const formatList = !option.formats || option.formats.length === 0 ? defaultFormats : option.formats;
 
-        let list = '<div class="se-list-inner"><ul class="se-list-basic se-list-format">';
+        let list = '<div class="se-list-inner"><ul class="se-list-basic">';
         for (let i = 0, len = formatList.length, format, tagName, command, name, h, attrs, className; i < len; i++) {
             format = formatList[i];
             
@@ -3153,7 +3587,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 15 */
+/* 17 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -3263,7 +3697,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 16 */
+/* 18 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -3298,26 +3732,23 @@ __webpack_require__.r(__webpack_exports__);
         const lang = this.lang;
         const listDiv = this.util.createElement('DIV');
 
-        listDiv.className = 'se-submenu se-list-layer';
+        listDiv.className = 'se-submenu se-list-layer se-list-line';
         listDiv.innerHTML = '' +
-            '<div class="se-list-inner se-list-line">' +
+            '<div class="se-list-inner">' +
                 '<ul class="se-list-basic">' +
                     '<li>' +
-                        '<button type="button" class="se-btn-list btn_line se-tooltip" data-command="horizontalRule" data-value="solid">' +
+                        '<button type="button" class="se-btn-list btn_line" data-command="horizontalRule" data-value="solid" title="' + lang.toolbar.hr_solid + '">' +
                             '<hr style="border-width: 1px 0 0; border-style: solid none none; border-color: black; border-image: initial; height: 1px;" />' +
-                            '<span class="se-tooltip-inner"><span class="se-tooltip-text">' + lang.toolbar.hr_solid + '</span></span>' +
                         '</button>' +
                     '</li>' +
                     '<li>' +
-                        '<button type="button" class="se-btn-list btn_line se-tooltip" data-command="horizontalRule" data-value="dotted">' +
+                        '<button type="button" class="se-btn-list btn_line" data-command="horizontalRule" data-value="dotted" title="' + lang.toolbar.hr_dotted + '">' +
                             '<hr style="border-width: 1px 0 0; border-style: dotted none none; border-color: black; border-image: initial; height: 1px;" />' +
-                            '<span class="se-tooltip-inner"><span class="se-tooltip-text">' + lang.toolbar.hr_dotted + '</span></span>' +
                         '</button>' +
                     '</li>' +
                     '<li>' +
-                        '<button type="button" class="se-btn-list btn_line se-tooltip" data-command="horizontalRule" data-value="dashed">' +
+                        '<button type="button" class="se-btn-list btn_line" data-command="horizontalRule" data-value="dashed" title="' + lang.toolbar.hr_dashed + '">' +
                             '<hr style="border-width: 1px 0 0; border-style: dashed none none; border-color: black; border-image: initial; height: 1px;" />' +
-                            '<span class="se-tooltip-inner"><span class="se-tooltip-text">' + lang.toolbar.hr_dashed + '</span></span>' +
                         '</button>' +
                     '</li>' +
                 '</ul>' +
@@ -3331,7 +3762,7 @@ __webpack_require__.r(__webpack_exports__);
         oHr.className = className;
         this.focus();
 
-        let oNode = this.insertComponent(oHr, false);
+        const oNode = this.insertComponent(oHr, false);
         this.setRange(oNode, 0, oNode, 0);
     },
 
@@ -3357,7 +3788,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 17 */
+/* 19 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -3468,7 +3899,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 18 */
+/* 20 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -3520,13 +3951,11 @@ __webpack_require__.r(__webpack_exports__);
         listDiv.innerHTML = '' +
             '<div class="se-list-inner">' +
                 '<ul class="se-list-basic">' +
-                    '<li><button type="button" class="se-btn-list se-tooltip" data-command="OL">' +
+                    '<li><button type="button" class="se-btn-list se-tooltip" data-command="OL" title="' + lang.toolbar.orderList + '">' +
                         this.icons.list_number +
-                        '<span class="se-tooltip-inner"><span class="se-tooltip-text">' + lang.toolbar.orderList + '</span></span>' +
                     '</button></li>' +
-                    '<li><button type="button" class="se-btn-list se-tooltip" data-command="UL">' +
+                    '<li><button type="button" class="se-btn-list se-tooltip" data-command="UL" title="' + lang.toolbar.unorderList + '">' +
                         this.icons.list_bullets +
-                        '<span class="se-tooltip-inner"><span class="se-tooltip-text">' + lang.toolbar.unorderList + '</span></span>' +
                     '</button></li>' +
                 '</ul>' +
             '</div>';
@@ -3919,7 +4348,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 19 */
+/* 21 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -3960,7 +4389,7 @@ __webpack_require__.r(__webpack_exports__);
     setSubmenu: function () {
         const option = this.context.option;
         const listDiv = this.util.createElement('DIV');
-        listDiv.className = 'se-submenu se-list-layer';
+        listDiv.className = 'se-submenu se-list-layer se-list-format';
 
         const menuLang = this.lang.menu;
         const defaultList = {
@@ -3982,7 +4411,7 @@ __webpack_require__.r(__webpack_exports__);
         };
         const paragraphStyles = !option.paragraphStyles || option.paragraphStyles.length === 0 ? ['spaced', 'bordered', 'neon'] : option.paragraphStyles;
 
-        let list = '<div class="se-list-inner"><ul class="se-list-basic se-list-format">';
+        let list = '<div class="se-list-inner"><ul class="se-list-basic">';
         for (let i = 0, len = paragraphStyles.length, p, name, attrs, _class; i < len; i++) {
             p = paragraphStyles[i];
 
@@ -4060,7 +4489,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 20 */
+/* 22 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -5433,7 +5862,7 @@ __webpack_require__.r(__webpack_exports__);
             this._wd.addEventListener('mousemove', tablePlugin._bindOnSelect, false);
         } else {
             tablePlugin._bindOffShift = function () {
-                this.controllersOn(this.context.table.resizeDiv, this.context.table.tableController, this.plugins.table.init.bind(this), this.focus.bind(this), tdElement, 'table');
+                this.controllersOn(this.context.table.resizeDiv, this.context.table.tableController, this.plugins.table.init.bind(this), tdElement, 'table');
                 if (!tablePlugin._ref) this.controllersOff();
             }.bind(this);
 
@@ -5513,7 +5942,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 21 */
+/* 23 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -5589,7 +6018,7 @@ __webpack_require__.r(__webpack_exports__);
 });
 
 /***/ }),
-/* 22 */
+/* 24 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -5631,7 +6060,7 @@ __webpack_require__.r(__webpack_exports__);
     setSubmenu: function () {
         const option = this.context.option;
         const listDiv = this.util.createElement('DIV');
-        listDiv.className = 'se-submenu se-list-layer';
+        listDiv.className = 'se-submenu se-list-layer se-list-format';
 
         const defaultList = {
             translucent: {
@@ -5647,7 +6076,7 @@ __webpack_require__.r(__webpack_exports__);
         };
         const styleList = !option.textStyles ? ['translucent', 'shadow'] : option.textStyles;
 
-        let list = '<div class="se-list-inner"><ul class="se-list-basic se-list-format">';
+        let list = '<div class="se-list-inner"><ul class="se-list-basic">';
         for (let i = 0, len = styleList.length, t, tag, name, attrs, command, value, _class; i < len; i++) {
             t = styleList[i];
             attrs = '', value = '', command = [];
@@ -5759,7 +6188,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 23 */
+/* 25 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -5846,8 +6275,11 @@ __webpack_require__.r(__webpack_exports__);
         /** add event listeners */
         image_dialog.querySelector('.se-dialog-tabs').addEventListener('click', this.openTab.bind(core));
         image_dialog.querySelector('.se-btn-primary').addEventListener('click', this.submit.bind(core));
-        if (contextImage.imgInputFile) image_dialog.querySelector('.se-dialog-files-edge-button').addEventListener('click', this._removeSelectedFiles.bind(core, contextImage.imgInputFile, contextImage.imgUrlFile));
+        if (contextImage.imgInputFile) image_dialog.querySelector('.__se__file_remove').addEventListener('click', this._removeSelectedFiles.bind(core, contextImage.imgInputFile, contextImage.imgUrlFile));
         if (contextImage.imgInputFile && contextImage.imgUrlFile) contextImage.imgInputFile.addEventListener('change', this._fileInputChange.bind(contextImage));
+
+        const imageGalleryButton = image_dialog.querySelector('.__se__gallery');
+        if (imageGalleryButton) imageGalleryButton.addEventListener('click', this._openGallery.bind(core));
         
         contextImage.proportion = {};
         contextImage.inputX = {};
@@ -5906,7 +6338,7 @@ __webpack_require__.r(__webpack_exports__);
                                 '<label>' + lang.dialogBox.imageBox.file + '</label>' +
                                 '<div class="se-dialog-form-files">' +
                                     '<input class="se-input-form _se_image_file" type="file" accept="image/*" multiple="multiple" />' +
-                                    '<button type="button" data-command="filesRemove" class="se-btn se-dialog-files-edge-button" title="' + lang.controller.remove + '">' + this.icons.cancel + '</button>' +
+                                    '<button type="button" class="se-btn se-dialog-files-edge-button __se__file_remove" title="' + lang.controller.remove + '">' + this.icons.cancel + '</button>' +
                                 '</div>' +
                             '</div>' ;
                     }
@@ -5915,7 +6347,10 @@ __webpack_require__.r(__webpack_exports__);
                         html += '' +
                             '<div class="se-dialog-form">' +
                                 '<label>' + lang.dialogBox.imageBox.url + '</label>' +
-                                '<input class="se-input-form se-input-url" type="text" />' +
+                                '<div class="se-dialog-form-files">' +
+                                    '<input class="se-input-form se-input-url" type="text" />' +
+                                    ((option.imageGalleryUrl && this.plugins.imageGallery) ? '<button type="button" class="se-btn se-dialog-files-edge-button __se__gallery" title="' + lang.toolbar.imageGallery + '">' + this.icons.image_gallery + '</button>' : '') +
+                                '</div>' +
                             '</div>';
                     }
         
@@ -5991,6 +6426,16 @@ __webpack_require__.r(__webpack_exports__);
         if (urlInput) urlInput.removeAttribute('disabled');
     },
 
+    _openGallery: function () {
+        this.callPlugin('imageGallery', this.plugins.imageGallery.open.bind(this, this.plugins.image._setUrlInput.bind(this, this.context.image.imgUrlFile, this.context.image.altText)), null);
+    },
+
+    _setUrlInput: function (urlInput, altText, target) {
+        altText.value = target.alt;
+        urlInput.value = target.src;
+        urlInput.focus();
+    },
+
     /**
      * @Override @Required fileManager
      */
@@ -5998,6 +6443,8 @@ __webpack_require__.r(__webpack_exports__);
 
     /**
      * @Override core, fileManager, resizing
+     * @description It is called from core.selectComponent.
+     * @param {Element} element Target element
      */
     select: function (element) {
         this.plugins.image.onModifyMode.call(this, element, this.plugins.resizing.call_controller_resize.call(this, element, 'image'));
@@ -6105,7 +6552,7 @@ __webpack_require__.r(__webpack_exports__);
 
         try {
             if (this.context.dialog.updateModal) {
-                imagePlugin.update_image.call(this, false, false, false);
+                imagePlugin.update_image.call(this, false, true, false);
             }
             
             if (contextImage.imgInputFile && contextImage.imgInputFile.files.length > 0) {
@@ -6126,7 +6573,7 @@ __webpack_require__.r(__webpack_exports__);
         if (fileList.length === 0) return;
 
         let fileSize = 0;
-        const files = [];
+        let files = [];
         for (let i = 0, len = fileList.length; i < len; i++) {
             if (/image/i.test(fileList[i].type)) {
                 files.push(fileList[i]);
@@ -6166,7 +6613,11 @@ __webpack_require__.r(__webpack_exports__);
             element: contextImage._element
         };
 
-        if (typeof this.functions.onImageUploadBefore === 'function' && !this.functions.onImageUploadBefore(files, info, this)) return;
+        if (typeof this.functions.onImageUploadBefore === 'function') {
+            const result = this.functions.onImageUploadBefore(files, info, this);
+            if (!result) return;
+            if (this._w.Array.isArray(result) && result.length > 0) files = result;
+        }
 
         // server upload
         if (typeof imageUploadUrl === 'string' && imageUploadUrl.length > 0) {
@@ -6369,6 +6820,9 @@ __webpack_require__.r(__webpack_exports__);
         } else if (isNewContainer) {
             container.innerHTML = '';
             container.appendChild(cover);
+            contextImage._cover = cover;
+            contextImage._element = imageEl;
+            isNewContainer = false;
         }
 
         // check size
@@ -6466,8 +6920,7 @@ __webpack_require__.r(__webpack_exports__);
 
         if (openController) {
             this.plugins.image.init.call(this);
-            const size = this.plugins.resizing.call_controller_resize.call(this, imageEl, 'image');
-            this.plugins.image.onModifyMode.call(this, imageEl, size);
+            this.selectComponent(imageEl, 'image');
         }
 
         // history stack
@@ -6741,7 +7194,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 24 */
+/* 26 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -7037,7 +7490,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 25 */
+/* 27 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -7266,6 +7719,8 @@ __webpack_require__.r(__webpack_exports__);
 
     /**
      * @Override core, resizing, fileManager
+     * @description It is called from core.selectComponent.
+     * @param {Element} element Target element
      */
     select: function (element) {
         this.plugins.video.onModifyMode.call(this, element, this.plugins.resizing.call_controller_resize.call(this, element, 'video'));
@@ -7384,7 +7839,7 @@ __webpack_require__.r(__webpack_exports__);
         if (fileList.length === 0) return;
 
         let fileSize = 0;
-        const files = [];
+        let files = [];
         for (let i = 0, len = fileList.length; i < len; i++) {
             if (/video/i.test(fileList[i].type)) {
                 files.push(fileList[i]);
@@ -7422,7 +7877,11 @@ __webpack_require__.r(__webpack_exports__);
             element: contextVideo._element
         };
 
-        if (typeof this.functions.onVideoUploadBefore === 'function' && !this.functions.onVideoUploadBefore(files, info, this)) return;
+        if (typeof this.functions.onVideoUploadBefore === 'function') {
+            const result = this.functions.onVideoUploadBefore(files, info, this);
+            if (!result) return;
+            if (typeof result === 'object' && result.length > 0) files = result;
+        }
 
         // server upload
         if (typeof videoUploadUrl === 'string' && videoUploadUrl.length > 0) {
@@ -7569,6 +8028,10 @@ __webpack_require__.r(__webpack_exports__);
             this.plugins.fileManager.setInfo.call(this, 'video', oFrame, this.functions.onVideoUpload, file, true);
         }
 
+        if (isUpdate) {
+            this.selectComponent(oFrame, 'video');
+        }
+
         this.context.resizing._resize_plugin = '';
 
         // history stack
@@ -7577,20 +8040,20 @@ __webpack_require__.r(__webpack_exports__);
         }
     },
 
-    _update_videoCover: function (oIframe) {
-        if (!oIframe) return;
+    _update_videoCover: function (oFrame) {
+        if (!oFrame) return;
 
         const contextVideo = this.context.video;
-        oIframe.frameBorder = '0';
-        oIframe.allowFullscreen = true;
+        oFrame.frameBorder = '0';
+        oFrame.allowFullscreen = true;
         
-        const existElement = this.util.getParentElement(oIframe, this.util.isMediaComponent) || 
-            this.util.getParentElement(oIframe, function (current) {
+        const existElement = this.util.getParentElement(oFrame, this.util.isMediaComponent) || 
+            this.util.getParentElement(oFrame, function (current) {
                 return this.isWysiwygDiv(current.parentNode);
             }.bind(this.util));
 
-        contextVideo._element = oIframe = oIframe.cloneNode(false);
-        const cover = contextVideo._cover = this.plugins.component.set_cover.call(this, oIframe);
+        contextVideo._element = oFrame = oFrame.cloneNode(true);
+        const cover = contextVideo._cover = this.plugins.component.set_cover.call(this, oFrame);
         const container = contextVideo._container = this.plugins.component.set_container.call(this, cover, 'se-video-container');
 
         const figcaption = existElement.querySelector('figcaption');
@@ -7601,12 +8064,12 @@ __webpack_require__.r(__webpack_exports__);
             this.util.removeItem(figcaption);
         }
 
-        const size = (oIframe.getAttribute('data-size') || oIframe.getAttribute('data-origin') || '').split(',');
+        const size = (oFrame.getAttribute('data-size') || oFrame.getAttribute('data-origin') || '').split(',');
         this.plugins.video.applySize.call(this, size[0], size[1]);
 
         existElement.parentNode.replaceChild(container, existElement);
         if (!!caption) existElement.parentNode.insertBefore(caption, container.nextElementSibling);
-        this.plugins.fileManager.setInfo.call(this, 'video', oIframe, this.functions.onVideoUpload, null, true);
+        this.plugins.fileManager.setInfo.call(this, 'video', oFrame, this.functions.onVideoUpload, null, true);
     },
 
     /**
@@ -7645,7 +8108,7 @@ __webpack_require__.r(__webpack_exports__);
     openModify: function (notOpen) {
         const contextVideo = this.context.video;
 
-        if (contextVideo.videoUrlFile) contextVideo.videoUrlFile.value = contextVideo._element.src;
+        if (contextVideo.videoUrlFile) contextVideo.videoUrlFile.value = (contextVideo._element.src || (contextVideo._element.querySelector('source') || '').src || '');
         contextVideo.modal.querySelector('input[name="suneditor_video_radio"][value="' + contextVideo._align + '"]').checked = true;
 
         if (contextVideo._resizing) {
@@ -7897,7 +8360,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 26 */
+/* 28 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -8077,6 +8540,8 @@ __webpack_require__.r(__webpack_exports__);
 
     /**
      * @Override core, fileManager, resizing
+     * @description It is called from core.selectComponent.
+     * @param {Element} element Target element
      */
     select: function (element) {
         this.plugins.audio.onModifyMode.call(this, element);
@@ -8168,7 +8633,7 @@ __webpack_require__.r(__webpack_exports__);
         if (fileList.length === 0) return;
 
         let fileSize = 0;
-        const files = [];
+        let files = [];
         for (let i = 0, len = fileList.length; i < len; i++) {
             if (/audio/i.test(fileList[i].type)) {
                 files.push(fileList[i]);
@@ -8205,7 +8670,11 @@ __webpack_require__.r(__webpack_exports__);
             element: context._element
         };
 
-        if (typeof this.functions.onAudioUploadBefore === 'function' && !this.functions.onAudioUploadBefore(files, info, this)) return;
+        if (typeof this.functions.onAudioUploadBefore === 'function') {
+            const result = this.functions.onAudioUploadBefore(files, info, this);
+            if (!result) return;
+            if (typeof result === 'object' && result.length > 0) files = result;
+        }
 
         // create formData
         const formData = new FormData();
@@ -8265,12 +8734,14 @@ __webpack_require__.r(__webpack_exports__);
             if (element && element.src !== src) {
                 element.src = src;
             } else {
+                this.selectComponent(element, 'audio');
                 return;
             }
         }
 
         this.plugins.fileManager.setInfo.call(this, 'audio', element, this.functions.onAudioUpload, file, false);
-        this.history.push(false);
+        this.selectComponent(element, 'audio');
+        if (isUpdate) this.history.push(false);
     },
 
     updateCover: function (element) {
@@ -8313,7 +8784,7 @@ __webpack_require__.r(__webpack_exports__);
             controller.firstElementChild.style.left = '20px';
         }
         
-        this.controllersOn(controller, selectionTag, this.plugins.audio.init.bind(this), 'audio');
+        this.controllersOn(controller, selectionTag, this.plugins.audio.onControllerOff.bind(this, selectionTag), 'audio');
 
         this.util.addClass(selectionTag, 'active');
         context._element = selectionTag;
@@ -8347,6 +8818,11 @@ __webpack_require__.r(__webpack_exports__);
         this.controllersOff();
     },
 
+    onControllerOff: function (selectionTag) {
+        this.util.removeClass(selectionTag, 'active');
+        this.context.audio.controller.style.display = 'none';
+    },
+
     /**
      * @Required @Override dialog
      */
@@ -8354,19 +8830,16 @@ __webpack_require__.r(__webpack_exports__);
         if (this.context.dialog.updateModal) return;
         const context = this.context.audio;
 
-        if (context._element) this.util.removeClass(context._element, 'active');
-
         if (context.audioInputFile) context.audioInputFile.value = '';
         if (context.audioUrlFile) context.audioUrlFile.value = '';
         if (context.audioInputFile && context.audioUrlFile) context.audioUrlFile.removeAttribute('disabled');
 
-        context.controller.style.display = 'none';
         context._element = null;
     }
 });
 
 /***/ }),
-/* 27 */
+/* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8432,6 +8905,7 @@ __webpack_require__.r(__webpack_exports__);
             math: 'Math',
             image: 'Billede',
             video: 'Video',
+            audio: 'Audio',
             fullScreen: 'Fuld skærm',
             showBlocks: 'Vis blokke',
             codeView: 'Vis koder',
@@ -8447,7 +8921,8 @@ __webpack_require__.r(__webpack_exports__);
             template: 'Schablone',
             lineHeight: 'Linjehøjde',
             paragraphStyle: 'Afsnitstil',
-            textStyle: 'Tekststil'
+            textStyle: 'Tekststil',
+            imageGallery: 'Billedgalleri'
         },
         dialogBox: {
             linkBox: {
@@ -8477,6 +8952,10 @@ __webpack_require__.r(__webpack_exports__);
                 title: 'Indsæt Audio',
                 file: 'Indsæt fra fil',
                 url: 'Indsæt fra URL'
+            },
+            browser: {
+                tags: 'Tags',
+                search: 'Søg',
             },
             caption: 'Indsæt beskrivelse',
             close: 'Luk',
@@ -8552,7 +9031,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 28 */
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8615,6 +9094,7 @@ __webpack_require__.r(__webpack_exports__);
             math: 'Mathematik',
             image: 'Bild',
             video: 'Video',
+            audio: 'Audio',
             fullScreen: 'Vollbild',
             showBlocks: 'Blockformatierungen anzeigen',
             codeView: 'Quelltext anzeigen',
@@ -8630,7 +9110,8 @@ __webpack_require__.r(__webpack_exports__);
             template: 'Vorlage',
             lineHeight: 'Zeilenhöhe',
             paragraphStyle: 'Absatzstil',
-            textStyle: 'Textstil'
+            textStyle: 'Textstil',
+            imageGallery: 'Bildergalerie'
         },
         dialogBox: {
             linkBox: {
@@ -8660,6 +9141,10 @@ __webpack_require__.r(__webpack_exports__);
                 title: 'Audio enfügen',
                 file: 'Datei auswählen',
                 url: 'Audio-URL'
+            },
+            browser: {
+                tags: 'Stichworte',
+                search: 'Suche',
             },
             caption: 'Beschreibung eingeben',
             close: 'Schließen',
@@ -8734,7 +9219,7 @@ __webpack_require__.r(__webpack_exports__);
 }));
 
 /***/ }),
-/* 29 */
+/* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8797,6 +9282,7 @@ __webpack_require__.r(__webpack_exports__);
 			math: 'Matemáticas',
 			image: 'Imagen',
 			video: 'Video',
+			audio: 'Audio',
 			fullScreen: 'Pantalla completa',
 			showBlocks: 'Ver bloques',
 			codeView: 'Ver código fuente',
@@ -8812,7 +9298,8 @@ __webpack_require__.r(__webpack_exports__);
 			template: 'Plantilla',
 			lineHeight: 'Altura de la línea',
 			paragraphStyle: 'Estilo del parrafo',
-			textStyle: 'Estilo del texto'
+			textStyle: 'Estilo del texto',
+            imageGallery: 'Galería de imágenes'
 		},
 		dialogBox: {
 			linkBox: {
@@ -8842,6 +9329,10 @@ __webpack_require__.r(__webpack_exports__);
                 title: 'Insertar Audio',
                 file: 'Seleccionar desde los archivos',
                 url: 'URL de la audio'
+            },
+            browser: {
+                tags: 'Etiquetas',
+                search: 'Buscar',
             },
 			caption: 'Insertar descripción',
 			close: 'Cerrar',
@@ -8916,7 +9407,7 @@ __webpack_require__.r(__webpack_exports__);
 }));
 
 /***/ }),
-/* 30 */
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8979,6 +9470,7 @@ __webpack_require__.r(__webpack_exports__);
             math: 'Math',
             image: 'Image',
             video: 'Video',
+            audio: 'l\'audio',
             fullScreen: 'Plein écran',
             showBlocks: 'Voir les blocs',
             codeView: 'Voir le code',
@@ -8994,7 +9486,8 @@ __webpack_require__.r(__webpack_exports__);
             template: 'Template',
             lineHeight: 'Hauteur de la ligne',
             paragraphStyle: 'Style de paragraphe',
-            textStyle: 'Style de texte'
+            textStyle: 'Style de texte',
+            imageGallery: 'Galerie d\'images'
         },
         dialogBox: {
             linkBox: {
@@ -9024,6 +9517,10 @@ __webpack_require__.r(__webpack_exports__);
                 title: 'Insertar une l\'audio',
                 file: 'Sélectionner le fichier',
                 url: 'Adresse URL du fichier'
+            },
+            browser: {
+                tags: 'Mots clés',
+                search: 'Chercher',
             },
             caption: 'Insérer une description',
             close: 'Fermer',
@@ -9099,7 +9596,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 31 */
+/* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9162,6 +9659,7 @@ __webpack_require__.r(__webpack_exports__);
             math: '数学',
             image: '画像',
             video: '動画',
+            audio: 'オーディオ',
             fullScreen: 'フルスクリーン',
             showBlocks: 'ブロック表示',
             codeView: 'HTMLの編集',
@@ -9177,7 +9675,8 @@ __webpack_require__.r(__webpack_exports__);
             template: 'テンプレート',
             lineHeight: '行の高さ',
             paragraphStyle: '段落スタイル',
-            textStyle: 'テキストスタイル'
+            textStyle: 'テキストスタイル',
+            imageGallery: 'イメージギャラリー'
         },
         dialogBox: {
             linkBox: {
@@ -9207,6 +9706,10 @@ __webpack_require__.r(__webpack_exports__);
                 title: 'オーディオを挿入',
                 file: 'ファイルの選択',
                 url: 'オーディオアドレス'
+            },
+            browser: {
+                tags: 'タグ',
+                search: '探す',
             },
             caption: '説明付け',
             close: '閉じる',
@@ -9281,7 +9784,7 @@ __webpack_require__.r(__webpack_exports__);
 }));
 
 /***/ }),
-/* 32 */
+/* 34 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9344,6 +9847,7 @@ __webpack_require__.r(__webpack_exports__);
             math: '수식',
             image: '이미지',
             video: '동영상',
+            audio: '오디오',
             fullScreen: '전체 화면',
             showBlocks: '블록 보기',
             codeView: 'HTML 편집',
@@ -9359,7 +9863,8 @@ __webpack_require__.r(__webpack_exports__);
             template: '템플릿',
             lineHeight: '줄 높이',
             paragraphStyle: '문단 스타일',
-            textStyle: '글자 스타일'
+            textStyle: '글자 스타일',
+            imageGallery: '이미지 갤러리'
         },
         dialogBox: {
             linkBox: {
@@ -9389,6 +9894,10 @@ __webpack_require__.r(__webpack_exports__);
                 title: '오디오 삽입',
                 file: '파일 선택',
                 url: '오디오 파일 주소'
+            },
+            browser: {
+                tags: '태그',
+                search: '검색',
             },
             caption: '설명 넣기',
             close: '닫기',
@@ -9463,7 +9972,7 @@ __webpack_require__.r(__webpack_exports__);
 }));
 
 /***/ }),
-/* 33 */
+/* 35 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9527,6 +10036,7 @@ __webpack_require__.r(__webpack_exports__);
             math: 'Matemática',
             image: 'Imagem',
             video: 'Vídeo',
+            audio: 'Áudio',
             fullScreen: 'Tela cheia',
             showBlocks: 'Mostrar blocos',
             codeView: 'Mostrar códigos',
@@ -9542,7 +10052,8 @@ __webpack_require__.r(__webpack_exports__);
             template: 'Modelo',
             lineHeight: 'Altura da linha',
             paragraphStyle: 'Estilo do parágrafo',
-            textStyle: 'Estilo do texto'
+            textStyle: 'Estilo do texto',
+            imageGallery: 'Galeria de imagens'
         },
         dialogBox: {
             linkBox: {
@@ -9572,6 +10083,10 @@ __webpack_require__.r(__webpack_exports__);
                 title: 'Inserir audio',
                 file: 'Selecionar arquivos',
                 url: 'URL da audio'
+            },
+            browser: {
+                tags: 'Tag',
+                search: 'Procurar',
             },
             caption: 'Inserir descrição',
             close: 'Fechar',
@@ -9646,7 +10161,7 @@ __webpack_require__.r(__webpack_exports__);
 }));
 
 /***/ }),
-/* 34 */
+/* 36 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9678,9 +10193,9 @@ __webpack_require__.r(__webpack_exports__);
         toolbar: {
             default: 'По умолчанию',
             save: 'Сохранить',
-            font: 'Гарнитура',
+            font: 'Шрифт',
             formats: 'Стиль абзаца',
-            fontSize: 'Кегль',
+            fontSize: 'Размер шрифта',
             bold: 'Полужирный',
             underline: 'Подчёркнутый',
             italic: 'Курсив',
@@ -9709,6 +10224,7 @@ __webpack_require__.r(__webpack_exports__);
             math: 'математический',
             image: 'Изображение',
             video: 'Видео',
+            audio: 'Аудио',
             fullScreen: 'Полный экран',
             showBlocks: 'Блочный вид',
             codeView: 'Редактировать HTML',
@@ -9724,7 +10240,8 @@ __webpack_require__.r(__webpack_exports__);
             template: 'Шаблон',
             lineHeight: 'Высота линии',
             paragraphStyle: 'Стиль абзаца',
-            textStyle: 'Стиль текста'
+            textStyle: 'Стиль текста',
+            imageGallery: 'Галерея'
         },
         dialogBox: {
             linkBox: {
@@ -9754,6 +10271,10 @@ __webpack_require__.r(__webpack_exports__);
                 title: 'Вставить аудио',
                 file: 'Выберите файл',
                 url: 'Адрес аудио'
+            },
+            browser: {
+                tags: 'Теги',
+                search: 'Поиск',
             },
             caption: 'Добавить подпись',
             close: 'Закрыть',
@@ -9828,7 +10349,7 @@ __webpack_require__.r(__webpack_exports__);
 }));
 
 /***/ }),
-/* 35 */
+/* 37 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9891,6 +10412,7 @@ __webpack_require__.r(__webpack_exports__);
             math: 'Matematica',
             image: 'Immagine',
             video: 'Video',
+            audio: 'Audio',
             fullScreen: 'Tutto Schermo',
             showBlocks: 'Visualizza Blocchi',
             codeView: 'Visualizza Codice',
@@ -9906,7 +10428,8 @@ __webpack_require__.r(__webpack_exports__);
             template: 'Template',
             lineHeight: 'Altezza linea',
             paragraphStyle: 'Stile Paragrafo',
-            textStyle: 'Stile Testo'
+            textStyle: 'Stile Testo',
+            imageGallery: 'Galleria di immagini'
         },
         dialogBox: {
             linkBox: {
@@ -9936,6 +10459,10 @@ __webpack_require__.r(__webpack_exports__);
                 title: 'Insertar Audio',
                 file: 'Seleziona da file',
                 url: 'Indirizzo audio'
+            },
+            browser: {
+                tags: 'tag',
+                search: 'Ricerca',
             },
             caption: 'Inserisci descrizione',
             close: 'ClChiudiose',
@@ -10011,7 +10538,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 36 */
+/* 38 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10074,6 +10601,7 @@ __webpack_require__.r(__webpack_exports__);
             math: '数学',
             image: '图片',
             video: '视频',
+            audio: '音讯',
             fullScreen: '全屏',
             showBlocks: '显示块区域',
             codeView: '代码视图',
@@ -10089,7 +10617,8 @@ __webpack_require__.r(__webpack_exports__);
             template: '模板',
             lineHeight: '行高',
             paragraphStyle: '段落样式',
-            textStyle: '文字样式'
+            textStyle: '文字样式',
+            imageGallery: '图片库'
         },
         dialogBox: {
             linkBox: {
@@ -10119,6 +10648,10 @@ __webpack_require__.r(__webpack_exports__);
                 title: '插入音频',
                 file: '上传图片',
                 url: '音频网址'
+            },
+            browser: {
+                tags: '标签',
+                search: '搜索',
             },
             caption: '标题',
             close: '取消',
@@ -10193,7 +10726,195 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 37 */
+/* 39 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+/*
+ * wysiwyg web editor
+ *
+ * suneditor.js
+ * Copyright 2017 JiHong Lee.
+ * MIT license.
+ */
+
+
+(function (global, factory) {
+    if ( true && typeof module.exports === 'object') {
+        module.exports = global.document ?
+            factory(global, true) :
+            function (w) {
+                if (!w.document) {
+                    throw new Error('SUNEDITOR_LANG a window with a document');
+                }
+                return factory(w);
+            };
+    } else {
+        factory(global);
+    }
+}(typeof window !== 'undefined' ? window : this, function (window, noGlobal) {
+    const lang = {
+        code: 'ro',
+        toolbar: {
+            default: 'Default',
+            save: 'Salvează',
+            font: 'Font',
+            formats: 'Format',
+            fontSize: 'Dimensiune',
+            bold: 'Îngroșat',
+            underline: 'Subliniat',
+            italic: 'Înclinat',
+            strike: 'Tăiat',
+            subscript: 'Subscript',
+            superscript: 'Superscript',
+            removeFormat: 'Șterge formatare',
+            fontColor: 'Culoare font',
+            hiliteColor: 'Culoare de evidențiere',
+            indent: 'Indentează',
+            outdent: 'Fără indentare',
+            align: 'Aliniere',
+            alignLeft: 'Aliniere la stânga',
+            alignRight: 'Aliniere la dreapta',
+            alignCenter: 'Aliniere la centru',
+            alignJustify: 'Aliniere stânga - dreapta',
+            list: 'Listă',
+            orderList: 'Listă ordonată',
+            unorderList: 'Listă neordonată',
+            horizontalRule: 'Linie orizontală',
+            hr_solid: 'Solid',
+            hr_dotted: 'Punctat',
+            hr_dashed: 'Punctate',
+            table: 'Tabel',
+            link: 'Link',
+            math: 'Matematică',
+            image: 'Imagine',
+            video: 'Video',
+            audio: 'Audio',
+            fullScreen: 'Tot ecranul',
+            showBlocks: 'Arată blocuri',
+            codeView: 'Vizualizare cod',
+            undo: 'Anulează',
+            redo: 'Refă',
+            preview: 'Previzualizare',
+            print: 'printează',
+            tag_p: 'Paragraf',
+            tag_div: 'Normal (DIV)',
+            tag_h: 'Antet',
+            tag_blockquote: 'Quote',
+            tag_pre: 'Citat',
+            template: 'Template',
+            lineHeight: 'Înălțime linie',
+            paragraphStyle: 'Stil paragraf',
+            textStyle: 'Stil text',
+            imageGallery: 'Galerie de imagini'
+        },
+        dialogBox: {
+            linkBox: {
+                title: 'Inserează Link',
+                url: 'Adresă link',
+                text: 'Text de afișat',
+                newWindowCheck: 'Deschide în fereastră nouă'
+            },
+            mathBox: {
+                title: 'Matematică',
+                inputLabel: 'Notație matematică',
+                fontSizeLabel: 'Dimensiune font',
+                previewLabel: 'Previzualizare'
+            },
+            imageBox: {
+                title: 'Inserează imagine',
+                file: 'Selectează',
+                url: 'URL imagine',
+                altText: 'text alternativ'
+            },
+            videoBox: {
+                title: 'Inserează video',
+                file: 'Selectează',
+                url: 'Include URL, youtube'
+            },
+            audioBox: {
+                title: 'Inserează Audio',
+                file: 'Selectează',
+                url: 'URL Audio'
+            },
+            browser: {
+                tags: 'Etichete',
+                search: 'Căutareim',
+            },
+            caption: 'Inserează descriere',
+            close: 'Închide',
+            submitButton: 'Salvează',
+            revertButton: 'Revenire',
+            proportion: 'Constrânge proporțiile',
+            basic: 'De bază',
+            left: 'Stânga',
+            right: 'Dreapta',
+            center: 'Centru',
+            width: 'Lățime',
+            height: 'Înălțime',
+            size: 'Dimensiune',
+            ratio: 'Ratie'
+        },
+        controller: {
+            edit: 'Editează',
+            unlink: 'Scoate link',
+            remove: 'Elimină',
+            insertRowAbove: 'Inserează rând deasupra',
+            insertRowBelow: 'Inserează rând dedesupt',
+            deleteRow: 'Șterge linie',
+            insertColumnBefore: 'Inserează coloană înainte',
+            insertColumnAfter: 'Inserează coloană după',
+            deleteColumn: 'Șterge coloană',
+            fixedColumnWidth: 'Lățime fixă coloană',
+            resize100: 'Redimensionare 100%',
+            resize75: 'Redimensionare 75%',
+            resize50: 'Redimensionare 50%',
+            resize25: 'Redimensionare 25%',
+            autoSize: 'Dimensiune automată',
+            mirrorHorizontal: 'Oglindă, orizontal',
+            mirrorVertical: 'Oglindă, vertical',
+            rotateLeft: 'Rotește la stânga',
+            rotateRight: 'Rotește la dreapta',
+            maxSize: 'Dimensiune maximă',
+            minSize: 'Dimensiune minimă',
+            tableHeader: 'Antet tabel',
+            mergeCells: 'Îmbină celule',
+            splitCells: 'Divizează celule',
+            HorizontalSplit: 'Despicare orizontală',
+            VerticalSplit: 'Despicare verticală'
+        },
+        menu: {
+            spaced: 'Spațiat',
+            bordered: 'Mărginit',
+            neon: 'Neon',
+            translucent: 'Translucent',
+            shadow: 'Umbră'
+        }
+    };
+
+    if (typeof noGlobal === typeof undefined) {
+        if (!window.SUNEDITOR_LANG) {
+            Object.defineProperty(window, 'SUNEDITOR_LANG', {
+                enumerable: true,
+                writable: false,
+                configurable: false,
+                value: {}
+            });
+        }
+
+        Object.defineProperty(window.SUNEDITOR_LANG, 'ro', {
+            enumerable: true,
+            writable: true,
+            configurable: true,
+            value: lang
+        });
+    }
+
+    return lang;
+}));
+
+/***/ }),
+/* 40 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10206,7 +10927,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
-var ReactPropTypesSecret = __webpack_require__(38);
+var ReactPropTypesSecret = __webpack_require__(41);
 
 function emptyFunction() {}
 function emptyFunctionWithReset() {}
@@ -10264,7 +10985,7 @@ module.exports = function() {
 
 
 /***/ }),
-/* 38 */
+/* 41 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10283,7 +11004,7 @@ module.exports = ReactPropTypesSecret;
 
 
 /***/ }),
-/* 39 */
+/* 42 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -10299,13 +11020,13 @@ __webpack_require__.r(buttonList_namespaceObject);
 __webpack_require__.d(buttonList_namespaceObject, "basic", function() { return basic; });
 __webpack_require__.d(buttonList_namespaceObject, "complex", function() { return complex; });
 __webpack_require__.d(buttonList_namespaceObject, "formatting", function() { return formatting; });
-__webpack_require__.d(buttonList_namespaceObject, "default", function() { return buttonList; });
+__webpack_require__.d(buttonList_namespaceObject, "default", function() { return misc_buttonList; });
 
 // CONCATENATED MODULE: ./misc/buttonList.js
 var basic = [["font", "fontSize"], ["fontColor"], ["horizontalRule"], ["link", "image"]];
 var complex = [["undo", "redo"], ["font", "fontSize", "formatBlock"], ["bold", "underline", "italic", "strike", "subscript", "superscript"], ["removeFormat"], "/", ["fontColor", "hiliteColor"], ["outdent", "indent"], ["align", "horizontalRule", "list", "table"], ["link", "image", "video"], ["fullScreen", "showBlocks", "codeView"], ["preview", "print"], ["save", "template"]];
 var formatting = [["undo", "redo"], ["bold", "underline", "italic", "strike", "subscript", "superscript"], ["removeFormat"], ["outdent", "indent"], ["fullScreen", "showBlocks", "codeView"], ["preview", "print"]];
-/* harmony default export */ var buttonList = ({
+/* harmony default export */ var misc_buttonList = ({
   basic: basic,
   complex: complex,
   formatting: formatting
@@ -10388,13 +11109,18 @@ var external_react_default = /*#__PURE__*/__webpack_require__.n(external_react_)
    checked: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.75 12.1"><g><path d="M4.59,12.23l.12.18L9.43,17.5a.58.58,0,0,0,.84,0L20,7.45h0a.58.58,0,0,0,0-.84l-.85-.85a.58.58,0,0,0-.84,0H18.2l-8.12,8.41a.29.29,0,0,1-.42,0l-3.4-3.63a.58.58,0,0,0-.84,0l-.85.85a.6.6,0,0,0-.14.21.51.51,0,0,0,0,.44c.05.06.1.13.16.19Z" transform="translate(-4.38 -5.58)"/></g></svg>',
    line_break: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 21L14.9 3H17L9.1 21H7Z" /></svg>',
    audio: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14,3.23V5.29C16.89,6.15 19,8.83 19,12C19,15.17 16.89,17.84 14,18.7V20.77C18,19.86 21,16.28 21,12C21,7.72 18,4.14 14,3.23M16.5,12C16.5,10.23 15.5,8.71 14,7.97V16C15.5,15.29 16.5,13.76 16.5,12M3,9V15H7L12,20V4L7,9H3Z" /></svg>',
+   image_gallery: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="30 30 150 150"><g><path d="M152.775,120.548V51.651c0-12.271-9.984-22.254-22.254-22.254H43.727c-12.271,0-22.254,9.983-22.254,22.254v68.896c0,12.27,9.983,22.254,22.254,22.254h86.795C142.791,142.802,152.775,132.817,152.775,120.548z M36.394,51.651c0-4.042,3.291-7.333,7.333-7.333h86.795c4.042,0,7.332,3.291,7.332,7.333v23.917l-14.938-17.767c-1.41-1.678-3.487-2.649-5.68-2.658h-0.029c-2.184,0-4.255,0.954-5.674,2.613L76.709,98.519l-9.096-9.398c-1.427-1.474-3.392-2.291-5.448-2.273c-2.052,0.025-4.004,0.893-5.396,2.4L36.394,111.32V51.651z M41.684,127.585l20.697-22.416l9.312,9.622c1.461,1.511,3.489,2.334,5.592,2.27c2.101-0.066,4.075-1.013,5.44-2.612l34.436-40.308l20.693,24.613v21.794c0,4.042-3.29,7.332-7.332,7.332H43.727C43.018,127.88,42.334,127.775,41.684,127.585z M182.616,152.5V75.657c0-4.12-3.34-7.46-7.461-7.46c-4.119,0-7.46,3.34-7.46,7.46V152.5c0,4.112-3.347,7.46-7.461,7.46h-94c-4.119,0-7.46,3.339-7.46,7.459c0,4.123,3.341,7.462,7.46,7.462h94C172.576,174.881,182.616,164.841,182.616,152.5z"/></g></svg>',
+   // More icons
+   more_text: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="10 10 180 180"><g><path d="M49.711,142.188h49.027c2.328,0.002,4.394,1.492,5.129,3.699l9.742,29.252c0.363,1.092,1.385,1.828,2.537,1.83l15.883,0.01c0.859,0,1.667-0.412,2.17-1.109s0.641-1.594,0.37-2.41l-16.625-50.045L86.503,28.953c-0.36-1.097-1.383-1.839-2.537-1.842H64.532c-1.153-0.001-2.178,0.736-2.542,1.831L13.847,173.457c-0.271,0.816-0.135,1.713,0.369,2.412c0.503,0.697,1.311,1.109,2.171,1.109h15.872c1.151,0,2.173-0.736,2.537-1.828l9.793-29.287C45.325,143.66,47.39,142.18,49.711,142.188L49.711,142.188z M53.493,119.098l15.607-46.9c0.744-2.196,2.806-3.674,5.125-3.674s4.381,1.478,5.125,3.674l15.607,46.904c0.537,1.621,0.263,3.402-0.736,4.789c-1.018,1.408-2.649,2.24-4.386,2.24H58.615c-1.736,0-3.368-0.832-4.386-2.24C53.23,122.504,52.956,120.721,53.493,119.098L53.493,119.098z M190.465,63.32c0-2.919-1.015-5.396-3.059-7.428c-2.029-2.031-4.496-3.047-7.383-3.047c-2.889,0-5.355,1.016-7.388,3.047c-2.029,2.032-3.056,4.498-3.056,7.386c0,2.889,1.026,5.354,3.056,7.385c2.032,2.032,4.499,3.059,7.388,3.059c2.887,0,5.354-1.026,7.383-3.059C189.45,68.633,190.465,66.178,190.465,63.32L190.465,63.32z M190.465,101.994c0-2.858-1.015-5.313-3.059-7.333c-2.029-2.042-4.496-3.047-7.383-3.047c-2.889,0-5.355,1.005-7.388,3.047c-2.029,2.021-3.056,4.486-3.056,7.376c0,2.887,1.026,5.352,3.056,7.395c2.032,2.021,4.499,3.047,7.388,3.047c2.887,0,5.354-1.025,7.383-3.047C189.45,107.389,190.465,104.914,190.465,101.994L190.465,101.994z M190.465,140.76c0-2.918-1.015-5.395-3.059-7.438c-2.029-2.041-4.496-3.047-7.383-3.047c-2.889,0-5.355,1.006-7.388,3.047c-2.029,2.043-3.056,4.52-3.056,7.438c0,2.922,1.026,5.398,3.056,7.439c2.032,2.021,4.499,3.047,7.388,3.047c2.887,0,5.354-1.025,7.383-3.047C189.45,146.158,190.465,143.682,190.465,140.76L190.465,140.76z"/></g></svg>',
+   more_paragraph: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="10 10 180 180"><g><path d="M128.39,28.499H63.493c-25.558,0-46.354,20.796-46.354,46.354c0,25.559,20.796,46.353,46.354,46.353h9.271v55.625h18.542V47.04h9.271V176.83h18.543V47.04h9.271V28.499z M72.764,102.664h-9.271c-15.337,0-27.813-12.475-27.813-27.812c0-15.336,12.476-27.813,27.813-27.813h9.271V102.664z M190.465,63.32c0-2.919-1.015-5.396-3.059-7.428c-2.029-2.031-4.496-3.047-7.383-3.047c-2.889,0-5.355,1.016-7.388,3.047c-2.029,2.032-3.056,4.498-3.056,7.386c0,2.889,1.026,5.354,3.056,7.385c2.032,2.032,4.499,3.059,7.388,3.059c2.887,0,5.354-1.026,7.383-3.059C189.45,68.633,190.465,66.178,190.465,63.32L190.465,63.32z M190.465,101.994c0-2.858-1.015-5.313-3.059-7.333c-2.029-2.042-4.496-3.047-7.383-3.047c-2.889,0-5.355,1.005-7.388,3.047c-2.029,2.021-3.056,4.486-3.056,7.376c0,2.887,1.026,5.352,3.056,7.395c2.032,2.021,4.499,3.047,7.388,3.047c2.887,0,5.354-1.025,7.383-3.047C189.45,107.389,190.465,104.914,190.465,101.994L190.465,101.994z M190.465,140.76c0-2.918-1.015-5.395-3.059-7.438c-2.029-2.041-4.496-3.047-7.383-3.047c-2.889,0-5.355,1.006-7.388,3.047c-2.029,2.043-3.056,4.52-3.056,7.438c0,2.922,1.026,5.398,3.056,7.439c2.032,2.021,4.499,3.047,7.388,3.047c2.887,0,5.354-1.025,7.383-3.047C189.45,146.158,190.465,143.682,190.465,140.76L190.465,140.76z"/></g></svg>',
+   more_plus: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="35 30 140 140"><g><path d="M137.215,102.045c0,3.498-2.835,6.332-6.333,6.332H24.549c-3.498,0-6.334-2.834-6.334-6.332l0,0c0-3.498,2.836-6.333,6.334-6.333h106.333C134.38,95.711,137.215,98.547,137.215,102.045L137.215,102.045z M77.715,161.545c-3.498,0-6.333-2.836-6.333-6.334V48.878c0-3.498,2.836-6.333,6.333-6.333l0,0c3.498,0,6.334,2.835,6.334,6.333v106.333C84.049,158.709,81.213,161.545,77.715,161.545L77.715,161.545z M190.465,63.32c0-2.919-1.015-5.396-3.059-7.428c-2.029-2.031-4.496-3.047-7.383-3.047c-2.889,0-5.355,1.016-7.388,3.047c-2.029,2.032-3.056,4.498-3.056,7.386c0,2.889,1.026,5.354,3.056,7.385c2.032,2.032,4.499,3.059,7.388,3.059c2.887,0,5.354-1.026,7.383-3.059C189.45,68.632,190.465,66.177,190.465,63.32L190.465,63.32z M190.465,101.993c0-2.858-1.015-5.313-3.059-7.333c-2.029-2.042-4.496-3.047-7.383-3.047c-2.889,0-5.355,1.005-7.388,3.047c-2.029,2.021-3.056,4.486-3.056,7.376c0,2.888,1.026,5.353,3.056,7.396c2.032,2.021,4.499,3.047,7.388,3.047c2.887,0,5.354-1.025,7.383-3.047C189.45,107.389,190.465,104.914,190.465,101.993L190.465,101.993z M190.465,140.76c0-2.918-1.015-5.395-3.059-7.438c-2.029-2.041-4.496-3.047-7.383-3.047c-2.889,0-5.355,1.006-7.388,3.047c-2.029,2.043-3.056,4.52-3.056,7.438c0,2.922,1.026,5.398,3.056,7.439c2.032,2.021,4.499,3.047,7.388,3.047c2.887,0,5.354-1.025,7.383-3.047C189.45,146.158,190.465,143.682,190.465,140.76L190.465,140.76z"/></g></svg>',
+   more_horizontal: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.76 3.58"><g><path d="M4.64,10.73a1.84,1.84,0,0,1,.65-.65,1.76,1.76,0,0,1,1.79,0A1.79,1.79,0,0,1,8,11.63a1.84,1.84,0,0,1-.25.9,1.69,1.69,0,0,1-.65.65,1.8,1.8,0,0,1-2.69-1.55A2.08,2.08,0,0,1,4.64,10.73Zm6.09,0a1.84,1.84,0,0,1,.65-.65,1.78,1.78,0,0,1,2.67,1.55,1.73,1.73,0,0,1-.24.9,1.84,1.84,0,0,1-.65.65,1.76,1.76,0,0,1-1.79,0,1.79,1.79,0,0,1-.64-2.44Zm6.08,0a1.69,1.69,0,0,1,.65-.65,1.76,1.76,0,0,1,1.79,0,1.79,1.79,0,0,1,.9,1.54,1.73,1.73,0,0,1-.24.9,1.84,1.84,0,0,1-.65.65,1.8,1.8,0,0,1-2.69-1.55A2,2,0,0,1,16.81,10.73Z" transform="translate(-4.39 -9.84)"/></g></svg>',
+   more_vertical: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3.94 15.75"><g><path d="M12.28,7.69a1.92,1.92,0,0,1-1.39-.58,2,2,0,0,1-.58-1.39,1.92,1.92,0,0,1,.58-1.39,2,2,0,0,1,1.39-.58,1.92,1.92,0,0,1,1.39.58,2,2,0,0,1,.58,1.39,1.92,1.92,0,0,1-.58,1.39,2,2,0,0,1-1.39.58Zm0,2a1.92,1.92,0,0,1,1.39.58,2,2,0,0,1,.58,1.39A1.92,1.92,0,0,1,13.67,13a2,2,0,0,1-1.39.58A1.92,1.92,0,0,1,10.89,13a2,2,0,0,1-.58-1.39,2,2,0,0,1,2-2Zm0,5.9a1.92,1.92,0,0,1,1.39.58,2,2,0,0,1,.58,1.39,1.92,1.92,0,0,1-.58,1.39,2,2,0,0,1-1.39.58,1.92,1.92,0,0,1-1.39-.58,2,2,0,0,1-.58-1.39,1.92,1.92,0,0,1,.58-1.39,1.94,1.94,0,0,1,1.39-.58Z" transform="translate(-10.31 -3.75)"/></g></svg>',
    // Not currently used
    attachment: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8.38 15.68"><g><path d="M15.23,6h1v9.78a3.88,3.88,0,0,1-1.31,2.45,4,4,0,0,1-6.57-2.45V7A3,3,0,0,1,9.2,4.89a3,3,0,0,1,5,2.09v8.31a1.92,1.92,0,0,1-.58,1.39,2,2,0,0,1-1.39.58,1.92,1.92,0,0,1-1.39-.58,2,2,0,0,1-.58-1.39V8h1v7.32a1,1,0,0,0,.29.69,1,1,0,0,0,.69.28A.9.9,0,0,0,13,16a1,1,0,0,0,.29-.69V7a1.92,1.92,0,0,0-.58-1.39A2,2,0,0,0,11.27,5a1.92,1.92,0,0,0-1.39.58A2,2,0,0,0,9.33,7v8.31a3,3,0,1,0,5.9,0V6Z" transform="translate(-8.08 -3.78)"/></g></svg>',
    map: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 11.7 15.62"><g><path d="M12.05,12.42a2.93,2.93,0,1,1,2.07-5A2.88,2.88,0,0,1,15,9.49a3,3,0,0,1-.86,2.07,2.89,2.89,0,0,1-2.07.86Zm0-5.36a2.43,2.43,0,0,0-1.72,4.16,2.48,2.48,0,0,0,1.72.72,2.44,2.44,0,0,0,0-4.88Zm0-3.3A5.84,5.84,0,0,1,17.9,9.62a9.94,9.94,0,0,1-1.73,5A33.59,33.59,0,0,1,12.84,19a1.52,1.52,0,0,1-.23.2,1,1,0,0,1-.55.2h0a1,1,0,0,1-.55-.2,1.52,1.52,0,0,1-.23-.2,33.59,33.59,0,0,1-3.33-4.32,9.93,9.93,0,0,1-1.72-5,5.84,5.84,0,0,1,5.85-5.86ZM12,18.34l.08.05.06-.06a35.58,35.58,0,0,0,3.06-3.93,9.35,9.35,0,0,0,1.74-4.77,4.88,4.88,0,0,0-4.88-4.88A4.79,4.79,0,0,0,8.6,6.17,4.84,4.84,0,0,0,7.17,9.62,9.29,9.29,0,0,0,8.91,14.4,36,36,0,0,0,12,18.34Z" transform="translate(-6.2 -3.76)"/></g></svg>',
    magic_stick: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.73 15.75"><g><path d="M19.86,19.21a1,1,0,0,0,.28-.68,1,1,0,0,0-.28-.7L13,10.93a1,1,0,0,0-.7-.28,1,1,0,0,0-.68,1.65l6.9,6.9a1,1,0,0,0,.69.29.93.93,0,0,0,.69-.28ZM9.19,8.55a3,3,0,0,0,1.68,0,14.12,14.12,0,0,0,1.41-.32A11.26,11.26,0,0,0,10.8,7.06c-.56-.36-.86-.56-.91-.58S10,5.91,10,5.11s0-1.26-.15-1.37a4.35,4.35,0,0,0-1.19.71c-.53.4-.81.62-.87.68a9,9,0,0,0-2-.6,6.84,6.84,0,0,0-.76-.09s0,.27.08.77a8.6,8.6,0,0,0,.61,2q-.09.09-.69.87a3.59,3.59,0,0,0-.68,1.17c.12.17.57.23,1.36.15S7,9.26,7.15,9.23s.21.36.57.91a10.49,10.49,0,0,0,1.14,1.48c0-.1.14-.57.31-1.4a3,3,0,0,0,0-1.67Z" transform="translate(-4.41 -3.74)"/></g></svg>',
-   empty_file: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12.78 15.75"><g><path d="M14.73,3.76,18.67,7.7v9.84a2,2,0,0,1-2,2H7.84a1.89,1.89,0,0,1-1.38-.58,2,2,0,0,1-.57-1.39V5.73a1.93,1.93,0,0,1,.57-1.38,2,2,0,0,1,1.38-.58h6.62l.26,0v0Zm2.95,4.92h-2a1.93,1.93,0,0,1-1.38-.57,2,2,0,0,1-.58-1.4V6.17c0-.36,0-.84,0-1.43H7.85a1,1,0,0,0-.7.29,1,1,0,0,0-.29.7V17.54a1,1,0,0,0,.29.69,1,1,0,0,0,.69.29h8.85a1,1,0,0,0,.71-.29.92.92,0,0,0,.28-.69Zm0-1L14.73,4.74v2A1,1,0,0,0,15,7.4a1,1,0,0,0,.69.29Z" transform="translate(-5.89 -3.76)"/></g></svg>',
-   more_horizontal: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.76 3.58"><g><path d="M4.64,10.73a1.84,1.84,0,0,1,.65-.65,1.76,1.76,0,0,1,1.79,0A1.79,1.79,0,0,1,8,11.63a1.84,1.84,0,0,1-.25.9,1.69,1.69,0,0,1-.65.65,1.8,1.8,0,0,1-2.69-1.55A2.08,2.08,0,0,1,4.64,10.73Zm6.09,0a1.84,1.84,0,0,1,.65-.65,1.78,1.78,0,0,1,2.67,1.55,1.73,1.73,0,0,1-.24.9,1.84,1.84,0,0,1-.65.65,1.76,1.76,0,0,1-1.79,0,1.79,1.79,0,0,1-.64-2.44Zm6.08,0a1.69,1.69,0,0,1,.65-.65,1.76,1.76,0,0,1,1.79,0,1.79,1.79,0,0,1,.9,1.54,1.73,1.73,0,0,1-.24.9,1.84,1.84,0,0,1-.65.65,1.8,1.8,0,0,1-2.69-1.55A2,2,0,0,1,16.81,10.73Z" transform="translate(-4.39 -9.84)"/></g></svg>',
-   more_vertical: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3.94 15.75"><g><path d="M12.28,7.69a1.92,1.92,0,0,1-1.39-.58,2,2,0,0,1-.58-1.39,1.92,1.92,0,0,1,.58-1.39,2,2,0,0,1,1.39-.58,1.92,1.92,0,0,1,1.39.58,2,2,0,0,1,.58,1.39,1.92,1.92,0,0,1-.58,1.39,2,2,0,0,1-1.39.58Zm0,2a1.92,1.92,0,0,1,1.39.58,2,2,0,0,1,.58,1.39A1.92,1.92,0,0,1,13.67,13a2,2,0,0,1-1.39.58A1.92,1.92,0,0,1,10.89,13a2,2,0,0,1-.58-1.39,2,2,0,0,1,2-2Zm0,5.9a1.92,1.92,0,0,1,1.39.58,2,2,0,0,1,.58,1.39,1.92,1.92,0,0,1-.58,1.39,2,2,0,0,1-1.39.58,1.92,1.92,0,0,1-1.39-.58,2,2,0,0,1-.58-1.39,1.92,1.92,0,0,1,.58-1.39,1.94,1.94,0,0,1,1.39-.58Z" transform="translate(-10.31 -3.75)"/></g></svg>'
+   empty_file: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12.78 15.75"><g><path d="M14.73,3.76,18.67,7.7v9.84a2,2,0,0,1-2,2H7.84a1.89,1.89,0,0,1-1.38-.58,2,2,0,0,1-.57-1.39V5.73a1.93,1.93,0,0,1,.57-1.38,2,2,0,0,1,1.38-.58h6.62l.26,0v0Zm2.95,4.92h-2a1.93,1.93,0,0,1-1.38-.57,2,2,0,0,1-.58-1.4V6.17c0-.36,0-.84,0-1.43H7.85a1,1,0,0,0-.7.29,1,1,0,0,0-.29.7V17.54a1,1,0,0,0,.29.69,1,1,0,0,0,.69.29h8.85a1,1,0,0,0,.71-.29.92.92,0,0,0,.28-.69Zm0-1L14.73,4.74v2A1,1,0,0,0,15,7.4a1,1,0,0,0,.69.29Z" transform="translate(-5.89 -3.76)"/></g></svg>'
 });
 // EXTERNAL MODULE: ./node_modules/suneditor/src/lang/en.js
 var en = __webpack_require__(4);
@@ -10416,8 +11142,9 @@ var en_default = /*#__PURE__*/__webpack_require__.n(en);
 const util_util = {
     _d: document,
     _w: window,
-    isIE: window.navigator.userAgent.match(/(MSIE|Trident.*rv[ :])([0-9]+)/) !== null,
-    isIE_Edge: (window.navigator.userAgent.match(/(MSIE|Trident.*rv[ :])([0-9]+)/) !== null) || (window.navigator.appVersion.indexOf('Edge') > -1),
+    isIE: navigator.userAgent.indexOf('Trident') > -1,
+    isIE_Edge: (navigator.userAgent.indexOf('Trident') > -1) || (navigator.appVersion.indexOf('Edge') > -1),
+    isOSX_IOS: /(Mac|iPhone|iPod|iPad)/.test(navigator.platform),
 
     /**
      * @description Removes attribute values such as style and converts tags that do not conform to the "html5" standard.
@@ -10448,7 +11175,7 @@ const util_util = {
     /**
      * @description Unicode Character 'ZERO WIDTH SPACE' (\u200B)
      */
-    zeroWidthSpace: '\u200B',
+    zeroWidthSpace: String.fromCharCode(8203),
 
     /**
      * @description Regular expression to find 'zero width space' (/\u200B/g)
@@ -10696,7 +11423,7 @@ const util_util = {
     },
 
     /**
-     * @description It is judged whether it is the component [img, iframe] cover(element className - ".se-component") and table, hr
+     * @description It is judged whether it is the component [img, iframe, video, audio] cover(element className - ".se-component") and table, hr
      * @param {Node} element The node to check
      * @returns {Boolean}
      */
@@ -11935,8 +12662,9 @@ const util_util = {
             }
 
             return current.parentNode !== documentFragment &&
-             (this.isFormatElement(current) || this.isComponent(current) || this.isList(current) || (((this.isMedia(current) && !this.isAnchor(current.parentNode)) || (this.isMedia(current.firstElementChild) && this.isAnchor(current))) && !this.getParentElement(current, this.isComponent))) &&
-              !this.isRangeFormatElement(current.parentNode) && !this.isListCell(current.parentNode);
+             (this.isFormatElement(current) || this.isComponent(current) || this.isList(current)) &&
+             !this.isRangeFormatElement(current.parentNode) && !this.isListCell(current.parentNode) && !this.getParentElement(current, this.isComponent) &&
+             !this.getParentElement(current, '.__se__tag');
         }.bind(this));
 
         for (let i in emptyWhitelistTags) {
@@ -11990,14 +12718,14 @@ const util_util = {
         // table cells without format
         const withoutFormatCells = this.getListChildNodes(documentFragment, function (current) {
             if (current.nodeType !== 1) return false;
-            return this.isCell(current) && !this.isFormatElement(current.firstElementChild);
+            return this.isCell(current) && (!this.isFormatElement(current.firstElementChild) || current.textContent.trim().length === 0);
         }.bind(this));
 
         for (let i = 0, len = withoutFormatCells.length, t, f; i < len; i++) {
             t = withoutFormatCells[i];
 
             f = this.createElement('DIV');
-            f.innerHTML = t.innerHTML;
+            f.innerHTML = t.textContent.trim().length === 0 ? '<br>' : t.innerHTML;
             t.innerHTML = f.outerHTML;
         }
     },
@@ -12029,7 +12757,7 @@ const util_util = {
 /* harmony default export */ var lib_constructor = ({
     icons: null,
     /**
-     * @description document create - call _createToolBar()
+     * @description document create
      * @param {Element} element Textarea
      * @param {Object} options Options
      * @returns {Object}
@@ -12052,7 +12780,8 @@ const util_util = {
         relative.className = 'se-container';
     
         // toolbar
-        const tool_bar = this._createToolBar(doc, options.buttonList, options.plugins, options.lang);
+        const tool_bar = this._createToolBar(doc, options.buttonList, options.plugins, options);
+        tool_bar.element.style.visibility = 'hidden';
         if (tool_bar.pluginCallButtons.math) this._checkKatexMath(options.katex);
         const arrow = doc.createElement('DIV');
         arrow.className = 'se-arrow';
@@ -12088,21 +12817,33 @@ const util_util = {
         const line_breaker = doc.createElement('DIV');
         line_breaker.className = 'se-line-breaker';
         line_breaker.innerHTML = '<button class="se-btn">' + this.icons.line_break + '</button>';
+        const line_breaker_t = doc.createElement('DIV');
+        line_breaker_t.className += 'se-line-breaker-component';
+        const line_breaker_b = line_breaker_t.cloneNode(true);
+        line_breaker_t.innerHTML = line_breaker_b.innerHTML = this.icons.line_break;
     
         // resize operation background
         const resize_back = doc.createElement('DIV');
         resize_back.className = 'se-resizing-back';
+
+        // toolbar container
+        const toolbarContainer = options.toolbarContainer;
+        if (toolbarContainer) {
+            toolbarContainer.appendChild(tool_bar.element);
+        }
     
         /** append html */
         editor_div.appendChild(wysiwyg_div);
         editor_div.appendChild(textarea);
         if (placeholder_span) editor_div.appendChild(placeholder_span);
-        relative.appendChild(tool_bar.element);
+        if (!toolbarContainer) relative.appendChild(tool_bar.element);
         relative.appendChild(sticky_dummy);
         relative.appendChild(editor_div);
         relative.appendChild(resize_back);
         relative.appendChild(loading_box);
         relative.appendChild(line_breaker);
+        relative.appendChild(line_breaker_t);
+        relative.appendChild(line_breaker_b);
         if (resizing_bar) relative.appendChild(resizing_bar);
         top_div.appendChild(relative);
 
@@ -12113,6 +12854,7 @@ const util_util = {
                 _top: top_div,
                 _relative: relative,
                 _toolBar: tool_bar.element,
+                _menuTray: tool_bar._menuTray,
                 _editorArea: editor_div,
                 _wysiwygArea: wysiwyg_div,
                 _codeArea: textarea,
@@ -12123,6 +12865,8 @@ const util_util = {
                 _charCounter: char_counter,
                 _loading: loading_box,
                 _lineBreaker: line_breaker,
+                _lineBreaker_t: line_breaker_t,
+                _lineBreaker_b: line_breaker_b,
                 _resizeBack: resize_back,
                 _stickyDummy: sticky_dummy,
                 _arrow: arrow
@@ -12130,6 +12874,7 @@ const util_util = {
             options: options,
             plugins: tool_bar.plugins,
             pluginCallButtons: tool_bar.pluginCallButtons,
+            _responsiveButtons: tool_bar.responsiveButtons,
             _icons: this.icons
         };
     },
@@ -12205,17 +12950,27 @@ const util_util = {
         const el = context.element;
         const relative = el.relative;
         const editorArea = el.editorArea;
-        const isNewToolbar = !!mergeOptions.buttonList || mergeOptions.mode !== originOptions.mode;
+        const isNewToolbarContainer = mergeOptions.toolbarContainer && mergeOptions.toolbarContainer !== originOptions.toolbarContainer;
+        const isNewToolbar = !!mergeOptions.buttonList || mergeOptions.mode !== originOptions.mode || isNewToolbarContainer;
         const isNewPlugins = !!mergeOptions.plugins;
 
-        const tool_bar = this._createToolBar(document, (isNewToolbar ? mergeOptions.buttonList : originOptions.buttonList), (isNewPlugins ? mergeOptions.plugins : plugins), mergeOptions.lang);
+        const tool_bar = this._createToolBar(document, (isNewToolbar ? mergeOptions.buttonList : originOptions.buttonList), (isNewPlugins ? mergeOptions.plugins : plugins), mergeOptions);
         if (tool_bar.pluginCallButtons.math) this._checkKatexMath(mergeOptions.katex);
         const arrow = document.createElement('DIV');
         arrow.className = 'se-arrow';
 
         if (isNewToolbar) {
-            relative.replaceChild(tool_bar.element, el.toolbar);
+            tool_bar.element.style.visibility = 'hidden';
+            // toolbar container
+            if (isNewToolbarContainer) {
+                mergeOptions.toolbarContainer.appendChild(tool_bar.element);
+                el.toolbar.parentElement.removeChild(el.toolbar);
+            } else {
+                el.toolbar.parentElement.replaceChild(tool_bar.element, el.toolbar);
+            }
+
             el.toolbar = tool_bar.element;
+            el._menuTray = tool_bar._menuTray;
             el._arrow = arrow;
         }
         
@@ -12238,7 +12993,6 @@ const util_util = {
         editorArea.appendChild(wysiwygFrame);
         editorArea.appendChild(code);
 
-        if (el.placeholder) editorArea.removeChild(el.placeholder);
         if (placeholder_span) editorArea.appendChild(placeholder_span);
 
         code = this._checkCodeMirror(mergeOptions, code);
@@ -12249,7 +13003,8 @@ const util_util = {
 
         return {
             callButtons: isNewToolbar ? tool_bar.pluginCallButtons : null,
-            plugins: isNewToolbar || isNewPlugins ? tool_bar.plugins : null
+            plugins: isNewToolbar || isNewPlugins ? tool_bar.plugins : null,
+            toolbar: tool_bar
         };
     },
 
@@ -12422,13 +13177,14 @@ const util_util = {
         /** Layout */
         options.mode = options.mode || 'classic'; // classic, inline, balloon, balloon-always
         options.toolbarWidth = options.toolbarWidth ? (lib_util.isNumber(options.toolbarWidth) ? options.toolbarWidth + 'px' : options.toolbarWidth) : 'auto';
+        options.toolbarContainer = /balloon/i.test(options.mode) ? null : (typeof options.toolbarContainer === 'string' ? document.querySelector(options.toolbarContainer) : options.toolbarContainer);
         options.stickyToolbar = /balloon/i.test(options.mode) ? -1 : options.stickyToolbar === undefined ? 0 : (/^\d+/.test(options.stickyToolbar) ? lib_util.getNumber(options.stickyToolbar, 0) : -1);
         options.fullPage = !!options.fullPage;
         options.iframe = options.fullPage || options.iframe;
         options.iframeCSSFileName = options.iframe ? typeof options.iframeCSSFileName === 'string' ? [options.iframeCSSFileName] : (options.iframeCSSFileName || ['suneditor']) : null;
         options.codeMirror = options.codeMirror ? options.codeMirror.src ? options.codeMirror : {src: options.codeMirror} : null;
         /** Display */
-        // options.position = options.position;
+        options.position = typeof options.position === 'string' ? options.position : null;
         options.display = options.display || (element.style.display === 'none' || !element.style.display ? 'block' : element.style.display);
         options.popupDisplay = options.popupDisplay || 'full';
         /** Bottom resizing bar */
@@ -12469,8 +13225,10 @@ const util_util = {
         options.imageFileInput = options.imageFileInput === undefined ? true : options.imageFileInput;
         options.imageUrlInput = (options.imageUrlInput === undefined || !options.imageFileInput) ? true : options.imageUrlInput;
         options.imageUploadHeader = options.imageUploadHeader || null;
-        options.imageUploadUrl = options.imageUploadUrl || null;
+        options.imageUploadUrl = typeof options.imageUploadUrl === 'string' ? options.imageUploadUrl : null;
         options.imageUploadSizeLimit = /\d+/.test(options.imageUploadSizeLimit) ? lib_util.getNumber(options.imageUploadSizeLimit, 0) : null;
+        /** Image - image gallery */
+        options.imageGalleryUrl = typeof options.imageGalleryUrl === 'string' ? options.imageGalleryUrl : null;
         /** Video */
         options.videoResizing = options.videoResizing === undefined ? true : options.videoResizing;
         options.videoHeightShow = options.videoHeightShow === undefined ? true : !!options.videoHeightShow;
@@ -12486,7 +13244,7 @@ const util_util = {
         options.videoFileInput = !!options.videoFileInput;
         options.videoUrlInput = (options.videoUrlInput === undefined || !options.videoFileInput) ? true : options.videoUrlInput;
         options.videoUploadHeader = options.videoUploadHeader || null;
-        options.videoUploadUrl = options.videoUploadUrl || null;
+        options.videoUploadUrl = typeof options.videoUploadUrl === 'string' ? options.videoUploadUrl : null;
         options.videoUploadSizeLimit = /\d+/.test(options.videoUploadSizeLimit) ? lib_util.getNumber(options.videoUploadSizeLimit, 0) : null;
         /** Audio */
         options.audioWidth = !options.audioWidth ? '' : lib_util.isNumber(options.audioWidth) ? options.audioWidth + 'px' : options.audioWidth;
@@ -12494,12 +13252,14 @@ const util_util = {
         options.audioFileInput = !!options.audioFileInput;
         options.audioUrlInput = (options.audioUrlInput === undefined || !options.audioFileInput) ? true : options.audioUrlInput;
         options.audioUploadHeader = options.audioUploadHeader || null;
-        options.audioUploadUrl = options.audioUploadUrl || null;
+        options.audioUploadUrl = typeof options.audioUploadUrl === 'string' ? options.audioUploadUrl : null;
         options.audioUploadSizeLimit = /\d+/.test(options.audioUploadSizeLimit) ? lib_util.getNumber(options.audioUploadSizeLimit, 0) : null;
         /** Table */
         options.tableCellControllerPosition = typeof options.tableCellControllerPosition === 'string' ? options.tableCellControllerPosition.toLowerCase() : 'cell';
         /** Key actions */
         options.tabDisable = !!options.tabDisable;
+        options.shortcutsDisable = (Array.isArray(options.shortcutsDisable) && options.shortcutsDisable.length > 0) ? options.shortcutsDisable.map(function (v) { return v.toLowerCase(); }) : [];
+        options.shortcutsHint = options.shortcutsHint === undefined ? true : !!options.shortcutsHint;
         /** Defining save button */
         options.callBackSave = !options.callBackSave ? null : options.callBackSave;
         /** Templates Array */
@@ -12529,26 +13289,31 @@ const util_util = {
 
     /**
      * @description Suneditor's Default button list
+     * @param {Object} options options
      * @private
      */
-    _defaultButtons: function (lang) {
+    _defaultButtons: function (options) {
         const icons = this.icons;
+        const lang = options.lang;
+        const cmd = lib_util.isOSX_IOS ? '⌘' : 'CTRL';
+        const shortcutsDisable = !options.shortcutsHint ? ['bold', 'strike', 'underline', 'italic', 'undo', 'indent'] : options.shortcutsDisable;
+
         return {
             /** default command */
-            bold: ['_se_command_bold', lang.toolbar.bold + ' (CTRL+B)', 'STRONG', '', icons.bold],
-            underline: ['_se_command_underline', lang.toolbar.underline + ' (CTRL+U)', 'U', '', icons.underline],
-            italic: ['_se_command_italic', lang.toolbar.italic + ' (CTRL+I)', 'EM', '', icons.italic],
-            strike: ['_se_command_strike', lang.toolbar.strike + ' (CTRL+SHIFT+S)', 'DEL', '', icons.strike],
+            bold: ['_se_command_bold', lang.toolbar.bold + (shortcutsDisable.indexOf('bold') > -1 ? '' : ' (' + cmd + '+B)'), 'STRONG', '', icons.bold],
+            underline: ['_se_command_underline', lang.toolbar.underline + (shortcutsDisable.indexOf('underline') > -1 ? '' : ' (' + cmd + '+U)'), 'U', '', icons.underline],
+            italic: ['_se_command_italic', lang.toolbar.italic + (shortcutsDisable.indexOf('italic') > -1 ? '' : ' (' + cmd + '+I)'), 'EM', '', icons.italic],
+            strike: ['_se_command_strike', lang.toolbar.strike + (shortcutsDisable.indexOf('strike') > -1 ? '' : ' (' + cmd + '+SHIFT+S)'), 'DEL', '', icons.strike],
             subscript: ['_se_command_subscript', lang.toolbar.subscript, 'SUB', '', icons.subscript],
             superscript: ['_se_command_superscript', lang.toolbar.superscript, 'SUP', '', icons.superscript],
             removeFormat: ['', lang.toolbar.removeFormat, 'removeFormat', '', icons.erase],
-            indent: ['_se_command_indent', lang.toolbar.indent + ' (CTRL+])', 'indent', '', icons.outdent],
-            outdent: ['_se_command_outdent', lang.toolbar.outdent + ' (CTRL+[)', 'outdent', '', icons.indent],
+            indent: ['_se_command_indent', lang.toolbar.indent + (shortcutsDisable.indexOf('indent') > -1 ? '' : ' (' + cmd + '+])'), 'indent', '', icons.outdent],
+            outdent: ['_se_command_outdent', lang.toolbar.outdent + (shortcutsDisable.indexOf('indent') > -1 ? '' : ' (' + cmd + '+[)'), 'outdent', '', icons.indent],
             fullScreen: ['se-code-view-enabled se-resizing-enabled', lang.toolbar.fullScreen, 'fullScreen', '', icons.expansion],
             showBlocks: ['', lang.toolbar.showBlocks, 'showBlocks', '', icons.show_blocks],
             codeView: ['se-code-view-enabled se-resizing-enabled', lang.toolbar.codeView, 'codeView', '', icons.code_view],
-            undo: ['_se_command_undo se-resizing-enabled', lang.toolbar.undo + ' (CTRL+Z)', 'undo', '', icons.undo],
-            redo: ['_se_command_redo se-resizing-enabled', lang.toolbar.redo + ' (CTRL+Y / CTRL+SHIFT+Z)', 'redo', '', icons.redo],
+            undo: ['_se_command_undo se-resizing-enabled', lang.toolbar.undo + (shortcutsDisable.indexOf('undo') > -1 ? '' : ' (' + cmd + '+Z)'), 'undo', '', icons.undo],
+            redo: ['_se_command_redo se-resizing-enabled', lang.toolbar.redo + (shortcutsDisable.indexOf('undo') > -1 ? '' : ' (' + cmd + '+Y / ' + cmd + '+SHIFT+Z)'), 'redo', '', icons.redo],
             preview: ['se-resizing-enabled', lang.toolbar.preview, 'preview', '', icons.preview],
             print: ['se-resizing-enabled', lang.toolbar.print, 'print', '', icons.print],
             save: ['_se_command_save se-resizing-enabled', lang.toolbar.save, 'save', '', icons.save],
@@ -12573,7 +13338,9 @@ const util_util = {
             image: ['', lang.toolbar.image, 'image', 'dialog', icons.image],
             video: ['', lang.toolbar.video, 'video', 'dialog', icons.video],
             audio: ['', lang.toolbar.audio, 'audio', 'dialog', icons.audio],
-            math: ['', lang.toolbar.math, 'math', 'dialog', icons.math]
+            math: ['', lang.toolbar.math, 'math', 'dialog', icons.math],
+            /** plugins - fileBrowser */
+            imageGallery: ['', lang.toolbar.imageGallery, 'imageGallery', 'fileBrowser', icons.image_gallery]
         };
     },
 
@@ -12582,9 +13349,9 @@ const util_util = {
      * @returns {Object}
      * @private
      */
-    _createModuleGroup: function (oneModule) {
+    _createModuleGroup: function () {
         const oDiv = lib_util.createElement('DIV');
-        oDiv.className = 'se-btn-module' + (oneModule ? '' : ' se-btn-module-border');
+        oDiv.className = 'se-btn-module se-btn-module-border';
 
         const oUl = lib_util.createElement('UL');
         oUl.className = 'se-menu-list';
@@ -12615,7 +13382,17 @@ const util_util = {
         oButton.setAttribute('class', 'se-btn' + (buttonClass ? ' ' + buttonClass : '') + ' se-tooltip');
         oButton.setAttribute('data-command', dataCommand);
         oButton.setAttribute('data-display', dataDisplay);
+        oButton.setAttribute('tabindex', '-1');
+        
         if (!innerHTML) innerHTML = '<span class="se-icon-text">!</span>';
+        if (/^default\./i.test(innerHTML)) {
+            innerHTML = this.icons[innerHTML.replace(/^default\./i, '')];
+        }
+        if (/^text\./i.test(innerHTML)) {
+            innerHTML = innerHTML.replace(/^text\./i, '');
+            oButton.className += ' se-btn-more-text';
+        }
+
         innerHTML += '<span class="se-tooltip-inner"><span class="se-tooltip-text">' + (title || dataCommand) + '</span></span>';
 
         if (_disabled) oButton.setAttribute('disabled', true);
@@ -12633,19 +13410,26 @@ const util_util = {
      * @description Create editor HTML
      * @param {Array} doc document object
      * @param {Array} buttonList option.buttonList
-     * @param {Array} lang option.lang
+     * @param {Array|Object|null} _plugins Plugins
+     * @param {Array} options options
+     * @returns {Object} { element: (Element) Toolbar element, plugins: (Array|null) Plugins Array, pluginCallButtons: (Object), responsiveButtons: (Array) }
      * @private
      */
-    _createToolBar: function (doc, buttonList, _plugins, lang) {
+    _createToolBar: function (doc, buttonList, _plugins, options) {
         const separator_vertical = doc.createElement('DIV');
         separator_vertical.className = 'se-toolbar-separator-vertical';
 
         const tool_bar = doc.createElement('DIV');
         tool_bar.className = 'se-toolbar sun-editor-common';
 
+        const _buttonTray = doc.createElement('DIV');
+        _buttonTray.className = 'se-btn-tray';
+        tool_bar.appendChild(_buttonTray);
+
         /** create button list */
-        const defaultButtonList = this._defaultButtons(lang);
+        const defaultButtonList = this._defaultButtons(options);
         const pluginCallButtons = {};
+        const responsiveButtons = [];
         const plugins = {};
         if (_plugins) {
             const pluginsValues = _plugins.length ? _plugins : Object.keys(_plugins).map(function(name) { return _plugins[name]; });
@@ -12661,18 +13445,30 @@ const util_util = {
         let buttonElement = null;
         let pluginName = '';
         let vertical = false;
-        const oneModule = buttonList.length === 1;
+        const moreLayer = lib_util.createElement('DIV');
+        moreLayer.className = 'se-toolbar-more-layer';
 
-        for (let i = 0; i < buttonList.length; i++) {
+        buttonGroupLoop:
+        for (let i = 0, more, moreContainer, moreCommand, buttonGroup, align; i < buttonList.length; i++) {
+            more = false;
+            align = '';
+            buttonGroup = buttonList[i];
+            moduleElement = this._createModuleGroup();
 
-            const buttonGroup = buttonList[i];
-            moduleElement = this._createModuleGroup(oneModule);
-
-            /** button object */
+            // button object
             if (typeof buttonGroup === 'object') {
-                for (let j = 0; j < buttonGroup.length; j++) {
-
+                // buttons loop
+                for (let j = 0, moreButton; j < buttonGroup.length; j++) {
                     button = buttonGroup[j];
+                    moreButton = false;
+
+                    if (/^\%\d+/.test(button) && j === 0) {
+                        buttonGroup[0] = button.replace(/[^\d]/g, '');
+                        responsiveButtons.push(buttonGroup);
+                        buttonList.splice(i--, 1);
+                        continue buttonGroupLoop;
+                    }
+                    
                     if (typeof button === 'object') {
                         if (typeof button.add === 'function') {
                             pluginName = button.name;
@@ -12683,7 +13479,27 @@ const util_util = {
                             module = [button.buttonClass, button.title, button.name, button.dataDisplay, button.innerHTML, button._disabled];
                         }
                     } else {
-                        module = defaultButtonList[button];
+                        // align
+                        if (/^\-/.test(button)) {
+                            align = button.substr(1);
+                            moduleElement.div.style.float = align;
+                            continue;
+                        }
+                        
+                        // more button
+                        if (/^\:/.test(button)) {
+                            moreButton = true;
+                            const matched = button.match(/^\:([^\-]+)\-([^\-]+)\-([^\-]+)/);
+                            moreCommand = '__se__' + matched[1].trim();
+                            const title = matched[2].trim();
+                            const innerHTML = matched[3].trim();
+                            module = ['se-btn-more', title, moreCommand, 'MORE', innerHTML];
+                        }
+                        // buttons
+                        else {
+                            module = defaultButtonList[button];
+                        }
+
                         pluginName = button;
                         if (!module) {
                             const custom = plugins[pluginName];
@@ -12693,26 +13509,51 @@ const util_util = {
                     }
 
                     buttonElement = this._createButton(module[0], module[1], module[2], module[3], module[4], module[5]);
-                    moduleElement.ul.appendChild(buttonElement.li);
+                    (more ? moreContainer : moduleElement.ul).appendChild(buttonElement.li);
 
                     if (plugins[pluginName]) {
                         pluginCallButtons[pluginName] = buttonElement.button;
                     }
+
+                    // more button
+                    if (moreButton) {
+                        more = true;
+                        moreContainer = lib_util.createElement('DIV');
+                        moreContainer.className = 'se-more-layer ' + moreCommand;
+                        moreContainer.innerHTML = '<div class="se-more-form"><ul class="se-menu-list"' + (align ? ' style="float: ' + align + ';"' : '') + '></ul></div>';
+                        moreLayer.appendChild(moreContainer);
+                        moreContainer = moreContainer.firstElementChild.firstElementChild;
+                    }
                 }
 
-                if (vertical) tool_bar.appendChild(separator_vertical.cloneNode(false));
-                tool_bar.appendChild(moduleElement.div);
+                if (vertical) {
+                    const sv =  separator_vertical.cloneNode(false);
+                    if (align) sv.style.float = align;
+                    _buttonTray.appendChild(sv);
+                }
+                
+                _buttonTray.appendChild(moduleElement.div);
                 vertical = true;
             }
             /** line break  */
             else if (/^\/$/.test(buttonGroup)) {
                 const enterDiv = doc.createElement('DIV');
                 enterDiv.className = 'se-btn-module-enter';
-                tool_bar.appendChild(enterDiv);
+                _buttonTray.appendChild(enterDiv);
                 vertical = false;
             }
         }
 
+        if (_buttonTray.children.length === 1) lib_util.removeClass(_buttonTray.firstElementChild, 'se-btn-module-border');
+        if (responsiveButtons.length > 0) responsiveButtons.unshift(buttonList);
+        if (moreLayer.children.length > 0) _buttonTray.appendChild(moreLayer);
+
+        // menu tray
+        const _menuTray = doc.createElement('DIV');
+        _menuTray.className = 'se-menu-tray';
+        tool_bar.appendChild(_menuTray);
+
+        // cover
         const tool_cover = doc.createElement('DIV');
         tool_cover.className = 'se-toolbar-cover';
         tool_bar.appendChild(tool_cover);
@@ -12720,7 +13561,10 @@ const util_util = {
         return {
             'element': tool_bar,
             'plugins': plugins,
-            'pluginCallButtons': pluginCallButtons
+            'pluginCallButtons': pluginCallButtons,
+            'responsiveButtons': responsiveButtons,
+            '_menuTray': _menuTray,
+            '_buttonTray': _buttonTray
         };
     }
 });
@@ -12749,6 +13593,8 @@ const _Context = function (element, cons, options) {
             topArea: cons._top,
             relative: cons._relative,
             toolbar: cons._toolBar,
+            _buttonTray: cons._toolBar.querySelector('.se-btn-tray'),
+            _menuTray: cons._menuTray,
             resizingBar: cons._resizingBar,
             navigation: cons._navigation,
             charWrapper: cons._charWrapper,
@@ -12760,6 +13606,8 @@ const _Context = function (element, cons, options) {
             placeholder: cons._placeholder,
             loading: cons._loading,
             lineBreaker: cons._lineBreaker,
+            lineBreaker_t: cons._lineBreaker_t,
+            lineBreaker_b: cons._lineBreaker_b,
             resizeBackground: cons._resizeBack,
             _stickyDummy: cons._stickyDummy,
             _arrow: cons._arrow
@@ -12796,10 +13644,11 @@ const _Context = function (element, cons, options) {
 
 /* harmony default export */ var lib_history = (function (core, change) {
     const _w = window;
-    const editor = core.context.element;
     const util = core.util;
-    const undo = core.context.tool.undo;
-    const redo = core.context.tool.redo;
+    let editor = core.context.element;
+    let undo = core.context.tool.undo;
+    let redo = core.context.tool.redo;
+
     let pushDelay = null;
     let stackIndex = 0;
     let stack = [];
@@ -12961,6 +13810,24 @@ const _Context = function (element, cons, options) {
         },
 
         /**
+         * @description Reset the disabled state of the buttons to fit the current stack.
+         * @private
+         */
+        _resetCachingButton: function () {
+            editor = core.context.element;
+            undo = core.context.tool.undo;
+            redo = core.context.tool.redo;
+
+            if (stackIndex === 0) {
+                if (undo) undo.setAttribute('disabled', true);
+                if (redo && stackIndex === stack.length - 1) redo.setAttribute('disabled', true);
+                if (core.context.tool.save) core.context.tool.save.setAttribute('disabled', true);
+            } else if (stackIndex === stack.length - 1) {
+                if (redo) redo.setAttribute('disabled', true);
+            }
+        },
+
+        /**
          * @description Remove all stacks and remove the timeout function.
          * @private
          */
@@ -13072,7 +13939,7 @@ const _Context = function (element, cons, options) {
  * @param {Object} _icons
  * @returns {Object} functions Object
  */
-/* harmony default export */ var lib_core = (function (context, pluginCallButtons, plugins, lang, options, _icons) {
+/* harmony default export */ var lib_core = (function (context, pluginCallButtons, plugins, lang, options, _icons, _responsiveButtons) {
     const _d = context.element.originElement.ownerDocument || document;
     const _w = _d.defaultView || window;
     const util = lib_util;
@@ -13157,6 +14024,12 @@ const _Context = function (element, cons, options) {
         _targetPlugins: {},
 
         /**
+         * @description Save rendered submenus and containers
+         * @private
+         */
+        _menuTray: {},
+
+        /**
          * @description loaded language
          */
         lang: lang,
@@ -13230,6 +14103,12 @@ const _Context = function (element, cons, options) {
         resizingDisabledButtons: null,
 
         /**
+         * @description active more layer element in submenu
+         * @private
+         */
+        _moreLayerActiveButton: null,
+
+        /**
          * @description Tag whitelist RegExp object used in "_consistencyCheckOfHTML" method
          * ^(options._editorTagsWhitelist)$
          * @private
@@ -13252,6 +14131,11 @@ const _Context = function (element, cons, options) {
          * @description Boolean value of whether the editor has focus
          */
         hasFocus: false,
+
+        /**
+         * @description Boolean value of whether the editor is disabled
+         */
+        isDisabled: false,
 
         /**
          * @description Attributes whitelist used by the cleanHTML method
@@ -13477,8 +14361,9 @@ const _Context = function (element, cons, options) {
             if (!target) {
                 this._targetPlugins[pluginName] = menu;
             } else {
-                target.parentNode.appendChild(menu);
+                context.element._menuTray.appendChild(menu);
                 this._targetPlugins[pluginName] = true;
+                this._menuTray[target.getAttribute('data-command')] = menu;
             }
         },
 
@@ -13491,43 +14376,10 @@ const _Context = function (element, cons, options) {
             if (this._bindControllersOff) this.controllersOff();
 
             const submenuName = this._submenuName = element.getAttribute('data-command');
-            const submenu = this.submenu = element.nextElementSibling;
-
-            submenu.style.top = '-10000px';
-            submenu.style.visibility = 'hidden';
-            submenu.style.display = 'block';
-            util.addClass(element, 'on');
+            const menu = this.submenu = this._menuTray[submenuName];
             this.submenuActiveButton = element;
-
-            const toolbar = this.context.element.toolbar;
-            const toolbarW = toolbar.offsetWidth;
-            const menuW = submenu.offsetWidth;
-            const overLeft = toolbarW <= menuW ? 0 : toolbarW - (element.parentElement.offsetLeft + menuW);
-            if (overLeft < 0) submenu.style.left = overLeft + 'px';
-            else submenu.style.left = '1px';
-
-
-            let t = 0;
-            let offsetEl = element;
-            while (offsetEl && offsetEl !== toolbar) {
-                t += offsetEl.offsetTop;
-                offsetEl = offsetEl.offsetParent;
-            }
-
-            if (this._isBalloon) {
-                t += toolbar.offsetTop + element.offsetHeight;
-            } else {
-                t -= element.offsetHeight;
-            }
-
-            const space = t + submenu.offsetHeight - context.element.wysiwyg.offsetHeight + 3;
-            if (space > 0 && event._getPageBottomSpace() < space) {
-                submenu.style.top = (-1 * (submenu.offsetHeight + 3)) + 'px';
-            } else {
-                submenu.style.top = '';
-            }
-
-            submenu.style.visibility = '';
+            this._setMenuPosition(element, menu);
+            
             this._bindedSubmenuOff = this.submenuOff.bind(this);
             this.addDocEvent('mousedown', this._bindedSubmenuOff, false);
 
@@ -13562,18 +14414,10 @@ const _Context = function (element, cons, options) {
             if (this._bindedContainerOff) this._bindedContainerOff();
 
             const containerName = this._containerName = element.getAttribute('data-command');
-            const container = this.container = element.nextElementSibling;
-
-            container.style.display = 'block';
-            util.addClass(element, 'on');
+            const menu = this.container = this._menuTray[containerName];
             this.containerActiveButton = element;
-
-            const toolbarW = this.context.element.toolbar.offsetWidth;
-            const menuW = container.offsetWidth;
-            const overLeft = toolbarW <= menuW ? 0 : toolbarW - (element.parentElement.offsetLeft + menuW);
-            if (overLeft < 0) container.style.left = overLeft + 'px';
-            else container.style.left = '1px';
-
+            this._setMenuPosition(element, menu);
+            
             this._bindedContainerOff = this.containerOff.bind(this);
             this.addDocEvent('mousedown', this._bindedContainerOff, false);
 
@@ -13598,6 +14442,74 @@ const _Context = function (element, cons, options) {
             }
 
             this._antiBlur = false;
+        },
+
+        /**
+         * @description Set the menu position. (submenu, container)
+         * @param {*} element Button element
+         * @param {*} menu Menu element
+         * @private
+         */
+        _setMenuPosition: function (element, menu) {
+            menu.style.top = '-10000px';
+            menu.style.visibility = 'hidden';
+            menu.style.display = 'block';
+            menu.style.height = '';
+            util.addClass(element, 'on');
+
+            const toolbar = this.context.element.toolbar;
+            const toolbarW = toolbar.offsetWidth;
+            const menuW = menu.offsetWidth;
+            const l = element.parentElement.offsetLeft + 3;
+            const overLeft = toolbarW <= menuW ? 0 : toolbarW - (l + menuW);
+            if (overLeft < 0) menu.style.left = (l + overLeft) + 'px';
+            else menu.style.left = l + 'px';
+
+            // get element top
+            let t = 0;
+            let offsetEl = element;
+            while (offsetEl && offsetEl !== toolbar) {
+                t += offsetEl.offsetTop;
+                offsetEl = offsetEl.offsetParent;
+            }
+
+            const bt = t;
+            if (this._isBalloon) {
+                t += toolbar.offsetTop + element.offsetHeight;
+            } else {
+                t -= element.offsetHeight;
+            }
+
+            // set menu position
+            const toolbarTop = event._getEditorOffsets(context.element.toolbar).top;
+            let menuHeight = menu.offsetHeight;
+            let el = context.element.topArea;
+            let scrollTop = 0;
+            while (!!el) {
+                scrollTop += el.scrollTop;
+                el = el.parentElement;
+            }
+
+            const menuHeight_bottom = _w.innerHeight - (toolbarTop - scrollTop + bt + element.parentElement.offsetHeight);
+            if (menuHeight_bottom < menuHeight) {
+                let menuTop = -1 * (menuHeight - bt + 3);
+                const insTop = toolbarTop - scrollTop + menuTop;
+                const menuHeight_top = menuHeight + (insTop < 0 ? insTop : 0);
+                
+                if (menuHeight_top > menuHeight_bottom) {
+                    menu.style.height = menuHeight_top + 'px';
+                    menuTop = -1 * (menuHeight_top - bt + 3);
+                } else {
+                    menu.style.height = menuHeight_bottom + 'px';
+                    menuTop = bt + element.parentElement.offsetHeight;
+                }
+
+                menu.style.top = menuTop + 'px';
+            } else {
+                menu.style.top = (bt + element.parentElement.offsetHeight) + 'px';
+            }
+
+            menu.style.visibility = '';
         },
 
         /**
@@ -13642,6 +14554,8 @@ const _Context = function (element, cons, options) {
          */
         controllersOff: function (e) {
             if (this._fileManager.pluginRegExp.test(this.currentControllerName) && e && e.type === 'keydown' && e.keyCode !== 27) return;
+            context.element.lineBreaker_t.style.display = context.element.lineBreaker_b.style.display = 'none';
+            this._variable._lineBreakComp = null;
 
             this.currentControllerName = '';
             this.currentControllerTarget = null;
@@ -13819,8 +14733,17 @@ const _Context = function (element, cons, options) {
          * @returns {Node}
          */
         getSelectionNode: function () {
-            if (!this._variable._selectionNode || util.isWysiwygDiv(this._variable._selectionNode)) this._editorRange();
-            return this._variable._selectionNode || context.element.wysiwyg.firstChild;
+            if (util.isWysiwygDiv(this._variable._selectionNode)) this._editorRange();
+            if (!this._variable._selectionNode) {
+                const selectionNode = util.getChildElement(context.element.wysiwyg.firstChild, function (current) { return current.childNodes.length === 0 || current.nodeType === 3; }, false);
+                if (!selectionNode) {
+                    this._editorRange();
+                } else {
+                    this._variable._selectionNode = selectionNode;
+                    return selectionNode;
+                }
+            }
+            return this._variable._selectionNode;
         },
 
         /**
@@ -13879,12 +14802,12 @@ const _Context = function (element, cons, options) {
             let tempCon, tempOffset, tempChild;
 
             if (util.isFormatElement(startCon)) {
-                startCon = startCon.childNodes[startOff];
+                startCon = startCon.childNodes[startOff] || startCon.firstChild;
                 startOff = 0;
             }
             if (util.isFormatElement(endCon)) {
-                endCon = endCon.childNodes[endOff];
-                endOff = 0;
+                endCon = endCon.childNodes[endOff] || endCon.lastChild;
+                endOff = endCon.textContent.length;
             }
 
             // startContainer
@@ -14109,10 +15032,8 @@ const _Context = function (element, cons, options) {
         },
 
         /**
-         * @description The method to insert a element. (used elements : table, hr, image, video)
-         * This method is add the element next line and insert the new line.
-         * When used in a tag in "LI", it is inserted into the LI tag.
-         * Returns the first node of next line added.
+         * @description The method to insert a element and return. (used elements : table, hr, image, video)
+         * If "element" is "HR", insert and return the new line.
          * @param {Element} element Element to be inserted
          * @param {Boolean} notHistoryPush When true, it does not update the history stack and the selection object and return EdgeNodes (util.getEdgeChildNodes)
          * @returns {Element}
@@ -14124,33 +15045,27 @@ const _Context = function (element, cons, options) {
             let formatEl = util.getFormatElement(selectionNode, null);
 
             if (util.isListCell(formatEl)) {
-                if (/^HR$/i.test(element.nodeName)) {
-                    const newLi = util.createElement('LI');
-                    const textNode = util.createTextNode(util.zeroWidthSpace);
-                    newLi.appendChild(element);
-                    newLi.appendChild(textNode);
-                    formatEl.parentNode.insertBefore(newLi, formatEl.nextElementSibling);
-                    this.setRange(textNode, 1, textNode, 1);
-                } else {
-                    this.insertNode(element, selectionNode === formatEl ? null : r.container.nextSibling);
-                    if (!element.nextSibling) element.parentNode.appendChild(util.createElement('BR'));
-                    oNode = util.createElement('LI');
-                    formatEl.parentNode.insertBefore(oNode, formatEl.nextElementSibling);
-                }
+                this.insertNode(element, selectionNode === formatEl ? null : r.container.nextSibling);
+                if (!element.nextSibling) element.parentNode.appendChild(util.createElement('BR'));
             } else {
                 if (this.getRange().collapsed && (r.container.nodeType === 3 || util.isBreak(r.container))) {
                     const depthFormat = util.getParentElement(r.container, function (current) { return this.isRangeFormatElement(current); }.bind(util));
                     oNode = util.splitElement(r.container, r.offset, !depthFormat ? 0 : util.getElementDepth(depthFormat) + 1);
                     if (oNode) formatEl = oNode.previousSibling;
                 }
-
                 this.insertNode(element, formatEl);
-                if (!oNode) oNode = this.appendFormatTag(element, util.isFormatElement(formatEl) ? formatEl : null);
+                if (formatEl && util.onlyZeroWidthSpace(formatEl)) util.removeItem(formatEl);
             }
 
-            const edgeNode = util.getEdgeChildNodes(oNode, null).sc;
-            oNode = edgeNode || oNode;
-            this.setRange(oNode, 0, oNode, 0);
+            const fileComponentInfo = this.getFileComponent(element);
+            if (fileComponentInfo) {
+                this.selectComponent(fileComponentInfo.component, fileComponentInfo.pluginName);
+            } else if (!oNode) {
+                oNode = element;
+            } else {
+                oNode = util.getEdgeChildNodes(oNode, null).sc || oNode;
+                this.setRange(oNode, 0, oNode, 0);
+            }
 
             // history stack
             if (!notHistoryPush) this.history.push(1);
@@ -14165,6 +15080,8 @@ const _Context = function (element, cons, options) {
          * @returns {Object|null}
          */
         getFileComponent: function (element) {
+            if (!element) return null;
+
             let fileComponent, pluginName;
             if (/^FIGURE$/i.test(element.nodeName) || /se-component/.test(element.className)) {
                 fileComponent = element.querySelector(core._fileManager.queryString);
@@ -14192,9 +15109,56 @@ const _Context = function (element, cons, options) {
          * @param {String} pluginName Plugin name (image, video)
          */
         selectComponent: function (element, pluginName) {
-            const plugin = core.plugins[pluginName];
-            if (!plugin || !plugin.select) return;
-            this.callPlugin(pluginName, plugin.select.bind(this, element), null);
+            const plugin = this.plugins[pluginName];
+            if (!plugin) return;
+            _w.setTimeout(function () {
+                if (typeof plugin.select === 'function') this.callPlugin(pluginName, plugin.select.bind(this, element), null);
+                this._setComponentLineBreaker(element);
+            }.bind(this));
+        },
+
+        /**
+         * @description Set line breaker of component
+         * @param {Element} element Element tag (img, iframe, video)
+         * @private
+         */
+        _setComponentLineBreaker: function (element) {
+            // line breaker
+            this._lineBreaker.style.display = 'none';
+            const container = util.getParentElement(element, util.isComponent);
+            const t_style = context.element.lineBreaker_t.style;
+            const b_style = context.element.lineBreaker_b.style;
+            element = this.context.resizing.resizeContainer.style.display === 'block' ? this.context.resizing.resizeContainer : element;
+
+            let componentTop, wScroll, w;
+            // top
+            if (!util.isFormatElement(container.previousElementSibling)) {
+                this._variable._lineBreakComp = container;
+                wScroll = context.element.wysiwyg.scrollTop;
+                componentTop = util.getOffset(element, context.element.wysiwygFrame).top + wScroll;
+                w = (element.offsetWidth / 2) / 2;
+
+                t_style.top = (componentTop - wScroll - 12) + 'px';
+                t_style.left = (util.getOffset(element).left + w) + 'px';
+                t_style.display = 'block';
+            } else {
+                t_style.display = 'none';
+            }
+            // bottom
+            if (!util.isFormatElement(container.nextElementSibling)) {
+                if (!componentTop) {
+                    this._variable._lineBreakComp = container;
+                    wScroll = context.element.wysiwyg.scrollTop;
+                    componentTop = util.getOffset(element, context.element.wysiwygFrame).top + wScroll;
+                    w = (element.offsetWidth / 2) / 2;
+                }
+
+                b_style.top = (componentTop + element.offsetHeight - wScroll - 12) + 'px';
+                b_style.left = (util.getOffset(element).left + element.offsetWidth - w - 24) + 'px';
+                b_style.display = 'block';
+            } else {
+                b_style.display = 'none';
+            }
         },
 
         /**
@@ -14211,7 +15175,7 @@ const _Context = function (element, cons, options) {
             if (!afterNode && isComp) {
                 const r = this.removeNode();
                 if (r.container.nodeType === 3 || util.isBreak(r.container)) {
-                    const depthFormat = util.getParentElement(r.container, function (current) { return this.isRangeFormatElement(current); }.bind(util));
+                    const depthFormat = util.getParentElement(r.container, function (current) { return this.isRangeFormatElement(current) || this.isListCell(current); }.bind(util));
                     afterNode = util.splitElement(r.container, r.offset, !depthFormat ? 0 : util.getElementDepth(depthFormat) + 1);
                     if (afterNode) afterNode = afterNode.previousSibling;
                 }
@@ -14317,6 +15281,8 @@ const _Context = function (element, cons, options) {
                     if (util.isList(afterNode)) {
                         parentNode = afterNode;
                         afterNode = null;
+                    } else if (util.isListCell(afterNode)) {
+                        parentNode = afterNode.previousElementSibling || afterNode;
                     } else if (!originAfter && !afterNode) {
                         const r = this.removeNode();
                         const container = r.container.nodeType === 3 ? (util.isListCell(util.getFormatElement(r.container, null)) ? r.container : (util.getFormatElement(r.container, null) || r.container.parentNode)) : r.container;
@@ -14336,45 +15302,48 @@ const _Context = function (element, cons, options) {
             } catch (e) {
                 parentNode.appendChild(oNode);
             } finally {
-                let offset = 1;
-                if (oNode.nodeType === 3) {
-                    const previous = oNode.previousSibling;
-                    const next = oNode.nextSibling;
-                    const previousText = (!previous ||  previous.nodeType !== 3 || util.onlyZeroWidthSpace(previous)) ? '' : previous.textContent;
-                    const nextText = (!next || next.nodeType !== 3 || util.onlyZeroWidthSpace(next)) ? '' : next.textContent;
+                if (!util.isComponent(oNode)) {
+                    let offset = 1;
+                    if (oNode.nodeType === 3) {
+                        const previous = oNode.previousSibling;
+                        const next = oNode.nextSibling;
+                        const previousText = (!previous ||  previous.nodeType !== 3 || util.onlyZeroWidthSpace(previous)) ? '' : previous.textContent;
+                        const nextText = (!next || next.nodeType !== 3 || util.onlyZeroWidthSpace(next)) ? '' : next.textContent;
+        
+                        if (previous && previousText.length > 0) {
+                            oNode.textContent = previousText + oNode.textContent;
+                            util.removeItem(previous);
+                        }
+        
+                        if (next && next.length > 0) {
+                            oNode.textContent += nextText;
+                            util.removeItem(next);
+                        }
     
-                    if (previous && previousText.length > 0) {
-                        oNode.textContent = previousText + oNode.textContent;
-                        util.removeItem(previous);
+                        return {
+                            startOffset: previousText.length,
+                            endOffset: oNode.textContent.length - nextText.length
+                        };
+                    } else if (!util.isBreak(oNode) && util.isFormatElement(parentNode)) {
+                        let zeroWidth = null;
+                        if (!oNode.previousSibling) {
+                            zeroWidth = util.createTextNode(util.zeroWidthSpace);
+                            oNode.parentNode.insertBefore(zeroWidth, oNode);
+                        }
+                        
+                        if (!oNode.nextSibling) {
+                            zeroWidth = util.createTextNode(util.zeroWidthSpace);
+                            oNode.parentNode.appendChild(zeroWidth);
+                        }
+    
+                        if (util._isIgnoreNodeChange(oNode)) {
+                            oNode = oNode.nextSibling;
+                            offset = 0;
+                        }
                     }
     
-                    if (next && next.length > 0) {
-                        oNode.textContent += nextText;
-                        util.removeItem(next);
-                    }
-
-                    return {
-                        startOffset: previousText.length,
-                        endOffset: oNode.textContent.length - nextText.length
-                    };
-                } else if (!util.isBreak(oNode) && util.isFormatElement(parentNode)) {
-                    let zeroWidth = null;
-                    if (!oNode.previousSibling) {
-                        zeroWidth = util.createTextNode(util.zeroWidthSpace);
-                        oNode.parentNode.insertBefore(zeroWidth, oNode);
-                    }
-                    if (!oNode.nextSibling) {
-                        zeroWidth = util.createTextNode(util.zeroWidthSpace);
-                        oNode.parentNode.appendChild(zeroWidth);
-                    }
-
-                    if (util._isIgnoreNodeChange(oNode)) {
-                        oNode = oNode.nextSibling;
-                        offset = 0;
-                    }
+                    this.setRange(oNode, offset, oNode, offset);
                 }
-
-                this.setRange(oNode, offset, oNode, offset);
 
                 // history stack
                 this.history.push(true);
@@ -14429,7 +15398,7 @@ const _Context = function (element, cons, options) {
                     startCon = endCon = commonCon;
                 } else {
                     startCon = endCon = childNodes[0];
-                    if (util.isBreak(startCon)) {
+                    if (util.isBreak(startCon) || util.onlyZeroWidthSpace(startCon)) {
                         return {
                             container: startCon,
                             offset: 0
@@ -14509,7 +15478,12 @@ const _Context = function (element, cons, options) {
             container = endCon && endCon.parentNode ? endCon : startCon && startCon.parentNode ? startCon : (range.endContainer || range.startContainer);
             
             if (!util.isWysiwygDiv(container)) {
-                const rc = util.removeItemAllParents(container, null, null);
+                const rc = util.removeItemAllParents(container, function (current) {
+                    if (this.isComponent(current)) return false;
+                    const text = current.textContent;
+                    return text.length === 0 || /^(\n|\u200B)+$/.test(text);
+                }.bind(util), null);
+                
                 if (rc) container = rc.sc || rc.ec || context.element.wysiwyg;
             }
 
@@ -15036,11 +16010,11 @@ const _Context = function (element, cons, options) {
             }
 
             if (util.isFormatElement(startCon)) {
-                startCon = startCon.childNodes[startOff];
+                startCon = startCon.childNodes[startOff] || startCon.firstChild;
                 startOff = 0;
             }
             if (util.isFormatElement(endCon)) {
-                endCon = endCon.childNodes[endOff];
+                endCon = endCon.childNodes[endOff] || endCon.lastChild;
                 endOff = endCon.textContent.length;
             }
 
@@ -16475,7 +17449,22 @@ const _Context = function (element, cons, options) {
         actionCall: function (command, display, target) {
             // call plugins
             if (display) {
-                if (/submenu/.test(display) && (target.nextElementSibling === null || target !== this.submenuActiveButton)) {
+                if (/more/i.test(display) && target !== this._moreLayerActiveButton) {
+                    const layer = context.element.toolbar.querySelector('.' + command);
+                    if (layer) {
+                        if (this._moreLayerActiveButton) {
+                            (context.element.toolbar.querySelector('.' + this._moreLayerActiveButton.getAttribute('data-command'))).style.display = 'none';
+                            util.removeClass(this._moreLayerActiveButton, 'on');
+                        }
+                        util.addClass(target, 'on');
+                        this._moreLayerActiveButton = target;
+                        layer.style.display = 'block';
+
+                        event._showToolbarBalloon();
+                        event._showToolbarInline();
+                    }
+                    return;
+                } else if (/submenu/.test(display) && (this._menuTray[command] === null || target !== this.submenuActiveButton)) {
                     this.callPlugin(command, this.submenuOn.bind(this, target), target);
                     return;
                 } else if (/dialog/.test(display)) {
@@ -16483,16 +17472,28 @@ const _Context = function (element, cons, options) {
                     return;
                 } else if (/command/.test(display)) {
                     this.callPlugin(command, this.plugins[command].action.bind(this), target);
-                } else if (/container/.test(display) && (target.nextElementSibling === null || target !== this.containerActiveButton)) {
+                } else if (/container/.test(display) && (this._menuTray[command] === null || target !== this.containerActiveButton)) {
                     this.callPlugin(command, this.containerOn.bind(this, target), target);
                     return;
-                }                
+                } else if (/fileBrowser/.test(display)) {
+                    this.callPlugin(command, this.plugins[command].open.bind(this, null), target);
+                }
             } // default command
             else if (command) {
                 this.commandHandler(target, command);
             }
 
-            if (/submenu/.test(display)) {
+            if (/more/i.test(display)) {
+                const layer = context.element.toolbar.querySelector('.' + this._moreLayerActiveButton.getAttribute('data-command'));
+                if (layer) {
+                    util.removeClass(this._moreLayerActiveButton, 'on');
+                    this._moreLayerActiveButton = null;
+                    layer.style.display = 'none';
+
+                    event._showToolbarBalloon();
+                    event._showToolbarInline();
+                }
+            } else if (/submenu/.test(display)) {
                 this.submenuOff();
             } else {
                 this.submenuOff();
@@ -16698,6 +17699,8 @@ const _Context = function (element, cons, options) {
             }
 
             this._checkPlaceholder();
+
+            if (typeof functions.toggleCodeView === 'function') functions.toggleCodeView(this._variable.isCodeView, core);
         },
 
         /**
@@ -16828,7 +17831,7 @@ const _Context = function (element, cons, options) {
                     util.removeClass(toolbar, 'se-toolbar-sticky');
                 }
 
-                if (_var._fullScreenAttrs.sticky) {
+                if (_var._fullScreenAttrs.sticky && !options.toolbarContainer) {
                     _var._fullScreenAttrs.sticky = false;
                     context.element._stickyDummy.style.display = 'block';
                     util.addClass(toolbar, "se-toolbar-sticky");
@@ -16841,6 +17844,8 @@ const _Context = function (element, cons, options) {
                 event.onScroll_window();
                 util.changeElement(element.firstElementChild, icons.expansion);
             }
+
+            if (typeof functions.toggleFullScreen === 'function') functions.toggleFullScreen(this._variable.isFullScreen, core);
         },
 
         /**
@@ -17332,22 +18337,11 @@ const _Context = function (element, cons, options) {
             this._attributesWhitelistRegExp = new _w.RegExp('((?:' + allAttr + 'contenteditable|colspan|rowspan|target|href|src|class|type|controls|data-format|data-size|data-file-size|data-file-name|data-origin|data-align|data-image-link|data-rotate|data-proportion|data-percentage|origin-size)\s*=\s*"[^"]*")', 'ig');
             this._attributesTagsWhitelist = tagsAttr;
 
-            this.codeViewDisabledButtons = context.element.toolbar.querySelectorAll('.se-toolbar button:not([class~="se-code-view-enabled"])');
-            this.resizingDisabledButtons = context.element.toolbar.querySelectorAll('.se-toolbar button:not([class~="se-resizing-enabled"])');
             this._isInline = /inline/i.test(options.mode);
             this._isBalloon = /balloon|balloon-always/i.test(options.mode);
             this._isBalloonAlways = /balloon-always/i.test(options.mode);
 
-            this.commandMap = {
-                STRONG: context.tool.bold,
-                U: context.tool.underline,
-                EM: context.tool.italic,
-                DEL: context.tool.strike,
-                SUB: context.tool.subscript,
-                SUP: context.tool.superscript,
-                OUTDENT: context.tool.outdent,
-                INDENT: context.tool.indent
-            };
+            this._cachingButtons();
 
             // file components
             this._fileInfoPluginsCheck = [];
@@ -17383,7 +18377,7 @@ const _Context = function (element, cons, options) {
 
             this._fileManager.queryString = this._fileManager.tags.join(',');
             this._fileManager.regExp = new _w.RegExp('^(' +  this._fileManager.tags.join('|') + ')$', 'i');
-            this._fileManager.pluginRegExp = new _w.RegExp('^(' +  filePluginRegExp.join('|') + ')$', 'i');
+            this._fileManager.pluginRegExp = new _w.RegExp('^(' +  (filePluginRegExp.length === 0 ? 'undefined' : filePluginRegExp.join('|')) + ')$', 'i');
             
             // cache editor's element
             this._variable._originCssText = context.element.topArea.style.cssText;
@@ -17417,6 +18411,21 @@ const _Context = function (element, cons, options) {
 
                 if (typeof functions.onload === 'function') return functions.onload(this, reload);
             }.bind(this));
+        },
+
+        _cachingButtons: function () {
+            this.codeViewDisabledButtons = context.element.toolbar.querySelectorAll('.se-toolbar button:not([class~="se-code-view-enabled"])');
+            this.resizingDisabledButtons = context.element.toolbar.querySelectorAll('.se-toolbar button:not([class~="se-resizing-enabled"])');
+            this.commandMap = {
+                STRONG: context.tool.bold,
+                U: context.tool.underline,
+                EM: context.tool.italic,
+                DEL: context.tool.strike,
+                SUB: context.tool.subscript,
+                SUP: context.tool.superscript,
+                OUTDENT: context.tool.outdent,
+                INDENT: context.tool.indent
+            };
         },
 
         /**
@@ -17548,6 +18557,36 @@ const _Context = function (element, cons, options) {
 
             this.effectNode = null;
             this.nativeFocus();
+        },
+
+        /**
+         * @description Create and return an object to cache the new context.
+         * @param {Element} contextEl context.element
+         * @returns {Object}
+         * @private
+         */
+        _getConstructed: function (contextEl) {
+            return {
+                _top: contextEl.topArea,
+                _relative: contextEl.relative,
+                _toolBar: contextEl.toolbar,
+                _menuTray: contextEl._menuTray,
+                _editorArea: contextEl.editorArea,
+                _wysiwygArea: contextEl.wysiwygFrame,
+                _codeArea: contextEl.code,
+                _placeholder: contextEl.placeholder,
+                _resizingBar: contextEl.resizingBar,
+                _navigation: contextEl.navigation,
+                _charCounter: contextEl.charCounter,
+                _charWrapper: contextEl.charWrapper,
+                _loading: contextEl.loading,
+                _lineBreaker: contextEl.lineBreaker,
+                _lineBreaker_t: contextEl.lineBreaker_t,
+                _lineBreaker_b: contextEl.lineBreaker_b,
+                _resizeBack: contextEl.resizeBackground,
+                _stickyDummy: contextEl._stickyDummy,
+                _arrow: contextEl._arrow
+            };
         }
     };
 
@@ -17555,6 +18594,10 @@ const _Context = function (element, cons, options) {
      * @description event function
      */
     const event = {
+        _lineBreakerBind: null,
+        _responsiveCurrentSize: 'default',
+        _responsiveButtonSize: null,
+        _responsiveButtons: null,
         _directionKeyCode: new _w.RegExp('^(8|13|3[2-9]|40|46)$'),
         _nonTextKeyCode: new _w.RegExp('^(8|13|1[6-9]|20|27|3[3-9]|40|45|46|11[2-9]|12[0-3]|144|145)$'),
         _historyIgnoreKeyCode: new _w.RegExp('^(1[6-9]|20|27|3[3-9]|40|45|11[2-9]|12[0-3]|144|145)$'),
@@ -17581,34 +18624,48 @@ const _Context = function (element, cons, options) {
                     command = 'selectAll';
                     break;
                 case 'B':
-                    command = 'STRONG';
+                    if (options.shortcutsDisable.indexOf('bold') === -1) {
+                        command = 'STRONG';
+                    }
                     break;
                 case 'S':
-                    if (shift) {
+                    if (shift && options.shortcutsDisable.indexOf('strike') === -1) {
                         command = 'DEL';
                     }
                     break;
                 case 'U':
-                    command = 'U';
+                    if (options.shortcutsDisable.indexOf('underline') === -1) {
+                        command = 'U';
+                    }
                     break;
                 case 'I':
-                    command = 'EM';
+                    if (options.shortcutsDisable.indexOf('italic') === -1) {
+                        command = 'EM';
+                    }
                     break;
                 case 'Z':
-                    if (shift) {
-                        command = 'redo';
-                    } else {
-                        command = 'undo';
+                    if (options.shortcutsDisable.indexOf('undo') === -1) {
+                        if (shift) {
+                            command = 'redo';
+                        } else {
+                            command = 'undo';
+                        }
                     }
                     break;
                 case 'Y':
-                    command = 'redo';
+                    if (options.shortcutsDisable.indexOf('undo') === -1) {
+                        command = 'redo';
+                    }
                     break;
                 case '[':
-                    command = 'outdent';
+                    if (options.shortcutsDisable.indexOf('indent') === -1) {
+                        command = 'outdent';
+                    }
                     break;
                 case ']':
-                    command = 'indent';
+                    if (options.shortcutsDisable.indexOf('indent') === -1) {
+                        command = 'indent';
+                    }
                     break;
             }
 
@@ -17705,7 +18762,7 @@ const _Context = function (element, cons, options) {
             this.removeEventListener('blur', event._cancelCaptionEdit);
         },
 
-        onMouseDown_toolbar: function (e) {
+        _buttonsEventHandler: function (e) {
             let target = e.target;
             if (core._bindControllersOff) e.stopPropagation();
 
@@ -17722,7 +18779,7 @@ const _Context = function (element, cons, options) {
                 let command = target.getAttribute('data-command');
                 let className = target.className;
     
-                while (!command && !/se-menu-list/.test(className) && !/se-toolbar/.test(className)) {
+                while (!command && !/se-menu-list/.test(className) && !/sun-editor-common/.test(className)) {
                     target = target.parentNode;
                     command = target.getAttribute('data-command');
                     className = target.className;
@@ -17772,7 +18829,7 @@ const _Context = function (element, cons, options) {
                 event._hideToolbar();
             }
 
-            if (functions.onMouseDown) functions.onMouseDown(e, core);
+            if (typeof functions.onMouseDown === 'function') functions.onMouseDown(e, core);
         },
 
         onClick_wysiwyg: function (e) {
@@ -17830,7 +18887,7 @@ const _Context = function (element, cons, options) {
             }
 
             if (core._isBalloon) _w.setTimeout(event._toggleToolbarBalloon);
-            if (functions.onClick) functions.onClick(e, core);
+            if (typeof functions.onClick === 'function') functions.onClick(e, core);
         },
 
         _balloonDelay: null,
@@ -17883,7 +18940,7 @@ const _Context = function (element, cons, options) {
             }
 
             const editorWidth = context.element.topArea.offsetWidth;
-            const offsets = event._getEditorOffsets();
+            const offsets = event._getEditorOffsets(null);
             const stickyTop = offsets.top;
             const editorLeft = offsets.left;
             
@@ -17951,7 +19008,7 @@ const _Context = function (element, cons, options) {
             let l = absoluteLeft < 0 ? padding : overRight < 0 ? absoluteLeft : absoluteLeft - overRight - padding - 1;
 
             let resetTop = false;
-            const space = t + (isDirTop ? (event._getEditorOffsets().top) : (toolbar.offsetHeight - context.element.wysiwyg.offsetHeight));
+            const space = t + (isDirTop ? (event._getEditorOffsets(null).top) : (toolbar.offsetHeight - context.element.wysiwyg.offsetHeight));
             if (!isDirTop && space > 0 && event._getPageBottomSpace() < space) {
                 isDirTop = true;
                 resetTop = true;
@@ -17983,10 +19040,13 @@ const _Context = function (element, cons, options) {
             if (!core._isInline) return;
 
             const toolbar = context.element.toolbar;
+            if (options.toolbarContainer) toolbar.style.position = 'relative';
+            else toolbar.style.position = 'absolute';
+            
             toolbar.style.visibility = 'hidden';
             toolbar.style.display = 'block';
             core._inlineToolbarAttr.width = toolbar.style.width = options.toolbarWidth;
-            core._inlineToolbarAttr.top = toolbar.style.top = (-1 - toolbar.offsetHeight) + 'px';
+            core._inlineToolbarAttr.top = toolbar.style.top = (options.toolbarContainer ? 0 : (-1 - toolbar.offsetHeight)) + 'px';
             
             if (typeof functions.showInline === 'function') functions.showInline(toolbar, context, core);
 
@@ -18014,7 +19074,7 @@ const _Context = function (element, cons, options) {
             // history stack
             core.history.push(true);
 
-            if (functions.onInput) functions.onInput(e, core);
+            if (typeof functions.onInput === 'function') functions.onInput(e, core);
         },
 
         _onShortcutKey: false,
@@ -18198,8 +19258,8 @@ const _Context = function (element, cons, options) {
                             if (fileComponentInfo) {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                core.selectComponent(fileComponentInfo.component, fileComponentInfo.pluginName);
                                 if (formatEl.textContent.length === 0) util.removeItem(formatEl);
+                                core.selectComponent(fileComponentInfo.component, fileComponentInfo.pluginName);
                             }
                             break;
                         }
@@ -18513,8 +19573,7 @@ const _Context = function (element, cons, options) {
                         container.parentNode.insertBefore(newEl, container);
                         
                         core.callPlugin(fileComponentName, function () {
-                            const size = (core.plugins.resizing && core.context[fileComponentName]._resizing !== undefined) ? core.plugins.resizing.call_controller_resize.call(core, compContext._element, fileComponentName) : null;
-                            core.plugins[fileComponentName].onModifyMode.call(core, compContext._element, size);
+                            core.selectComponent(compContext._element, fileComponentName);
                         }, null);
                     }
                     
@@ -18549,7 +19608,7 @@ const _Context = function (element, cons, options) {
                 core.setRange(zeroWidth, 1, zeroWidth, 1);
             }
 
-            if (functions.onKeyDown) functions.onKeyDown(e, core);
+            if (typeof functions.onKeyDown === 'function') functions.onKeyDown(e, core);
         },
 
         onKeyUp_wysiwyg: function (e) {
@@ -18615,21 +19674,21 @@ const _Context = function (element, cons, options) {
             // history stack
             core.history.push(true);
 
-            if (functions.onKeyUp) functions.onKeyUp(e, core);
+            if (typeof functions.onKeyUp === 'function') functions.onKeyUp(e, core);
         },
 
         onScroll_wysiwyg: function (e) {
             core.controllersOff();
             core._lineBreaker.style.display = 'none';
             if (core._isBalloon) event._hideToolbar();
-            if (functions.onScroll) functions.onScroll(e, core);
+            if (typeof functions.onScroll === 'function') functions.onScroll(e, core);
         },
 
         onFocus_wysiwyg: function (e) {
             if (core._antiBlur) return;
             core.hasFocus = true;
             if (core._isInline) event._showToolbarInline();
-            if (functions.onFocus) functions.onFocus(e, core);
+            if (typeof functions.onFocus === 'function') functions.onFocus(e, core);
         },
 
         onBlur_wysiwyg: function (e) {
@@ -18637,7 +19696,7 @@ const _Context = function (element, cons, options) {
             core.hasFocus = false;
             core.controllersOff();
             if (core._isInline || core._isBalloon) event._hideToolbar();
-            if (functions.onBlur) functions.onBlur(e, core);
+            if (typeof functions.onBlur === 'function') functions.onBlur(e, core);
         },
 
         onMouseDown_resizingBar: function (e) {
@@ -18664,7 +19723,32 @@ const _Context = function (element, cons, options) {
 
         onResize_window: function () {
             core.controllersOff();
+
+            const responsiveSize = event._responsiveButtonSize;
+            if (responsiveSize) {
+                const windowWidth = _w.innerWidth;
+                let responsiveWidth = 'default';
+                for (let i = 1, len = responsiveSize.length; i < len; i++) {
+                    if (windowWidth < responsiveSize[i]) {
+                        responsiveWidth = responsiveSize[i] + '';
+                    }
+                }
+
+                if (event._responsiveCurrentSize !== responsiveWidth) {
+                    event._responsiveCurrentSize = responsiveWidth;
+                    functions.setToolbarButtons(event._responsiveButtons[responsiveWidth]);
+                }
+            }
+
             if (context.element.toolbar.offsetWidth === 0) return;
+
+            if (context.fileBrowser && context.fileBrowser.area.style.display === 'block') {
+                context.fileBrowser.body.style.maxHeight = (_w.innerHeight - context.fileBrowser.header.offsetHeight - 50) + 'px';
+            }
+
+            if (core.submenuActiveButton && core.submenu) {
+                core._setMenuPosition(core.submenuActiveButton, core.submenu);
+            }
 
             if (core._variable.isFullScreen) {
                 core._variable.innerHeight_fullScreen += (_w.innerHeight - context.element.toolbar.offsetHeight) - core._variable.innerHeight_fullScreen;
@@ -18691,7 +19775,7 @@ const _Context = function (element, cons, options) {
             const element = context.element;
             const editorHeight = element.editorArea.offsetHeight;
             const y = (this.scrollY || _d.documentElement.scrollTop) + options.stickyToolbar;
-            const editorTop = event._getEditorOffsets().top - (core._isInline ? element.toolbar.offsetHeight : 0);
+            const editorTop = event._getEditorOffsets(options.toolbarContainer).top - (core._isInline ? element.toolbar.offsetHeight : 0);
             
             if (y < editorTop) {
                 event._offStickyToolbar();
@@ -18705,8 +19789,8 @@ const _Context = function (element, cons, options) {
             }
         },
 
-        _getEditorOffsets: function () {
-            let offsetEl = context.element.topArea;
+        _getEditorOffsets: function (container) {
+            let offsetEl = container || context.element.topArea;
             let t = 0, l = 0, s = 0;
 
             while (offsetEl) {
@@ -18724,13 +19808,13 @@ const _Context = function (element, cons, options) {
         },
 
         _getPageBottomSpace: function () {
-            return _d.documentElement.scrollHeight - (event._getEditorOffsets().top + context.element.topArea.offsetHeight);
+            return _d.documentElement.scrollHeight - (event._getEditorOffsets(null).top + context.element.topArea.offsetHeight);
         },
 
         _onStickyToolbar: function () {
             const element = context.element;
 
-            if (!core._isInline) {
+            if (!core._isInline && !options.toolbarContainer) {
                 element._stickyDummy.style.height = element.toolbar.offsetHeight + 'px';
                 element._stickyDummy.style.display = 'block';
             }
@@ -18762,12 +19846,19 @@ const _Context = function (element, cons, options) {
             const range = core.getRange();
             const sCell = util.getRangeFormatElement(range.startContainer);
             const eCell = util.getRangeFormatElement(range.endContainer);
+            const sIsCell = util.isCell(sCell);
+            const eIsCell = util.isCell(eCell);
 
-            if (util.isCell(sCell) && util.isCell(eCell) && !sCell.previousElementSibling && !eCell.nextElementSibling) {
-                const table = util.getParentElement(sCell, util.isComponent);
-                util.removeItem(table);
-                core.nativeFocus();
-                return true;
+            if (((sIsCell && !sCell.previousElementSibling && !sCell.parentElement.previousElementSibling) || (eIsCell && !eCell.nextElementSibling && !eCell.parentElement.nextElementSibling)) && sCell !== eCell) {
+                if (!sIsCell) {
+                    util.removeItem(util.getParentElement(eCell, util.isComponent));
+                } else if (!eIsCell) {
+                    util.removeItem(util.getParentElement(sCell, util.isComponent));
+                } else {
+                    util.removeItem(util.getParentElement(sCell, util.isComponent));
+                    core.nativeFocus();
+                    return true;
+                }
             }
 
             return false;
@@ -18814,8 +19905,15 @@ const _Context = function (element, cons, options) {
         },
 
         _setClipboardData: function (e, plainText, cleanData) {
+            // MS word
+            if (/class=["']*Mso(Normal|List)/i.test(cleanData) || /content=["']*Word.Document/i.test(cleanData) || /content=["']*OneNote.File/i.test(cleanData)) {
+                cleanData = cleanData.replace(/\n/g, ' ');
+                plainText = plainText.replace(/\n/g, ' ');
+            } else {
+                plainText = plainText.replace(/\n/g, '');
+            }
+
             cleanData = core.cleanHTML(cleanData, core.pasteTagsWhitelistRegExp);
-            plainText = plainText.replace(/\n/g, '');
             const maxCharCount = core._charCount(options.charCounterType === 'byte-html' ? cleanData : plainText);
 
             if (typeof functions.onPaste === 'function' && !functions.onPaste(e, cleanData, maxCharCount, core)) {
@@ -18879,11 +19977,12 @@ const _Context = function (element, cons, options) {
             }
         },
 
-        onmouseMove_wysiwyg: function (e) {
+        onMouseMove_wysiwyg: function (e) {
+            if (core.isDisabled) return;
             const component = util.getParentElement(e.target, util.isComponent);
             const lineBreakerStyle = core._lineBreaker.style;
 
-            if (component) {
+            if (component && !core.currentControllerName) {
                 let scrollTop = 0;
                 let el = context.element.wysiwyg;
                 do {
@@ -18892,9 +19991,9 @@ const _Context = function (element, cons, options) {
                 } while (el && !/^(BODY|HTML)$/i.test(el.nodeName));
 
                 const wScroll = context.element.wysiwyg.scrollTop;
-                const offsets = event._getEditorOffsets();
+                const offsets = event._getEditorOffsets(null);
                 const componentTop = util.getOffset(component, context.element.wysiwygFrame).top + wScroll;
-                const y = e.pageY + scrollTop + (options.iframe ? context.element.toolbar.offsetHeight : 0);
+                const y = e.pageY + scrollTop + (options.iframe && !options.toolbarContainer ? context.element.toolbar.offsetHeight : 0);
                 const c = componentTop + (options.iframe ? scrollTop : offsets.top);
 
                 let dir = '', top = '';
@@ -18912,10 +20011,8 @@ const _Context = function (element, cons, options) {
                 core._variable._lineBreakComp = component;
                 core._variable._lineBreakDir = dir;
                 lineBreakerStyle.top = (top - wScroll) + 'px';
-                lineBreakerStyle.visibility = 'hidden';
+                core._lineBreakerButton.style.left = (util.getOffset(component).left + (component.offsetWidth / 2) - 17) + 'px';
                 lineBreakerStyle.display = 'block';
-                core._lineBreakerButton.style.left = (component.offsetLeft + (component.offsetWidth / 2) - (core._lineBreakerButton.offsetWidth / 2)) + 'px';
-                lineBreakerStyle.visibility = '';
             } // off line breaker
             else if (lineBreakerStyle.display !== 'none') {
                 lineBreakerStyle.display = 'none';
@@ -18926,12 +20023,14 @@ const _Context = function (element, cons, options) {
             e.preventDefault();
         },
 
-        _onLineBreak: function () {
+        _onLineBreak: function (e) {
+            e.preventDefault();
             const component = core._variable._lineBreakComp;
+            const dir = !this ? core._variable._lineBreakDir : this;
 
             const format = util.createElement('P');
             format.innerHTML = '<br>';
-            component.parentNode.insertBefore(format, core._variable._lineBreakDir === 't' ? component : component.nextSibling);
+            component.parentNode.insertBefore(format, dir === 't' ? component : component.nextSibling);
 
             core._lineBreaker.style.display = 'none';
             core._variable._lineBreakComp = null;
@@ -18959,7 +20058,8 @@ const _Context = function (element, cons, options) {
             const eventWysiwyg = options.iframe ? core._ww : context.element.wysiwyg;
 
             /** toolbar event */
-            context.element.toolbar.addEventListener('mousedown', event.onMouseDown_toolbar, false);
+            context.element.toolbar.addEventListener('mousedown', event._buttonsEventHandler, false);
+            context.element._menuTray.addEventListener('mousedown', event._buttonsEventHandler, false);
             context.element.toolbar.addEventListener('click', event.onClick_toolbar, false);
             /** editor area */
             eventWysiwyg.addEventListener('mousedown', event.onMouseDown_wysiwyg, false);
@@ -18976,9 +20076,12 @@ const _Context = function (element, cons, options) {
             eventWysiwyg.addEventListener('blur', event.onBlur_wysiwyg, false);
 
             /** line breaker */
-            eventWysiwyg.addEventListener('mousemove', event.onmouseMove_wysiwyg, false);
+            event._lineBreakerBind = { a: event._onLineBreak.bind(''), t: event._onLineBreak.bind('t'), b: event._onLineBreak.bind('b') };
+            eventWysiwyg.addEventListener('mousemove', event.onMouseMove_wysiwyg, false);
             core._lineBreakerButton.addEventListener('mousedown', event._onMouseDown_lineBreak, false);
-            core._lineBreakerButton.addEventListener('click', event._onLineBreak, false);
+            core._lineBreakerButton.addEventListener('click', event._lineBreakerBind.a, false);
+            context.element.lineBreaker_t.addEventListener('mousedown', event._lineBreakerBind.t, false);
+            context.element.lineBreaker_b.addEventListener('mousedown', event._lineBreakerBind.b, false);
 
             /** Events are registered only when there is a table plugin.  */
             if (core.plugins.table) {
@@ -19002,6 +20105,7 @@ const _Context = function (element, cons, options) {
             }
             
             /** window event */
+            event._setResponsiveToolbar();
             _w.removeEventListener('resize', event.onResize_window);
             _w.removeEventListener('scroll', event.onScroll_window);
 
@@ -19014,7 +20118,8 @@ const _Context = function (element, cons, options) {
         _removeEvent: function () {
             const eventWysiwyg = options.iframe ? core._ww : context.element.wysiwyg;
 
-            context.element.toolbar.removeEventListener('mousedown', event.onMouseDown_toolbar);
+            context.element.toolbar.removeEventListener('mousedown', event._buttonsEventHandler);
+            context.element._menuTray.removeEventListener('mousedown', event._buttonsEventHandler);
             context.element.toolbar.removeEventListener('click', event.onClick_toolbar);
 
             eventWysiwyg.removeEventListener('mousedown', event.onMouseDown_wysiwyg);
@@ -19028,9 +20133,12 @@ const _Context = function (element, cons, options) {
             eventWysiwyg.removeEventListener('drop', event.onDrop_wysiwyg);
             eventWysiwyg.removeEventListener('scroll', event.onScroll_wysiwyg);
 
-            eventWysiwyg.removeEventListener('mousemove', event.onmouseMove_wysiwyg);
+            eventWysiwyg.removeEventListener('mousemove', event.onMouseMove_wysiwyg);
             core._lineBreakerButton.removeEventListener('mousedown', event._onMouseDown_lineBreak);
-            core._lineBreakerButton.removeEventListener('click', event._onLineBreak);
+            core._lineBreakerButton.removeEventListener('click', event._lineBreakerBind.a);
+            context.element.lineBreaker_t.removeEventListener('mousedown', event._lineBreakerBind.t);
+            context.element.lineBreaker_b.removeEventListener('mousedown', event._lineBreakerBind.b);
+            event._lineBreakerBind = null;
             
             eventWysiwyg.removeEventListener('touchstart', event.onMouseDown_wysiwyg, {passive: true, useCapture: false});
             
@@ -19047,6 +20155,22 @@ const _Context = function (element, cons, options) {
             
             _w.removeEventListener('resize', event.onResize_window);
             _w.removeEventListener('scroll', event.onScroll_window);
+        },
+
+        _setResponsiveToolbar: function () {
+            if (_responsiveButtons.length === 0) {
+                _responsiveButtons = null;
+                return;
+            }
+
+            const sizeArray = event._responsiveButtonSize = ['default'];
+            const buttonsObj = event._responsiveButtons = {default: _responsiveButtons[0]};
+            for (let i = 1, len = _responsiveButtons.length, size, buttonGroup; i < len; i++) {
+                buttonGroup = _responsiveButtons[i];
+                size = buttonGroup[0] * 1;
+                sizeArray.push(size);
+                buttonsObj[size] = buttonGroup[1];
+            }
         }
     };
 
@@ -19094,6 +20218,20 @@ const _Context = function (element, cons, options) {
         showController: null,
 
         /**
+         * @description An event when toggling between code view and wysiwyg view.
+         * @param {Boolean} isCodeView Whether the current code view mode
+         * @param {Object} core Core object
+         */
+        toggleCodeView: null,
+
+        /**
+         * @description An event when toggling full screen.
+         * @param {Boolean} isFullScreen Whether the current full screen mode
+         * @param {Object} core Core object
+         */
+        toggleFullScreen: null,
+
+        /**
          * @description It replaces the default callback function of the image upload
          * @param {Object} response Response object
          * @param {Object} info Input information
@@ -19111,6 +20249,7 @@ const _Context = function (element, cons, options) {
         /**
          * @description Called before the image is uploaded
          * If false is returned, no image upload is performed.
+         * If new fileList are returned,  replaced the previous fileList
          * @param {Array} files Files array
          * @param {Object} info info: {
          * - linkValue: Link url value
@@ -19128,6 +20267,7 @@ const _Context = function (element, cons, options) {
         /**
          * @description Called before the video is uploaded
          * If false is returned, no video(iframe, video) upload is performed.
+         * If new fileList are returned,  replaced the previous fileList
          * @param {Array} files Files array
          * @param {Object} info info: {
          * - inputWidth: Value of width input
@@ -19143,6 +20283,7 @@ const _Context = function (element, cons, options) {
         /**
          * @description Called before the audio is uploaded
          * If false is returned, no audio upload is performed.
+         * If new fileList are returned,  replaced the previous fileList
          * @param {Array} files Files array
          * @param {Object} info info: {
          * - isUpdate: Update audio if true, create audio if false
@@ -19201,15 +20342,56 @@ const _Context = function (element, cons, options) {
         onAudioUploadError: null,
 
         /**
-         * @description Add or reset option property
-         * @param {Object} options Options
+         * @description Reset the buttons on the toolbar. (Editor is not reloaded)
+         * You cannot set a new plugin for the button.
+         * @param {Array} buttonList Button list 
+         */
+        setToolbarButtons: function (buttonList) {
+            core.submenuOff();
+            core.containerOff();
+            
+            const newToolbar = lib_constructor._createToolBar(_d, buttonList, core.plugins, options);
+            _responsiveButtons = newToolbar.responsiveButtons;
+            core._moreLayerActiveButton = null;
+            core._cachingButtons();
+            event._setResponsiveToolbar();
+            
+            core.activePlugins = [];
+            const oldCallButtons = pluginCallButtons;
+            pluginCallButtons = newToolbar.pluginCallButtons;
+            let plugin, button, oldButton;
+            for (let key in pluginCallButtons) {
+                plugin = plugins[key];
+                button = pluginCallButtons[key];
+                if (plugin.active && button) {
+                    oldButton = oldCallButtons[key];
+                    core.callPlugin(key, null, oldButton || button);
+                    if (oldButton) {
+                        button.parentElement.replaceChild(oldButton, button);
+                        pluginCallButtons[key] = oldButton;
+                    }
+                }
+            }
+
+            context.element.toolbar.replaceChild(newToolbar._buttonTray, context.element._buttonTray);
+
+            const newContext = lib_context(context.element.originElement, core._getConstructed(context.element), options);
+            context.element = newContext.element;
+            context.tool = newContext.tool;
+
+            core.history._resetCachingButton();
+        },
+
+        /**
+         * @description Add or reset option property (Editor is reloaded)
+         * @param {Object} _options Options
          */
         setOptions: function (_options) {
             event._removeEvent();
             core._resetComponents();
 
             core.plugins = _options.plugins || core.plugins;
-            const mergeOptions = [_options, _options].reduce(function (init, option) {
+            const mergeOptions = [options, _options].reduce(function (init, option) {
                 for (let key in option) {
                     if (key === 'plugins' && option[key] && init[key]) {
                         let i = init[key], o = option[key];
@@ -19224,7 +20406,8 @@ const _Context = function (element, cons, options) {
             }, {});
 
             // set option
-            const cons = lib_constructor._setOptions(mergeOptions, context, core.plugins, _options);
+            const cons = lib_constructor._setOptions(mergeOptions, context, core.plugins, options);
+            cons.toolbar.element.style.visibility = '';
 
             if (cons.callButtons) {
                 pluginCallButtons = cons.callButtons;
@@ -19238,34 +20421,19 @@ const _Context = function (element, cons, options) {
             // reset context
             const _initHTML = context.element.wysiwyg.innerHTML;
             const el = context.element;
-            const constructed = {
-                _top: el.topArea,
-                _relative: el.relative,
-                _toolBar: el.toolbar,
-                _editorArea: el.editorArea,
-                _wysiwygArea: el.wysiwygFrame,
-                _codeArea: el.code,
-                _placeholder: el.placeholder,
-                _resizingBar: el.resizingBar,
-                _navigation: el.navigation,
-                _charCounter: el.charCounter,
-                _charWrapper: el.charWrapper,
-                _loading: el.loading,
-                _lineBreaker: el.lineBreaker,
-                _resizeBack: el.resizeBackground,
-                _stickyDummy: el._stickyDummy,
-                _arrow: el._arrow
-            };
+
+            if (el._menuTray.children.length === 0) this._menuTray = {};
             
+            _responsiveButtons = cons.toolbar.responsiveButtons;
             options = mergeOptions;
             core.lang = lang = options.lang;
-            core.context = context = lib_context(context.element.originElement, constructed, options);
-
+            core.context = context = lib_context(context.element.originElement, core._getConstructed(el), options);
             core._componentsInfoReset = true;
+
+            // initialize core and add event listeners
             core._init(true, _initHTML);
             event._addEvent();
             core._charCount('');
-
             event._offStickyToolbar();
             event.onResize_window();
         },
@@ -19460,6 +20628,7 @@ const _Context = function (element, cons, options) {
         disabled: function () {
             context.tool.cover.style.display = 'block';
             context.element.wysiwyg.setAttribute('contenteditable', false);
+            core.isDisabled = true;
 
             if (options.codeMirrorEditor) {
                 options.codeMirrorEditor.setOption('readOnly', true);
@@ -19474,6 +20643,7 @@ const _Context = function (element, cons, options) {
         enabled: function () {
             context.tool.cover.style.display = 'none';
             context.element.wysiwyg.setAttribute('contenteditable', true);
+            core.isDisabled = false;
 
             if (options.codeMirrorEditor) {
                 options.codeMirrorEditor.setOption('readOnly', false);
@@ -19501,6 +20671,13 @@ const _Context = function (element, cons, options) {
          * @description Destroy the suneditor
          */
         destroy: function () {
+            /** off menus */
+            core.submenuOff();
+            core.containerOff();
+            core.controllersOff();
+            if (core.notice) core.notice.close.call(core);
+            if (core.modalForm) core.plugins.dialog.close.call(core);
+
             /** remove history */
             core.history._destroy();
 
@@ -19508,6 +20685,7 @@ const _Context = function (element, cons, options) {
             event._removeEvent();
             
             /** remove element */
+            util.removeItem(context.element.toolbar);
             util.removeItem(context.element.topArea);
 
             /** remove object reference */
@@ -19564,17 +20742,21 @@ const _Context = function (element, cons, options) {
         }
     };
 
-    /** initialize core and add event listeners */
+    // initialize core and add event listeners
     core._init(false, null);
     event._addEvent();
     core._charCount('');
+    event._offStickyToolbar();
+    event.onResize_window();
+
+    // toolbar visibility
+    context.element.toolbar.style.visibility = '';
 
     // functionss
     core.functions = functions;
 
     return functions;
 });
-
 // CONCATENATED MODULE: ./node_modules/suneditor/src/suneditor.js
 /*
  * wysiwyg web editor
@@ -19654,7 +20836,7 @@ const _Context = function (element, cons, options) {
             element.parentNode.appendChild(cons.constructed._top);
         }
 
-        return lib_core(lib_context(element, cons.constructed, cons.options), cons.pluginCallButtons, cons.plugins, cons.options.lang, options, cons._icons);
+        return lib_core(lib_context(element, cons.constructed, cons.options), cons.pluginCallButtons, cons.plugins, cons.options.lang, options, cons._icons, cons._responsiveButtons);
     }
 });
 
@@ -19673,25 +20855,26 @@ var getPlugins = function getPlugins(_ref) {
   if (!isArray(buttonList)) throw new Error("Button List must be of type array");else {
     var pluginList = [];
     buttonList = flatten(buttonList);
-    if (buttonList.indexOf("align") >= 0) pluginList.push(__webpack_require__(8).default);
-    if (buttonList.indexOf("math") >= 0) pluginList.push(__webpack_require__(9).default);
-    if (buttonList.indexOf("blockquote") >= 0) pluginList.push(__webpack_require__(10).default);
-    if (buttonList.indexOf("font") >= 0) pluginList.push(__webpack_require__(11).default);
-    if (buttonList.indexOf("fontColor") >= 0) pluginList.push(__webpack_require__(12).default);
-    if (buttonList.indexOf("fontSize") >= 0) pluginList.push(__webpack_require__(13).default);
-    if (buttonList.indexOf("formatBlock") >= 0) pluginList.push(__webpack_require__(14).default);
-    if (buttonList.indexOf("hiliteColor") >= 0) pluginList.push(__webpack_require__(15).default);
-    if (buttonList.indexOf("horizontalRule") >= 0) pluginList.push(__webpack_require__(16).default);
-    if (buttonList.indexOf("lineHeight") >= 0) pluginList.push(__webpack_require__(17).default);
-    if (buttonList.indexOf("list") >= 0) pluginList.push(__webpack_require__(18).default);
-    if (buttonList.indexOf("paragraphStyle") >= 0) pluginList.push(__webpack_require__(19).default);
-    if (buttonList.indexOf("table") >= 0) pluginList.push(__webpack_require__(20).default);
-    if (buttonList.indexOf("template") >= 0) pluginList.push(__webpack_require__(21).default);
-    if (buttonList.indexOf("textStyle") >= 0) pluginList.push(__webpack_require__(22).default);
-    if (buttonList.indexOf("image") >= 0) pluginList.push(__webpack_require__(23).default);
-    if (buttonList.indexOf("link") >= 0) pluginList.push(__webpack_require__(24).default);
-    if (buttonList.indexOf("video") >= 0) pluginList.push(__webpack_require__(25).default);
-    if (buttonList.indexOf("audio") >= 0) pluginList.push(__webpack_require__(26).default);
+    if (buttonList.indexOf("align") >= 0) pluginList.push(__webpack_require__(9).default);
+    if (buttonList.indexOf("math") >= 0) pluginList.push(__webpack_require__(10).default);
+    if (buttonList.indexOf("imageGallery") >= 0) pluginList.push(__webpack_require__(11).default);
+    if (buttonList.indexOf("blockquote") >= 0) pluginList.push(__webpack_require__(12).default);
+    if (buttonList.indexOf("font") >= 0) pluginList.push(__webpack_require__(13).default);
+    if (buttonList.indexOf("fontColor") >= 0) pluginList.push(__webpack_require__(14).default);
+    if (buttonList.indexOf("fontSize") >= 0) pluginList.push(__webpack_require__(15).default);
+    if (buttonList.indexOf("formatBlock") >= 0) pluginList.push(__webpack_require__(16).default);
+    if (buttonList.indexOf("hiliteColor") >= 0) pluginList.push(__webpack_require__(17).default);
+    if (buttonList.indexOf("horizontalRule") >= 0) pluginList.push(__webpack_require__(18).default);
+    if (buttonList.indexOf("lineHeight") >= 0) pluginList.push(__webpack_require__(19).default);
+    if (buttonList.indexOf("list") >= 0) pluginList.push(__webpack_require__(20).default);
+    if (buttonList.indexOf("paragraphStyle") >= 0) pluginList.push(__webpack_require__(21).default);
+    if (buttonList.indexOf("table") >= 0) pluginList.push(__webpack_require__(22).default);
+    if (buttonList.indexOf("template") >= 0) pluginList.push(__webpack_require__(23).default);
+    if (buttonList.indexOf("textStyle") >= 0) pluginList.push(__webpack_require__(24).default);
+    if (buttonList.indexOf("image") >= 0) pluginList.push(__webpack_require__(25).default);
+    if (buttonList.indexOf("link") >= 0) pluginList.push(__webpack_require__(26).default);
+    if (buttonList.indexOf("video") >= 0) pluginList.push(__webpack_require__(27).default);
+    if (buttonList.indexOf("audio") >= 0) pluginList.push(__webpack_require__(28).default);
     return pluginList;
   }
 };
@@ -19729,34 +20912,37 @@ var getLanguage = function getLanguage(lang) {
           return __webpack_require__(4);
 
         case 'da':
-          return __webpack_require__(27);
-
-        case 'de':
-          return __webpack_require__(28);
-
-        case 'es':
           return __webpack_require__(29);
 
-        case 'fr':
+        case 'de':
           return __webpack_require__(30);
 
-        case 'ja':
+        case 'es':
           return __webpack_require__(31);
 
-        case 'ko':
+        case 'fr':
           return __webpack_require__(32);
 
-        case 'pt_br':
+        case 'ja':
           return __webpack_require__(33);
 
-        case 'ru':
+        case 'ko':
           return __webpack_require__(34);
 
-        case 'it':
+        case 'pt_br':
           return __webpack_require__(35);
 
-        case 'zh_cn':
+        case 'ru':
           return __webpack_require__(36);
+
+        case 'it':
+          return __webpack_require__(37);
+
+        case 'zh_cn':
+          return __webpack_require__(38);
+
+        case 'ro':
+          return __webpack_require__(39);
 
         default:
           return __webpack_require__(4);
@@ -19822,10 +21008,12 @@ var SunEditor_SunEditor = /*#__PURE__*/function (_Component) {
           _this$props$setOption = _this$props.setOptions,
           setOptions = _this$props$setOption === void 0 ? {} : _this$props$setOption,
           _this$props$width = _this$props.width,
-          width = _this$props$width === void 0 ? "100%" : _this$props$width;
+          width = _this$props$width === void 0 ? "100%" : _this$props$width,
+          heigth = _this$props.heigth;
       setOptions.lang = setOptions.lang || misc_getLanguage(lang);
       setOptions.plugins = setOptions.plugins || misc_getPlugins(setOptions);
       setOptions.width = setOptions.width || width;
+      if (heigth) setOptions.heigth = heigth;
       this.editor = suneditor.create(this.txtArea.current);
       var _this$props2 = this.props,
           name = _this$props2.name,
@@ -19863,7 +21051,12 @@ var SunEditor_SunEditor = /*#__PURE__*/function (_Component) {
           onAudioUpload = _this$props2.onAudioUpload,
           onVideoUploadError = _this$props2.onVideoUploadError,
           onAudioUploadError = _this$props2.onAudioUploadError,
-          placeholder = _this$props2.placeholder;
+          placeholder = _this$props2.placeholder,
+          imageUploadHandler = _this$props2.imageUploadHandler,
+          toggleCodeView = _this$props2.toggleCodeView,
+          toggleFullScreen = _this$props2.toggleFullScreen,
+          showInline = _this$props2.showInline,
+          showController = _this$props2.showController;
       if (onChange || name) this.editor.onChange = function (content) {
         if (name) _this2.txtArea.current.value = content;
         if (onChange) onChange(content);
@@ -19945,12 +21138,52 @@ var SunEditor_SunEditor = /*#__PURE__*/function (_Component) {
       if (show === true) this.editor.show();
       if (showToolbar === true) this.editor.toolbar.show();else this.editor.toolbar.hide();
       if (enableToolbar === true) this.editor.toolbar.enabled();else this.editor.toolbar.disabled();
+
+      if (this.editor.util.isIE) {
+        this.editor.core._createDefaultRange();
+      }
+
       if (autoFocus === false) this.editor.core.context.element.wysiwyg.blur();else if (autoFocus === true) this.editor.core.context.element.wysiwyg.focus();
+      if (imageUploadHandler && typeof imageUploadHandler === 'function') this.editor.imageUploadHandler = imageUploadHandler;
+      if (toggleCodeView && typeof toggleCodeView === 'function') this.editor.toggleCodeView = function (isCodeView) {
+        return toggleCodeView(isCodeView);
+      };
+      if (toggleFullScreen && typeof toggleFullScreen === 'function') this.editor.toggleFullScreen = function (isFullScreen) {
+        return toggleFullScreen(isFullScreen);
+      };
+      if (showInline && typeof showInline === 'function') this.editor.showInline = function (toolbar, context) {
+        return showInline(toolbar, context);
+      };
+      if (showController && typeof showController === 'function') this.editor.showController = function (name, controllers) {
+        return showController(name, controllers);
+      };
     }
   }, {
     key: "componentDidUpdate",
     value: function componentDidUpdate(prevProps) {
       // Props compared
+      if (prevProps.lang !== this.props.lang) {
+        this.editor.setOptions({
+          lang: misc_getLanguage(this.props.lang)
+        });
+      }
+
+      if (prevProps.heigth !== this.props.heigth) {
+        this.editor.setOptions({
+          height: this.props.heigth
+        });
+      }
+
+      if (prevProps.width !== this.props.width) {
+        this.editor.setOptions({
+          width: this.props.width
+        });
+      }
+
+      if (prevProps.setDefaultStyle !== this.props.setDefaultStyle) {
+        this.editor.setDefaultStyle(this.props.setDefaultStyle);
+      }
+
       if (prevProps.setContents !== this.props.setContents) {
         !this.editor.core.hasFocus && this.editor.setContents(this.props.setContents);
       }
@@ -20003,6 +21236,11 @@ var SunEditor_SunEditor = /*#__PURE__*/function (_Component) {
 }(external_react_["Component"]);
 
 SunEditor_SunEditor.propTypes = {
+  imageUploadHandler: prop_types_default.a.func,
+  toggleCodeView: prop_types_default.a.func,
+  toggleFullScreen: prop_types_default.a.func,
+  showInline: prop_types_default.a.func,
+  showController: prop_types_default.a.func,
   onChange: prop_types_default.a.func,
   onScroll: prop_types_default.a.func,
   onClick: prop_types_default.a.func,

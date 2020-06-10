@@ -55,6 +55,10 @@ export default interface SetOptions {
     lang?: object;
     attributesWhitelist?: object;
     pasteTagsWhitelist?: string;
+    imageGalleryUrl?: string;
+    shortcutsHint?: boolean;
+    shortcutsDisable?: boolean;
+    toolbarContainer?: string | Element;
     addTagsWhitelist?: string;
     plugins?: Array<any>;
 }

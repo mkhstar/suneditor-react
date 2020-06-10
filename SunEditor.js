@@ -10,11 +10,12 @@ class SunEditor extends Component {
     this.txtArea = createRef();
   }
   componentDidMount() {
-    const { lang, setOptions = {}, width = "100%" } = this.props;
+    const { lang, setOptions = {}, width = "100%", heigth } = this.props;
 
     setOptions.lang = setOptions.lang || getLanguage(lang);
     setOptions.plugins = setOptions.plugins || getPlugins(setOptions);
     setOptions.width = setOptions.width || width;
+    if (heigth) setOptions.heigth = heigth;
 
     this.editor = suneditor.create(this.txtArea.current);
     const {
@@ -52,6 +53,11 @@ class SunEditor extends Component {
       onVideoUploadError,
       onAudioUploadError,
       placeholder,
+      imageUploadHandler,
+      toggleCodeView,
+      toggleFullScreen,
+      showInline,
+      showController
     } = this.props;
     if (onChange || name)
       this.editor.onChange = (content) => {
@@ -141,13 +147,37 @@ class SunEditor extends Component {
     if (enableToolbar === true) this.editor.toolbar.enabled();
     else this.editor.toolbar.disabled();
 
+    if (this.editor.util.isIE) {
+      this.editor.core._createDefaultRange();
+    }
+
     if (autoFocus === false) this.editor.core.context.element.wysiwyg.blur();
     else if (autoFocus === true)
       this.editor.core.context.element.wysiwyg.focus();
+
+    if (imageUploadHandler && typeof imageUploadHandler === 'function') this.editor.imageUploadHandler = imageUploadHandler;
+    if (toggleCodeView && typeof toggleCodeView === 'function') this.editor.toggleCodeView = isCodeView => toggleCodeView(isCodeView);
+    if (toggleFullScreen && typeof toggleFullScreen === 'function') this.editor.toggleFullScreen = isFullScreen => toggleFullScreen(isFullScreen);
+    if (showInline && typeof showInline === 'function') this.editor.showInline = (toolbar, context) => showInline(toolbar, context);
+    if (showController && typeof showController === 'function') this.editor.showController = (name, controllers) =>  showController(name, controllers);
+
   }
 
   componentDidUpdate(prevProps) {
     // Props compared
+    
+    if (prevProps.lang !== this.props.lang) {
+        this.editor.setOptions({lang: getLanguage(this.props.lang)});
+    }
+    if (prevProps.heigth !== this.props.heigth) {
+        this.editor.setOptions({height: this.props.heigth});
+    }
+    if (prevProps.width !== this.props.width) {
+        this.editor.setOptions({width: this.props.width});
+    }
+    if (prevProps.setDefaultStyle !== this.props.setDefaultStyle) {
+        this.editor.setDefaultStyle(this.props.setDefaultStyle);
+    }
     if (prevProps.setContents !== this.props.setContents) {
       !this.editor.core.hasFocus &&
         this.editor.setContents(this.props.setContents);
@@ -193,6 +223,11 @@ class SunEditor extends Component {
 }
 
 SunEditor.propTypes = {
+  imageUploadHandler: PropTypes.func,
+  toggleCodeView: PropTypes.func,
+  toggleFullScreen: PropTypes.func,
+  showInline: PropTypes.func,
+  showController: PropTypes.func,
   onChange: PropTypes.func,
   onScroll: PropTypes.func,
   onClick: PropTypes.func,

@@ -80,6 +80,20 @@ render() {
 }
 ```
 
+**heigth**
+
+**_Set Editor's height**
+
+```javascript
+//...
+// Accepts number representing px
+// or percentage string
+// eg width={100} or width="100%"
+render() {
+	return <SunEditor heigth="100%" />
+}
+```
+
 
 **placeholder**
 
@@ -534,7 +548,7 @@ render() {
 
 **onPaste**
 
-**\_Has something been pasted into the suneditor?**
+**_Has something been pasted into the suneditor?_**
 
 ```javascript
 handlePaste(e, cleanData, maxCharCount){
@@ -542,6 +556,73 @@ handlePaste(e, cleanData, maxCharCount){
 }
 render() {
 	return <SunEditor onPaste={handlePaste} />
+}
+```
+
+
+**imageUploadHandler**
+
+**_Replaces the default callback function of the image upload_**
+
+```javascript
+imageUploadHandler(xmlHttpRequest, info, core){
+	console.log(xmlHttpRequest, info, core)
+}
+render() {
+	return <SunEditor imageUploadHandler={imageUploadHandler} />
+}
+```
+
+
+**toggleCodeView**
+
+**_An event when toggling between code view and wysiwyg view_**
+
+```javascript
+toggleCodeView(isCodeView){
+	console.log(isCodeView)
+}
+render() {
+	return <SunEditor toggleCodeView={toggleCodeView} />
+}
+```
+
+**toggleFullScreen**
+
+**_An event when toggling full screen_**
+
+```javascript
+toggleFullScreen(isFullScreen){
+	console.log(isFullScreen)
+}
+render() {
+	return <SunEditor toggleFullScreen={toggleFullScreen} />
+}
+```
+
+**showInline**
+
+**_Called just before the inline toolbar is positioned and displayed on the screen._**
+
+```javascript
+showInline(toolbar, context){
+	console.log(toolbar, context)
+}
+render() {
+	return <SunEditor showInline={showInline} />
+}
+```
+
+**showController**
+
+**_Called just after the controller is positioned and displayed on the screen._**
+
+```javascript
+showController(name, controllers){
+	console.log(name, controllers)
+}
+render() {
+	return <SunEditor showController={showController} />
 }
 ```
 

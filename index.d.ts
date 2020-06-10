@@ -1,5 +1,6 @@
 import * as React from 'react';
 import SetOptions from './types/SetOptions';
+import SunEditor from './SunEditor';
 
 export interface SunEditorReactProps {
   onChange?: (content: string) => void;
@@ -41,6 +42,11 @@ export interface SunEditorReactProps {
   onImageUploadError?: (errorMessage: Error, result: any) => void;
   onVideoUploadError?: (errorMessage: Error, result: any) => void;
   onAudioUploadError?: (errorMessage: Error, result: any) => void;
+  toggleCodeView?: (isCodeView: boolean) => void;
+  toggleFullScreen?: (isFullScreen: boolean) => void;
+  showInline?: (toolbar: Element, context: any) => void;
+  showController?: (name: string, controllers: Array<any>) => void;
+  imageUploadHandler?: (xmlHttpRequest: XMLHttpRequest, info: {isUpdate: boolean, linkValue: any, element: Element, align: any, linkNewWindow: any, [key: string]: any}, core: any) => void;
 
   setOptions?: SetOptions;
   setContents?: string;
