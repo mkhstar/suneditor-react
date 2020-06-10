@@ -20841,13 +20841,17 @@ const _Context = function (element, cons, options) {
 });
 
 // CONCATENATED MODULE: ./misc/getPlugins.js
-function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
+function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread(); }
 
-function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance"); }
+function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
 
-function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter); }
+function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
 
-function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
+function _iterableToArray(iter) { if (typeof Symbol !== "undefined" && Symbol.iterator in Object(iter)) return Array.from(iter); }
+
+function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) return _arrayLikeToArray(arr); }
+
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 
 var getPlugins = function getPlugins(_ref) {
   var buttonList = _ref.buttonList;
@@ -20969,15 +20973,19 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
+
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+
+function _createSuper(Derived) { var hasNativeReflectConstruct = _isNativeReflectConstruct(); return function _createSuperInternal() { var Super = _getPrototypeOf(Derived), result; if (hasNativeReflectConstruct) { var NewTarget = _getPrototypeOf(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return _possibleConstructorReturn(this, result); }; }
+
 function _possibleConstructorReturn(self, call) { if (call && (SunEditor_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
 
 function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
 
+function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
+
 function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
-
-function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
 
 
 
@@ -20988,13 +20996,15 @@ function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || func
 var SunEditor_SunEditor = /*#__PURE__*/function (_Component) {
   _inherits(SunEditor, _Component);
 
+  var _super = _createSuper(SunEditor);
+
   function SunEditor(props) {
     var _this;
 
     _classCallCheck(this, SunEditor);
 
-    _this = _possibleConstructorReturn(this, _getPrototypeOf(SunEditor).call(this, props));
-    _this.txtArea = Object(external_react_["createRef"])();
+    _this = _super.call(this, props);
+    _this.txtArea = /*#__PURE__*/Object(external_react_["createRef"])();
     return _this;
   }
 
@@ -21009,11 +21019,11 @@ var SunEditor_SunEditor = /*#__PURE__*/function (_Component) {
           setOptions = _this$props$setOption === void 0 ? {} : _this$props$setOption,
           _this$props$width = _this$props.width,
           width = _this$props$width === void 0 ? "100%" : _this$props$width,
-          heigth = _this$props.heigth;
+          height = _this$props.height;
       setOptions.lang = setOptions.lang || misc_getLanguage(lang);
       setOptions.plugins = setOptions.plugins || misc_getPlugins(setOptions);
       setOptions.width = setOptions.width || width;
-      if (heigth) setOptions.heigth = heigth;
+      if (height) setOptions.height = height;
       this.editor = suneditor.create(this.txtArea.current);
       var _this$props2 = this.props,
           name = _this$props2.name,
@@ -21168,9 +21178,9 @@ var SunEditor_SunEditor = /*#__PURE__*/function (_Component) {
         });
       }
 
-      if (prevProps.heigth !== this.props.heigth) {
+      if (prevProps.height !== this.props.height) {
         this.editor.setOptions({
-          height: this.props.heigth
+          height: this.props.height
         });
       }
 
@@ -21226,7 +21236,7 @@ var SunEditor_SunEditor = /*#__PURE__*/function (_Component) {
     value: function render() {
       var dynamicName = {};
       if (this.props.name) dynamicName.name = this.props.name;
-      return external_react_default.a.createElement("textarea", _extends({
+      return /*#__PURE__*/external_react_default.a.createElement("textarea", _extends({
         ref: this.txtArea
       }, dynamicName));
     }
