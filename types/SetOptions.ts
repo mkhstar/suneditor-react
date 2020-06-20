@@ -53,6 +53,8 @@ export default interface SetOptions {
     toolbarWidth?: number|string;
     mode?: string;
     lang?: object;
+    linkProtocol?: string;
+    icons: object;
     attributesWhitelist?: object;
     pasteTagsWhitelist?: string;
     imageGalleryUrl?: string;

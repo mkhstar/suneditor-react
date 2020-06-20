@@ -428,7 +428,8 @@ render() {
 **_Before an image is uploaded into the editor_**
 
 ```javascript
-handleImageUploadBefore(files, info){
+handleImageUploadBefore(files, info, uploadHandler){
+    // uploadHandler is a function
 	console.log(files, info)
 }
 render() {
@@ -469,7 +470,8 @@ render() {
 **_Before a video is uploaded to the editor_**
 
 ```javascript
-handleVideoUploadBefore(files, info){
+handleVideoUploadBefore(files, info, uploadHandler){
+    // uploadHandler is a function
 	console.log(files, info)
 }
 render() {
@@ -510,7 +512,8 @@ render() {
 **_Before an audio is uploaded to the editor_**
 
 ```javascript
-handleAudioUploadBefore(files, info){
+handleAudioUploadBefore(files, info, uploadHandler){
+    // uploadHandler is a function
 	console.log(files, info)
 }
 render() {

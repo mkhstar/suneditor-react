@@ -73,17 +73,17 @@ class SunEditor extends Component {
     if (onBlur)
       this.editor.onBlur = (e) => onBlur(e, this.editor.getContents());
     if (onFocus) this.editor.onFocus = (e) => onFocus(e);
-    if (onLoad) this.editor.onload = (c, reload) => onLoad(reload);
+    if (onLoad) this.editor.onload = (_, reload) => onLoad(reload);
     if (onImageUploadBefore)
-      this.editor.onImageUploadBefore = (files, info) =>
-        onImageUploadBefore(files, info);
+      this.editor.onImageUploadBefore = (files, info, _, uploadHandler) =>
+        onImageUploadBefore(files, info, uploadHandler);
     if (onVideoUploadBefore)
-      this.editor.onVideoUploadBefore = (files, info) =>
-        onVideoUploadBefore(files, info);
+      this.editor.onVideoUploadBefore = (files, info, _, uploadHandler) =>
+        onVideoUploadBefore(files, info, uploadHandler);
     if (onAudioUploadBefore)
-      this.editor.onAudioUploadBefore = (files, info) =>
-        onAudioUploadBefore(files, info);
-    if (onDrop) this.editor.onDrop = (e) => onDrop(e);
+      this.editor.onAudioUploadBefore = (files, info, _, uploadHandler) =>
+        onAudioUploadBefore(files, info, uploadHandler);
+    if (onDrop) this.editor.onDrop = e => onDrop(e);
     if (onPaste)
       this.editor.onPaste = (e, cleanData, maxCharCount) =>
         onPaste(e, cleanData, maxCharCount);
@@ -264,5 +264,6 @@ SunEditor.propTypes = {
   placeholder: PropTypes.string,
   lang: PropTypes.oneOfType([PropTypes.object, PropTypes.string]),
   width: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  height: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
 };
 export default SunEditor;

@@ -36,9 +36,9 @@ export interface SunEditorReactProps {
     info: object,
     remainingFilesCount: number
   ) => void;
-  onImageUploadBefore?: (files: Array<File>, info: object) => void;
-  onVideoUploadBefore?: (files: Array<File>, info: object) => void;
-  onAudioUploadBefore?: (files: Array<File>, info: object) => void;
+  onImageUploadBefore?: (files: Array<File>, info: object, uploadHandler: Function) => void;
+  onVideoUploadBefore?: (files: Array<File>, info: object, uploadHandler: Function) => void;
+  onAudioUploadBefore?: (files: Array<File>, info: object, uploadHandler: Function) => void;
   onImageUploadError?: (errorMessage: Error, result: any) => void;
   onVideoUploadError?: (errorMessage: Error, result: any) => void;
   onAudioUploadError?: (errorMessage: Error, result: any) => void;
