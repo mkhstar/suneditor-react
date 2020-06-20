@@ -1,6 +1,5 @@
 import * as React from 'react';
 import SetOptions from './types/SetOptions';
-import SunEditor from './SunEditor';
 
 export interface SunEditorReactProps {
   onChange?: (content: string) => void;
