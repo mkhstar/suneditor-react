@@ -391,7 +391,7 @@ handleLoad(reload){
 	console.log(reload); //Boolean
 }
 render() {
-	return <SunEditor onBlur={handleLoad} />
+	return <SunEditor onLoad={handleLoad} />
 }
 ```
 
