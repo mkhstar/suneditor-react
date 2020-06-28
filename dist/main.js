@@ -2696,9 +2696,9 @@ __webpack_require__.r(__webpack_exports__);
                 if (selectedFormats.length > 1) {
                     const oFormat = this.util.createElement(selectedFormats[0].nodeName);
                     oFormat.appendChild(katexEl);
-                    this.insertNode(oFormat, null);
+                    if (!this.insertNode(oFormat, null, true)) return false;
                 } else {
-                    this.insertNode(katexEl, null);
+                    if (!this.insertNode(katexEl, null, true)) return false;
                 }
 
                 const empty = this.util.createTextNode(this.util.zeroWidthSpace);
@@ -3774,9 +3774,7 @@ __webpack_require__.r(__webpack_exports__);
         const oHr = this.util.createElement('HR');
         oHr.className = className;
         this.focus();
-
-        const oNode = this.insertComponent(oHr, false);
-        this.setRange(oNode, 0, oNode, 0);
+        return this.insertComponent(oHr, false, true);
     },
 
     horizontalRulePick: function (e) {
@@ -3793,9 +3791,11 @@ __webpack_require__.r(__webpack_exports__);
 
         if (!value) return;
 
-        this.plugins.horizontalRule.appendHr.call(this, '__se__' + value);
-
-        this.submenuOff();
+        const oNode = this.plugins.horizontalRule.appendHr.call(this, '__se__' + value);
+        if (oNode) {
+            this.setRange(oNode, 0, oNode, 0);
+            this.submenuOff();
+        }
     }
 });
 
@@ -4720,11 +4720,13 @@ __webpack_require__.r(__webpack_exports__);
         tableHTML += '</tbody>';
         oTable.innerHTML = tableHTML;
 
-        this.insertComponent(oTable, false);
+        const changed = this.insertComponent(oTable, false, true);
         
-        const firstTd = oTable.querySelector('td div');
-        this.setRange(firstTd, 0, firstTd, 0);
-        this.plugins.table.reset_table_picker.call(this);
+        if (changed) {
+            const firstTd = oTable.querySelector('td div');
+            this.setRange(firstTd, 0, firstTd, 0);
+            this.plugins.table.reset_table_picker.call(this);
+        }
     },
 
     createCells: function (nodeName, cnt, returnElement) {
@@ -6711,18 +6713,25 @@ __webpack_require__.r(__webpack_exports__);
             if (response.errorMessage) {
                 this.plugins.image.error.call(this, response.errorMessage, response);
             } else {
-                const fileList = response.result;
-                for (let i = 0, len = fileList.length, file; i < len; i++) {
-                    file = { name: fileList[i].name, size: fileList[i].size };
-                    if (info.isUpdate) {
-                        this.plugins.image.update_src.call(this, fileList[i].url, info.element, file);
-                        break;
-                    } else {
-                        this.plugins.image.create_image.call(this, fileList[i].url, info.linkValue, info.linkNewWindow, info.inputWidth, info.inputHeight, info.align, file);
-                    }
-                }
+                this.plugins.image.register.call(this, info, response);
             }
         }
+    },
+
+    register: function (info, response) {
+        const fileList = response.result;
+
+        for (let i = 0, len = fileList.length, file; i < len; i++) {
+            file = { name: fileList[i].name, size: fileList[i].size };
+            if (info.isUpdate) {
+                this.plugins.image.update_src.call(this, fileList[i].url, info.element, file);
+                break;
+            } else {
+                this.plugins.image.create_image.call(this, fileList[i].url, info.linkValue, info.linkNewWindow, info.inputWidth, info.inputHeight, info.align, file);
+            }
+        }
+        
+        this.closeLoading();
     },
 
     setup_reader: function (files, imgLinkValue, newWindowCheck, width, height, align, filesLen, isUpdate) {
@@ -6743,10 +6752,7 @@ __webpack_require__.r(__webpack_exports__);
                     if (update) this.plugins.image.update_src.call(this, reader.result, updateElement, file);
                     else this.plugins.image.create_image.call(this, reader.result, imgLinkValue, newWindowCheck, width, height, align, file);
     
-                    if (close) {
-                        this.closeLoading();
-                        this.selectComponent(updateElement, 'image');
-                    }
+                    if (close) this.closeLoading();
                 }.bind(this, isUpdate, this.context.image._element, file, i === filesLen);
         
                 reader.readAsDataURL(file);
@@ -6864,8 +6870,7 @@ __webpack_require__.r(__webpack_exports__);
         // align
         this.plugins.image.setAlign.call(this, align, oImg, cover, container);
 
-        this.insertComponent(container, true);
-        this.plugins.fileManager.setInfo.call(this, 'image', oImg, this.functions.onImageUpload, file, true);
+        if (this.insertComponent(container, true, true)) this.plugins.fileManager.setInfo.call(this, 'image', oImg, this.functions.onImageUpload, file, true);
         this.context.resizing._resize_plugin = '';
     },
 
@@ -7000,6 +7005,7 @@ __webpack_require__.r(__webpack_exports__);
     update_src: function (src, element, file) {
         element.src = src;
         this._w.setTimeout(this.plugins.fileManager.setInfo.bind(this, 'image', element, this.functions.onImageUpload, file, true));
+        this.selectComponent(element, 'image');
     },
 
     /**
@@ -7432,9 +7438,9 @@ __webpack_require__.r(__webpack_exports__);
                 if (selectedFormats.length > 1) {
                     const oFormat = this.util.createElement(selectedFormats[0].nodeName);
                     oFormat.appendChild(oA);
-                    this.insertNode(oFormat);
+                    if (!this.insertNode(oFormat, null, true)) return;
                 } else {
-                    this.insertNode(oA);
+                    if (!this.insertNode(oA, null, true)) return;
                 }
 
                 this.setRange(oA.childNodes[0], 0, oA.childNodes[0], oA.textContent.length);
@@ -8042,15 +8048,21 @@ __webpack_require__.r(__webpack_exports__);
             if (response.errorMessage) {
                 this.plugins.video.error.call(this, response.errorMessage, response);
             } else {
-                const fileList = response.result;
-                const videoTag = this.plugins.video.createVideoTag.call(this);
-
-                for (let i = 0, len = fileList.length, file; i < len; i++) {
-                    file = { name: fileList[i].name, size: fileList[i].size };
-                    this.plugins.video.create_video.call(this, (info.isUpdate ? info.element : videoTag.cloneNode(false)), fileList[i].url, info.inputWidth, info.inputHeight, info.align, file, info.isUpdate);
-                }
+                this.plugins.video.register.call(this, info, response);
             }
         }
+    },
+
+    register: function (info, response) {
+        const fileList = response.result;
+        const videoTag = this.plugins.video.createVideoTag.call(this);
+
+        for (let i = 0, len = fileList.length, file; i < len; i++) {
+            file = { name: fileList[i].name, size: fileList[i].size };
+            this.plugins.video.create_video.call(this, (info.isUpdate ? info.element : videoTag.cloneNode(false)), fileList[i].url, info.inputWidth, info.inputHeight, info.align, file, info.isUpdate);
+        }
+
+        this.closeLoading();
     },
 
     setup_url: function () {
@@ -8151,26 +8163,25 @@ __webpack_require__.r(__webpack_exports__);
             this.plugins.video.setAlign.call(this, null, oFrame, cover, container);
         }
 
+        let changed = true;
         if (!isUpdate) {
-            this.insertComponent(container, false);
+            changed = this.insertComponent(container, false, true);
         } else if (contextVideo._resizing && this.context.resizing._rotateVertical && changeSize) {
             this.plugins.resizing.setTransformSize.call(this, oFrame, null, null);
         }
 
-        if (init) {
-            this.plugins.fileManager.setInfo.call(this, 'video', oFrame, this.functions.onVideoUpload, file, true);
-        }
-
-        if (isUpdate) {
-            this.selectComponent(oFrame, 'video');
+        if (changed) {
+            if (init) {
+                this.plugins.fileManager.setInfo.call(this, 'video', oFrame, this.functions.onVideoUpload, file, true);
+            }
+            if (isUpdate) {
+                this.selectComponent(oFrame, 'video');
+                // history stack
+                this.history.push(false);
+            }
         }
 
         this.context.resizing._resize_plugin = '';
-
-        // history stack
-        if (isUpdate) {
-            this.history.push(false);
-        }
     },
 
     _update_videoCover: function (oFrame) {
@@ -8877,20 +8888,25 @@ __webpack_require__.r(__webpack_exports__);
         } else {
             const response = JSON.parse(xmlHttp.responseText);
             if (response.errorMessage) {
-                if (this.functions.onAudioUploadError !== 'function' || this.functions.onAudioUploadError(response.errorMessage, response, this)) {
-                    this.functions.noticeOpen(response.errorMessage);
-                }
+                this.plugins.audio.error.call(this, response.errorMessage, response);
             } else {
-                const fileList = response.result;
-                for (let i = 0, len = fileList.length, file, oAudio; i < len; i++) {
-                    if (info.isUpdate) oAudio = info.element;
-                    else oAudio = this.plugins.audio._createAudioTag.call(this);
-    
-                    file = { name: fileList[i].name, size: fileList[i].size };
-                    this.plugins.audio.create_audio.call(this, oAudio, fileList[i].url, file, info.isUpdate);
-                }
+                this.plugins.audio.register.call(this, info, response);
             }
         }
+    },
+
+    register: function (info, response) {
+        const fileList = response.result;
+
+        for (let i = 0, len = fileList.length, file, oAudio; i < len; i++) {
+            if (info.isUpdate) oAudio = info.element;
+            else oAudio = this.plugins.audio._createAudioTag.call(this);
+
+            file = { name: fileList[i].name, size: fileList[i].size };
+            this.plugins.audio.create_audio.call(this, oAudio, fileList[i].url, file, info.isUpdate);
+        }
+
+        this.closeLoading();
     },
 
     setupUrl: function (src) {
@@ -8912,7 +8928,10 @@ __webpack_require__.r(__webpack_exports__);
             element.src = src;
             const cover = this.plugins.component.set_cover.call(this, element);
             const container = this.plugins.component.set_container.call(this, cover, '');
-            this.insertComponent(container, false);
+            if (!this.insertComponent(container, false, true)) {
+                this.focus();
+                return;
+            }
         } // update
         else {
             if (contextAudio._element) element = contextAudio._element;
@@ -11758,8 +11777,16 @@ const util_util = {
      * @returns {Boolean}
      */
     isWysiwygDiv: function (element) {
-        if (element && element.nodeType === 1 && (this.hasClass(element, 'se-wrapper-wysiwyg') || /^BODY$/i.test(element.nodeName))) return true;
-        return false;
+        return element && element.nodeType === 1 && (this.hasClass(element, 'se-wrapper-wysiwyg') || /^BODY$/i.test(element.nodeName));
+    },
+
+    /**
+     * @description It is judged whether it is the contenteditable property is false.
+     * @param {Node} element The node to check
+     * @returns {Boolean}
+     */
+    isNonEditable: function (element) {
+        return element && element.nodeType === 1 && element.getAttribute('contenteditable') === 'false';
     },
 
     /**
@@ -11779,42 +11806,55 @@ const util_util = {
      * @returns {Boolean}
      */
     isFormatElement: function (element) {
-        return (element && element.nodeType === 1 && (/^(P|DIV|H[1-6]|PRE|LI|TD|TH)$/i.test(element.nodeName) || this.hasClass(element, '(\\s|^)__se__format__replace_.+(\\s|$)|(\\s|^)__se__format__free_.+(\\s|$)')) && !this.isComponent(element) && !this.isWysiwygDiv(element));
+        return element && element.nodeType === 1 && (/^(P|DIV|H[1-6]|PRE|LI|TH|TD)$/i.test(element.nodeName) || this.hasClass(element, '(\\s|^)__se__format__replace_.+(\\s|$)|(\\s|^)__se__format__free_.+(\\s|$)')) && !this.isComponent(element) && !this.isWysiwygDiv(element);
     },
 
     /**
      * @description It is judged whether it is the range format element. (BLOCKQUOTE, OL, UL, FIGCAPTION, TABLE, THEAD, TBODY, TR, TH, TD | class="__se__format__range_xxx")
-     * * Range format element is wrap the format element  (util.isFormatElement)
+     * Range format element is wrap the "format element" and "component"
      * @param {Node} element The node to check
      * @returns {Boolean}
      */
     isRangeFormatElement: function (element) {
-        return (element && element.nodeType === 1 && (/^(BLOCKQUOTE|OL|UL|FIGCAPTION|TABLE|THEAD|TBODY|TR|TH|TD)$/i.test(element.nodeName) || this.hasClass(element, '(\\s|^)__se__format__range_.+(\\s|$)')));
+        return element && element.nodeType === 1 && (/^(BLOCKQUOTE|OL|UL|FIGCAPTION|TABLE|THEAD|TBODY|TR|TH|TD)$/i.test(element.nodeName) || this.hasClass(element, '(\\s|^)__se__format__range_.+(\\s|$)'));
+    },
+
+    /**
+     * @description It is judged whether it is the closure range format element. (TH, TD | class="__se__format__range__closure_xxx")
+     * Closure range format elements is included in the range format element.
+     *  - Closure range format element is wrap the "format element" and "component"
+     * ※ You cannot exit this format with the Enter key or Backspace key.
+     * ※ Use it only in special cases. ([ex] format of table cells)
+     * @param {Node} element The node to check
+     * @returns {Boolean}
+     */
+    isClosureRangeFormatElement: function (element) {
+        return element && element.nodeType === 1 && (/^(TH|TD)$/i.test(element.nodeName) || this.hasClass(element, '(\\s|^)__se__format__range__closure_.+(\\s|$)'));
     },
 
     /**
      * @description It is judged whether it is the free format element. (PRE | class="__se__format__free_xxx")
-     * Free format elements's line break is "BR" tag.
      * Free format elements is included in the format element.
+     * Free format elements's line break is "BR" tag.
      * ※ Entering the Enter key in the space on the last line ends "Free Format" and appends "Format".
      * @param {Node} element The node to check
      * @returns {Boolean}
      */
     isFreeFormatElement: function (element) {
-        return (element && element.nodeType === 1 && (/^PRE$/i.test(element.nodeName) || this.hasClass(element, '(\\s|^)__se__format__free_.+(\\s|$)')) && !this.isComponent(element) && !this.isWysiwygDiv(element));
+        return element && element.nodeType === 1 && (/^PRE$/i.test(element.nodeName) || this.hasClass(element, '(\\s|^)__se__format__free_.+(\\s|$)')) && !this.isComponent(element) && !this.isWysiwygDiv(element);
     },
 
     /**
      * @description It is judged whether it is the closure free format element. (class="__se__format__free__closure_xxx")
-     * Closure free format elements's line break is "BR" tag.
      * Closure free format elements is included in the free format element.
-     * ※ You cannot exit this format with the Enter key.
+     *  - Closure free format elements's line break is "BR" tag.
+     * ※ You cannot exit this format with the Enter key or Backspace key.
      * ※ Use it only in special cases. ([ex] format of table cells)
      * @param {Node} element The node to check
      * @returns {Boolean}
      */
     isClosureFreeFormatElement: function (element) {
-        return (element && element.nodeType === 1 && this.hasClass(element, '(\\s|^)__se__format__free__closure_.+(\\s|$)'));
+        return element && element.nodeType === 1 && this.hasClass(element, '(\\s|^)__se__format__free__closure_.+(\\s|$)');
     },
 
     /**
@@ -12743,8 +12783,8 @@ const util_util = {
                     util_util.removeItem(temp.firstElementChild);
                     if (temp.children.length > 0) newEl.appendChild(temp);
                 } else {
+                    newEl.appendChild(temp);
                 }
-                newEl.appendChild(temp);
             }
 
             while (children[index]) {
@@ -12952,7 +12992,7 @@ const util_util = {
         }
         
         (function recursionFunc(current) {
-            if (inst._notTextNode(current) || current === notRemoveNode || current.getAttribute('contenteditable') === 'false') return 0;
+            if (inst._notTextNode(current) || current === notRemoveNode || inst.isNonEditable(current)) return 0;
             if (current !== element && inst.onlyZeroWidthSpace(current.textContent) && (!current.firstChild || !inst.isBreak(current.firstChild))) {
                 if (current.parentNode) {
                     current.parentNode.removeChild(current);
@@ -13006,7 +13046,7 @@ const util_util = {
      * @private
      */
     _isIgnoreNodeChange: function (element) {
-        return element.nodeType !== 3 && (element.getAttribute('contenteditable') === 'false' || !this.isTextStyleElement(element));
+        return element.nodeType !== 3 && (this.isNonEditable(element) || !this.isTextStyleElement(element));
     },
 
     /**
@@ -13069,6 +13109,7 @@ const util_util = {
          * So check the node type and exclude the text no (current.nodeType !== 1)
          */
         const emptyWhitelistTags = [], emptyTags = [], wrongList = [], withoutFormatCells = [];
+        const compClass = function (current) { return /katex|__se__tag/i.test(current.className); };
         // wrong position
         const wrongTags = this.getListChildNodes(documentFragment, function (current) {
             if (current.nodeType !== 1) return false;
@@ -13079,8 +13120,9 @@ const util_util = {
                 return false;
             }
 
+            const nrtag = !this.getParentElement(current, compClass);
             // empty tags
-            if ((!this.isTable(current) && !this.isListCell(current)) && (this.isFormatElement(current) || this.isRangeFormatElement(current) || this.isTextStyleElement(current)) && current.childNodes.length === 0 && !this.getParentElement(current, '.katex')) {
+            if ((!this.isTable(current) && !this.isListCell(current)) && (this.isFormatElement(current) || this.isRangeFormatElement(current) || this.isTextStyleElement(current)) && current.childNodes.length === 0 && nrtag) {
                 emptyTags.push(current);
                 return false;
             }
@@ -13092,15 +13134,18 @@ const util_util = {
             }
 
             // table cells
-            if (this.isCell(current) && (!this.isFormatElement(current.firstElementChild) || current.textContent.trim().length === 0)) {
-                withoutFormatCells.push(current);
-                return false;
+            if (this.isCell(current)) {
+                const fel = current.firstElementChild;
+                if (!this.isFormatElement(fel) && !this.isRangeFormatElement(fel) && !this.isComponent(fel)) {
+                    withoutFormatCells.push(current);
+                    return false;
+                }
             }
 
             return current.parentNode !== documentFragment &&
              (this.isFormatElement(current) || this.isComponent(current) || this.isList(current)) &&
-             !this.isRangeFormatElement(current.parentNode) && !this.isListCell(current.parentNode) && !this.getParentElement(current, this.isComponent) &&
-             !this.getParentElement(current, '.__se__tag');
+             !this.isRangeFormatElement(current.parentNode) && !this.isListCell(current.parentNode) &&
+             !this.getParentElement(current, this.isComponent) && nrtag;
         }.bind(this));
 
         for (let i in emptyWhitelistTags) {
@@ -14097,7 +14142,7 @@ const _Context = function (element, cons, options) {
 
         core.controllersOff();
         core._checkComponents();
-        core._charCount('');
+        core._setCharCount();
         core._resourcesStateChange();
         
         // onChange
@@ -14139,7 +14184,7 @@ const _Context = function (element, cons, options) {
 
         if (stackIndex === 1 && undo) undo.removeAttribute('disabled');
 
-        core._charCount('');
+        core._setCharCount();
         // onChange
         change();
     }
@@ -14158,7 +14203,7 @@ const _Context = function (element, cons, options) {
          * @param {Boolean|Number} delay If true, delays 400 milliseconds
          */
         push: function (delay) {
-            _w.setTimeout(core._resourcesStateChange);
+            _w.setTimeout(core._resourcesStateChange.bind(core));
             const time = typeof delay === 'number' ? (delay > 0 ? delay : 0) : (!delay ? 0 : 400);
             
             if (!time || pushDelay) {
@@ -14672,6 +14717,12 @@ const _Context = function (element, cons, options) {
         managedTagsInfo: null,
 
         /**
+         * @description cashing: options.charCounterType === 'byte-html'
+         * @private
+         */
+        _charTypeHTML: false,
+
+        /**
          * @description Array of "checkFileInfo" functions with the core bound
          * (Plugins with "checkFileInfo" and "resetFileInfo" methods)
          * "fileInfoPlugins" runs the "add" method when creating the editor.
@@ -15095,7 +15146,7 @@ const _Context = function (element, cons, options) {
             }
 
             event._applyTagEffects();
-            if (core._isBalloon) event._toggleToolbarBalloon();
+            if (this._isBalloon) event._toggleToolbarBalloon();
         },
 
         /**
@@ -15162,7 +15213,7 @@ const _Context = function (element, cons, options) {
             const activePlugins = this.activePlugins;
             for (let key in commandMap) {
                 if (activePlugins.indexOf(key) > -1) {
-                    plugins[key].active.call(core, null);
+                    plugins[key].active.call(this, null);
                 }
                 else if (commandMap.OUTDENT && /^OUTDENT$/i.test(key)) {
                     commandMap.OUTDENT.setAttribute('disabled', true);
@@ -15196,7 +15247,7 @@ const _Context = function (element, cons, options) {
                 const op = util.createElement('P');
                 op.innerHTML = '<br>';
                 wysiwyg.insertBefore(op, wysiwyg.firstElementChild);
-                core.setRange(op.firstElementChild, 0, op.firstElementChild, 1);
+                this.setRange(op.firstElementChild, 0, op.firstElementChild, 1);
                 range = this._variable._range;
             }
             return range;
@@ -15533,9 +15584,14 @@ const _Context = function (element, cons, options) {
          * If "element" is "HR", insert and return the new line.
          * @param {Element} element Element to be inserted
          * @param {Boolean} notHistoryPush When true, it does not update the history stack and the selection object and return EdgeNodes (util.getEdgeChildNodes)
+         * @param {Boolean} checkCharCount If true, if "options.maxCharCount" is exceeded when "element" is added, null is returned without addition.
          * @returns {Element}
          */
-        insertComponent: function (element, notHistoryPush) {
+        insertComponent: function (element, notHistoryPush, checkCharCount) {
+            if (checkCharCount && !this.checkCharCount(element, null)) {
+                return null;
+            }
+
             this.getRange_addLine(this.getRange());
             const r = this.removeNode();
             let oNode = null;
@@ -15543,7 +15599,7 @@ const _Context = function (element, cons, options) {
             let formatEl = util.getFormatElement(selectionNode, null);
 
             if (util.isListCell(formatEl)) {
-                this.insertNode(element, selectionNode === formatEl ? null : r.container.nextSibling);
+                this.insertNode(element, selectionNode === formatEl ? null : r.container.nextSibling, false);
                 if (!element.nextSibling) element.parentNode.appendChild(util.createElement('BR'));
             } else {
                 if (this.getRange().collapsed && (r.container.nodeType === 3 || util.isBreak(r.container))) {
@@ -15551,16 +15607,14 @@ const _Context = function (element, cons, options) {
                     oNode = util.splitElement(r.container, r.offset, !depthFormat ? 0 : util.getElementDepth(depthFormat) + 1);
                     if (oNode) formatEl = oNode.previousSibling;
                 }
-                this.insertNode(element, formatEl);
+                this.insertNode(element, formatEl, false);
                 if (formatEl && util.onlyZeroWidthSpace(formatEl)) util.removeItem(formatEl);
             }
 
             const fileComponentInfo = this.getFileComponent(element);
             if (fileComponentInfo) {
                 this.selectComponent(fileComponentInfo.component, fileComponentInfo.pluginName);
-            } else if (!oNode) {
-                oNode = element;
-            } else {
+            } else if (oNode) {
                 oNode = util.getEdgeChildNodes(oNode, null).sc || oNode;
                 this.setRange(oNode, 0, oNode, 0);
             }
@@ -15568,7 +15622,7 @@ const _Context = function (element, cons, options) {
             // history stack
             if (!notHistoryPush) this.history.push(1);
 
-            return oNode;
+            return oNode || element;
         },
 
         /**
@@ -15582,14 +15636,14 @@ const _Context = function (element, cons, options) {
 
             let fileComponent, pluginName;
             if (/^FIGURE$/i.test(element.nodeName) || /se-component/.test(element.className)) {
-                fileComponent = element.querySelector(core._fileManager.queryString);
+                fileComponent = element.querySelector(this._fileManager.queryString);
             }
-            if (!fileComponent && element.nodeName && core._fileManager.regExp.test(element.nodeName)) {
+            if (!fileComponent && element.nodeName && this._fileManager.regExp.test(element.nodeName)) {
                 fileComponent = element;
             }
 
             if (fileComponent) {
-                pluginName = core._fileManager.pluginMap[fileComponent.nodeName.toLowerCase()];
+                pluginName = this._fileManager.pluginMap[fileComponent.nodeName.toLowerCase()];
                 if (pluginName) {
                     return {
                         component: fileComponent,
@@ -15628,9 +15682,10 @@ const _Context = function (element, cons, options) {
             const b_style = context.element.lineBreaker_b.style;
             element = this.context.resizing.resizeContainer.style.display === 'block' ? this.context.resizing.resizeContainer : element;
 
+            const isList = util.isListCell(container.parentNode);
             let componentTop, wScroll, w;
             // top
-            if (!util.isFormatElement(container.previousElementSibling)) {
+            if (isList ? !container.previousSibling : !util.isFormatElement(container.previousElementSibling)) {
                 this._variable._lineBreakComp = container;
                 wScroll = context.element.wysiwyg.scrollTop;
                 componentTop = util.getOffset(element, context.element.wysiwygFrame).top + wScroll;
@@ -15643,7 +15698,7 @@ const _Context = function (element, cons, options) {
                 t_style.display = 'none';
             }
             // bottom
-            if (!util.isFormatElement(container.nextElementSibling)) {
+            if (isList ? !container.nextSibling : !util.isFormatElement(container.nextElementSibling)) {
                 if (!componentTop) {
                     this._variable._lineBreakComp = container;
                     wScroll = context.element.wysiwyg.scrollTop;
@@ -15660,14 +15715,19 @@ const _Context = function (element, cons, options) {
         },
 
         /**
-         * @description Delete selected node and insert argument value node
+         * @description Delete selected node and insert argument value node and return.
          * If the "afterNode" exists, it is inserted after the "afterNode"
          * Inserting a text node merges with both text nodes on both sides and returns a new "{ startOffset, endOffset }".
          * @param {Node} oNode Element to be inserted
          * @param {Node|null} afterNode If the node exists, it is inserted after the node
-         * @returns {undefined|Object}
+         * @param {Boolean} checkCharCount If true, if "options.maxCharCount" is exceeded when "element" is added, null is returned without addition.
+         * @returns {Object|Node|null}
          */
-        insertNode: function (oNode, afterNode) {
+        insertNode: function (oNode, afterNode, checkCharCount) {
+            if (checkCharCount && !this.checkCharCount(oNode, null)) {
+                return null;
+            }
+
             const isComp = util.isFormatElement(oNode) || util.isRangeFormatElement(oNode) || util.isComponent(oNode);
 
             if (!afterNode && isComp) {
@@ -15845,6 +15905,8 @@ const _Context = function (element, cons, options) {
 
                 // history stack
                 this.history.push(true);
+
+                return oNode;
             }
         },
 
@@ -16240,6 +16302,11 @@ const _Context = function (element, cons, options) {
                             const originNext = originNode.nextElementSibling;
                             const detachRange = util.detachNestedList(originNode, false);
                             if ((rangeElement !== detachRange) || (originNext !== originNode.nextElementSibling)) {
+                                const fChildren = format.childNodes;
+                                while (fChildren[0]) {
+                                    originNode.appendChild(fChildren[0]);
+                                }
+
                                 rangeElement = detachRange;
                                 reset = true;
                             }
@@ -16257,6 +16324,8 @@ const _Context = function (element, cons, options) {
             // detach loop
             for (let i = 0, len = children.length, insNode, lineIndex, next; i < len; i++) {
                 insNode = children[i];
+                if (insNode.nodeType === 3 && util.isList(rangeEl)) continue;
+                
                 moveComplete = false;
                 if (remove && i === 0) {
                     if (!selectedFormats || selectedFormats.length === len || selectedFormats[0] === insNode) {
@@ -16314,26 +16383,30 @@ const _Context = function (element, cons, options) {
                                 insNode = appendNode(parent, insNode, rangeElement, children[i]);
                             }
     
-                            if (selectedFormats) {
-                                lastNode = insNode;
-                                if (!firstNode) {
-                                    firstNode = insNode;
+                            if (!reset) {
+                                if (selectedFormats) {
+                                    lastNode = insNode;
+                                    if (!firstNode) {
+                                        firstNode = insNode;
+                                    }
+                                } else if (!firstNode) {
+                                    firstNode = lastNode = insNode;
                                 }
-                            } else if (!firstNode) {
-                                firstNode = lastNode = insNode;
                             }
                         } else {
                             removeArray.push(insNode);
                             util.removeItem(children[i]);
                         }
-                    } else {
-                        reset = moveComplete = false;
-                        children = util.getListChildNodes(rangeElement, function (current) { return current.parentNode === rangeElement; });
-                        rangeEl = rangeElement.cloneNode(false);
-                        parent = rangeElement.parentNode;
-                        i = -1;
-                        len = children.length;
-                        continue;
+
+                        if (reset) {
+                            reset = moveComplete = false;
+                            children = util.getListChildNodes(rangeElement, function (current) { return current.parentNode === rangeElement; });
+                            rangeEl = rangeElement.cloneNode(false);
+                            parent = rangeElement.parentNode;
+                            i = -1;
+                            len = children.length;
+                            continue;
+                        }
                     }
                 }
             }
@@ -16471,7 +16544,7 @@ const _Context = function (element, cons, options) {
             let range = this.getRange_addLine(this.getRange());
             styleArray = styleArray && styleArray.length > 0 ? styleArray : false;
             removeNodeArray = removeNodeArray && removeNodeArray.length > 0 ? removeNodeArray : false;
-
+            
             const isRemoveNode = !appendNode;
             const isRemoveFormat = isRemoveNode && !removeNodeArray && !styleArray;
             let startCon = range.startContainer;
@@ -16479,7 +16552,7 @@ const _Context = function (element, cons, options) {
             let endCon = range.endContainer;
             let endOff = range.endOffset;
 
-            if ((isRemoveFormat && range.collapsed && util.isFormatElement(startCon.parentNode) && util.isFormatElement(endCon.parentNode)) || (startCon === endCon && startCon.nodeType === 1 && startCon.getAttribute('contenteditable') === 'false')) {
+            if ((isRemoveFormat && range.collapsed && util.isFormatElement(startCon.parentNode) && util.isFormatElement(endCon.parentNode)) || (startCon === endCon && startCon.nodeType === 1 && util.isNonEditable(startCon))) {
                 return;
             }
 
@@ -18014,7 +18087,6 @@ const _Context = function (element, cons, options) {
                     const last = util.getChildElement(wysiwyg.lastChild, function (current) { return current.childNodes.length === 0 || current.nodeType === 3; }, true) || wysiwyg.lastChild;
                     if (!first || !last) return;
                     this.setRange(first, 0, last, last.textContent.length);
-                    this.focus();
                     break;
                 case 'codeView':
                     util.toggleClass(target, 'active');
@@ -18200,7 +18272,7 @@ const _Context = function (element, cons, options) {
 
             this._checkPlaceholder();
 
-            if (typeof functions.toggleCodeView === 'function') functions.toggleCodeView(this._variable.isCodeView, core);
+            if (typeof functions.toggleCodeView === 'function') functions.toggleCodeView(this._variable.isCodeView, this);
         },
 
         /**
@@ -18351,7 +18423,7 @@ const _Context = function (element, cons, options) {
                 util.changeElement(element.firstElementChild, icons.expansion);
             }
 
-            if (typeof functions.toggleFullScreen === 'function') functions.toggleFullScreen(this._variable.isFullScreen, core);
+            if (typeof functions.toggleFullScreen === 'function') functions.toggleFullScreen(this._variable.isFullScreen, this);
         },
 
         /**
@@ -18398,7 +18470,7 @@ const _Context = function (element, cons, options) {
                 );
             }
 
-            core.showLoading();
+            this.showLoading();
             _w.setTimeout(function () {
                 try {
                     iframe.focus();
@@ -18477,13 +18549,13 @@ const _Context = function (element, cons, options) {
             const convertValue = this.convertContentsForEditor(html);
             this._resetComponents();
 
-            if (!core._variable.isCodeView) {
+            if (!this._variable.isCodeView) {
                 context.element.wysiwyg.innerHTML = convertValue;
                 // history stack
-                core.history.push(false);
+                this.history.push(false);
             } else {
                 const value = this.convertHTMLForCodeView(convertValue);
-                core._setCodeView(value);
+                this._setCodeView(value);
             }
         },
 
@@ -18740,18 +18812,16 @@ const _Context = function (element, cons, options) {
          * @private
          */
         _charCount: function (inputText) {
-            const charCounter = context.element.charCounter;
             const maxCharCount = options.maxCharCount;
+            const countType = options.charCounterType;
             let nextCharCount = 0;
-            if (!!inputText) nextCharCount = core._getCharLength(inputText, options.charCounterType);
+            if (!!inputText) nextCharCount = this.getCharLength(inputText, countType);
 
-            if (charCounter) {
-                _w.setTimeout(function () { charCounter.textContent = functions.getCharCount(null); });
-            }
+            this._setCharCount();
 
             if (maxCharCount > 0) {
                 let over = false;
-                const count = functions.getCharCount(null);
+                const count = functions.getCharCount(countType);
                 
                 if (count > maxCharCount) {
                     over = true;
@@ -18770,14 +18840,7 @@ const _Context = function (element, cons, options) {
                 }
 
                 if (over) {
-                    const charWrapper = context.element.charWrapper;
-                    if (charWrapper && !util.hasClass(charWrapper, 'se-blink')) {
-                        util.addClass(charWrapper, 'se-blink');
-                        _w.setTimeout(function () {
-                            util.removeClass(charWrapper, 'se-blink');
-                        }, 600);
-                    }
-
+                    this._callCounterBlink();
                     if (nextCharCount > 0) return false;
                 }
             }
@@ -18786,14 +18849,56 @@ const _Context = function (element, cons, options) {
         },
 
         /**
-         * @description Method used only in "_charCount".
-         * Depending on the option, the length of the character is taken.
+         * @description When "element" is added, if it is greater than "options.maxCharCount", false is returned.
+         * @param {Node|String} element Element node or String.
+         * @param {String|null} charCounterType charCounterType. If it is null, the options.charCounterType
+         * @returns {Boolean}
+         */
+        checkCharCount: function (element, charCounterType) {
+            if (options.maxCharCount) {
+                const countType = charCounterType || options.charCounterType;
+                const length = this.getCharLength((typeof element === 'string' ? element : this._charTypeHTML ? element.outerHTML : element.textContent), countType);
+                if (length > 0 && length + functions.getCharCount(countType) > options.maxCharCount) {
+                    this._callCounterBlink();
+                    return false;
+                }
+            }
+            return true;
+        },
+
+        /**
+         * @description Get the length of the content.
+         * Depending on the option, the length of the character is taken. (charCounterType)
          * @param {String} content Content to count
-         * @param {String} charCounterType option - charCounterType
+         * @param {String} charCounterType options.charCounterType
          * @returns {Number}
          */
-        _getCharLength: function (content, charCounterType) {
+        getCharLength: function (content, charCounterType) {
             return /byte/.test(charCounterType) ? util.getByteLength(content) : content.length;
+        },
+
+        /**
+         * @description Set the char count to charCounter element textContent.
+         * @private
+         */
+        _setCharCount: function () {
+            if (context.element.charCounter) {
+                _w.setTimeout(function () { context.element.charCounter.textContent = functions.getCharCount(options.charCounterType); });
+            }
+        },
+
+        /**
+         * @description The character counter blinks.
+         * @private
+         */
+        _callCounterBlink: function () {
+            const charWrapper = context.element.charWrapper;
+            if (charWrapper && !util.hasClass(charWrapper, 'se-blink')) {
+                util.addClass(charWrapper, 'se-blink');
+                _w.setTimeout(function () {
+                    util.removeClass(charWrapper, 'se-blink');
+                }, 600);
+            }
         },
 
         /**
@@ -18846,6 +18951,8 @@ const _Context = function (element, cons, options) {
         _init: function (reload, _initHTML) {
             this._ww = options.iframe ? context.element.wysiwygFrame.contentWindow : _w;
             this._wd = _d;
+            this._charTypeHTML = options.charCounterType === 'byte-html';
+
             if (options.iframe && options.height === 'auto') this._iframeAuto = this._wd.body;
             
             if (!options.iframe && typeof _w.ShadowRoot === 'function') {
@@ -18946,7 +19053,7 @@ const _Context = function (element, cons, options) {
             this._lineBreakerButton = this._lineBreaker.querySelector('button');
 
             // Excute history function
-            this.history = lib_history(this, event._onChange_historyStack);
+            this.history = lib_history(this, this._onChange_historyStack.bind(this));
 
             // register notice module
             this.addModule([_notice]);
@@ -19011,8 +19118,18 @@ const _Context = function (element, cons, options) {
          * @private
          */
         _resourcesStateChange: function () {
-            core._iframeAutoHeight();
-            core._checkPlaceholder();
+            this._iframeAutoHeight();
+            this._checkPlaceholder();
+        },
+
+        /**
+         * @description Called when after execute "history.push"
+         * @private
+         */
+        _onChange_historyStack: function () {
+            event._applyTagEffects();
+            if (context.tool.save) context.tool.save.removeAttribute('disabled');
+            if (functions.onChange) functions.onChange(this.getContents(true), this);
         },
 
         /**
@@ -19375,7 +19492,7 @@ const _Context = function (element, cons, options) {
         },
 
         onMouseDown_wysiwyg: function (e) {
-            if (context.element.wysiwyg.getAttribute('contenteditable') === 'false') return;
+            if (util.isNonEditable(context.element.wysiwyg)) return;
             
             const tableCell = util.getParentElement(e.target, util.isCell);
             if (tableCell) {
@@ -19391,12 +19508,13 @@ const _Context = function (element, cons, options) {
                 event._hideToolbar();
             }
 
+            if (/FIGURE/i.test(e.target.nodeName)) e.preventDefault();
             if (typeof functions.onMouseDown === 'function') functions.onMouseDown(e, core);
         },
 
         onClick_wysiwyg: function (e) {
             const targetElement = e.target;
-            if (context.element.wysiwyg.getAttribute('contenteditable') === 'false') return;
+            if (util.isNonEditable(context.element.wysiwyg)) return;
 
             const fileComponentInfo = core.getFileComponent(targetElement);
             if (fileComponentInfo) {
@@ -19406,7 +19524,7 @@ const _Context = function (element, cons, options) {
             }
 
             const figcaption = util.getParentElement(targetElement, 'FIGCAPTION');
-            if (figcaption && (!figcaption.getAttribute('contenteditable') || figcaption.getAttribute('contenteditable') === 'false')) {
+            if (util.isNonEditable(figcaption)) {
                 e.preventDefault();
                 figcaption.setAttribute('contenteditable', true);
                 figcaption.focus();
@@ -19429,7 +19547,7 @@ const _Context = function (element, cons, options) {
             const selectionNode = core.getSelectionNode();
             const formatEl = util.getFormatElement(selectionNode, null);
             const rangeEl = util.getRangeFormatElement(selectionNode, null);
-            if (((!formatEl || formatEl === rangeEl) && targetElement.getAttribute('contenteditable') !== 'false')) {
+            if ((!formatEl || formatEl === rangeEl) && !util.isNonEditable(targetElement)) {
                 const range = core.getRange();
                 if (util.getFormatElement(range.startContainer) === util.getFormatElement(range.endContainer)) {
                     if (util.isList(rangeEl)) {
@@ -19514,7 +19632,7 @@ const _Context = function (element, cons, options) {
                 const node = core.getSelectionNode();
                 if (util.isFormatElement(node)) {
                     const zeroWidth = util.createTextNode(util.zeroWidthSpace);
-                    core.insertNode(zeroWidth, null);
+                    core.insertNode(zeroWidth, null, false);
                     core.setRange(zeroWidth, 1, zeroWidth, 1);
                     core._editorRange();
                     rects = core.getRange().getClientRects();
@@ -19695,17 +19813,28 @@ const _Context = function (element, cons, options) {
                         return false;
                     }
 
-                    if (!selectRange && !formatEl.previousElementSibling && (util.isWysiwygDiv(formatEl.parentNode) && (util.isFormatElement(formatEl) && !util.isFreeFormatElement(formatEl)) && !util.isListCell(formatEl) &&
-                     (formatEl.childNodes.length <= 1 && (!formatEl.firstChild || util.onlyZeroWidthSpace(formatEl.textContent))))) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        formatEl.innerHTML = '<br>';
-                        const attrs = formatEl.attributes;
-                        while (attrs[0]) {
-                            formatEl.removeAttribute(attrs[0].name);
+                    if (!selectRange && !formatEl.previousElementSibling && (range.startOffset === 0 && !selectionNode.previousSibling && !util.isListCell(formatEl) && 
+                     (util.isFormatElement(formatEl) && (!util.isFreeFormatElement(formatEl) || util.isClosureFreeFormatElement(formatEl))))) {
+                        // closure range
+                        if (util.isClosureRangeFormatElement(formatEl.parentNode)) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            return false;
                         }
-                        core.nativeFocus();
-                        return false;
+                        // maintain default format
+                        if (util.isWysiwygDiv(formatEl.parentNode) && formatEl.childNodes.length <= 1 && (!formatEl.firstChild || util.onlyZeroWidthSpace(formatEl.textContent))) {
+                            e.preventDefault();
+                            e.stopPropagation();
+
+                            formatEl.innerHTML = '<br>';
+                            const attrs = formatEl.attributes;
+                            while (attrs[0]) {
+                                formatEl.removeAttribute(attrs[0].name);
+                            }
+                            core.nativeFocus();
+
+                            return false;
+                        }
                     }
 
                     // clean remove tag
@@ -19815,8 +19944,11 @@ const _Context = function (element, cons, options) {
                     }
 
                     // component
-                    if (!selectRange && range.startOffset === 0) {
-                        if (util.isComponent(commonCon.previousSibling) || (commonCon.nodeType === 3 && !commonCon.previousSibling && range.startOffset === 0 && range.endOffset === 0 && util.isComponent(formatEl.previousSibling))) {
+                    if (!selectRange && (range.startOffset === 0 || (selectionNode === formatEl ? !!formatEl.childNodes[range.startOffset] : false))) {
+                        const sel = selectionNode === formatEl ? formatEl.childNodes[range.startOffset] : selectionNode;
+                        // select file component
+                        const ignoreZWS = (commonCon.nodeType === 3 || util.isBreak(commonCon)) && !commonCon.previousSibling && range.startOffset === 0;
+                        if (!sel.previousSibling && (util.isComponent(commonCon.previousSibling) || (ignoreZWS && util.isComponent(formatEl.previousSibling)))) {
                             const fileComponentInfo = core.getFileComponent(formatEl.previousSibling);
                             if (fileComponentInfo) {
                                 e.preventDefault();
@@ -19824,6 +19956,13 @@ const _Context = function (element, cons, options) {
                                 if (formatEl.textContent.length === 0) util.removeItem(formatEl);
                                 core.selectComponent(fileComponentInfo.component, fileComponentInfo.pluginName);
                             }
+                            break;
+                        }
+                        // delete nonEditable
+                        if (util.isNonEditable(sel.previousSibling)) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            util.removeItem(sel.previousSibling);
                             break;
                         }
                     }
@@ -19865,13 +20004,24 @@ const _Context = function (element, cons, options) {
                                 }
                             }
 
-                            // component
+                            // select file component
                             const fileComponentInfo = core.getFileComponent(nextEl);
                             if (fileComponentInfo) {
                                 e.stopPropagation();
                                 core.selectComponent(fileComponentInfo.component, fileComponentInfo.pluginName);
                             }
 
+                            break;
+                        }
+                    }
+
+                    if (!selectRange && (core.isEdgePoint(range.endContainer, range.endOffset) || (selectionNode === formatEl ? !!formatEl.childNodes[range.startOffset] : false))) {
+                        const sel = selectionNode === formatEl ? formatEl.childNodes[range.startOffset] : selectionNode;
+                        // delete nonEditable
+                        if (util.isNonEditable(sel.nextSibling)) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            util.removeItem(sel.nextSibling);
                             break;
                         }
                     }
@@ -19968,7 +20118,8 @@ const _Context = function (element, cons, options) {
                         if (!shift) {
                             const tabText = util.createTextNode(new _w.Array(core._variable.tabSize + 1).join('\u00A0'));
                             if (lines.length === 1) {
-                                const textRange = core.insertNode(tabText, null);
+                                const textRange = core.insertNode(tabText, null, true);
+                                if (!textRange) return false;
                                 if (!fc) {
                                     r.sc = tabText;
                                     r.so = textRange.endOffset;
@@ -20040,6 +20191,21 @@ const _Context = function (element, cons, options) {
                     break;
                 case 13: /** enter key */
                     const freeFormatEl = util.getFreeFormatElement(selectionNode, null);
+
+                    if (core._charTypeHTML) {
+                        let enterHTML = '';
+                        if ((!shift && freeFormatEl) || shift) {
+                            enterHTML = '<br>';
+                        } else {
+                            enterHTML = '<' + formatEl.nodeName + '><br></' + formatEl.nodeName + '>';
+                        }
+
+                        if (!core.checkCharCount(enterHTML, 'byte-html')) {
+                            e.preventDefault();
+                            return false;
+                        }
+                    }
+
                     if (!shift && freeFormatEl) {
                         e.preventDefault();
                         const selectionFormat = selectionNode === freeFormatEl;
@@ -20057,7 +20223,7 @@ const _Context = function (element, cons, options) {
                         }
                         
                         if (selectionFormat) {
-                            functions.insertHTML(((range.collapsed && util.isBreak(range.startContainer.childNodes[range.startOffset - 1])) ? '<br>' : '<br><br>'), true);
+                            functions.insertHTML(((range.collapsed && util.isBreak(range.startContainer.childNodes[range.startOffset - 1])) ? '<br>' : '<br><br>'), true, false);
 
                             let focusNode = wSelection.focusNode;
                             const wOffset = wSelection.focusOffset;
@@ -20069,7 +20235,7 @@ const _Context = function (element, cons, options) {
                         } else {
                             const focusNext = wSelection.focusNode.nextSibling;
                             const br = util.createElement('BR');
-                            core.insertNode(br, null);
+                            core.insertNode(br, null, false);
 
                             const brPrev = br.previousSibling, brNext = br.nextSibling;
                             if (!util.isBreak(focusNext) && !util.isBreak(brPrev) && (!brNext || util.onlyZeroWidthSpace(brNext))) {
@@ -20088,15 +20254,32 @@ const _Context = function (element, cons, options) {
                     
                     if (rangeEl && formatEl && !util.isCell(rangeEl) && !/^FIGCAPTION$/i.test(rangeEl.nodeName)) {
                         const range = core.getRange();
+                        if(core.isEdgePoint(range.endContainer, range.endOffset) && util.isList(selectionNode.nextSibling)) {
+                            e.preventDefault();
+                            const newEl = util.createElement('LI');
+                            const br = util.createElement('BR');
+                            newEl.appendChild(br);
+
+                            formatEl.parentNode.insertBefore(newEl, formatEl.nextElementSibling);
+                            newEl.appendChild(selectionNode.nextSibling);
+                            
+                            core.setRange(br, 1, br, 1);
+                            break;
+                        }
+
                         if ((range.commonAncestorContainer.nodeType === 3 ? !range.commonAncestorContainer.nextElementSibling : true) && util.onlyZeroWidthSpace(formatEl.innerText.trim())) {
                             e.preventDefault();
                             let newEl = null;
 
                             if (util.isListCell(rangeEl.parentNode)) {
                                 rangeEl = formatEl.parentNode.parentNode.parentNode;
-                                const splitRange = util.splitElement(formatEl, null, util.getElementDepth(formatEl) - 2);
-                                newEl = util.createElement('LI');
-                                rangeEl.insertBefore(newEl, splitRange);
+                                newEl = util.splitElement(formatEl, null, util.getElementDepth(formatEl) - 2);
+                                if (!newEl) {
+                                    const newListCell = util.createElement('LI');
+                                    newListCell.innerHTML = '<br>';
+                                    rangeEl.insertBefore(newListCell, newEl);
+                                    newEl = newListCell;
+                                }
                             } else {
                                 const newFormat = util.isCell(rangeEl.parentNode) ? 'DIV' : util.isList(rangeEl.parentNode) ? 'LI' : util.isFormatElement(rangeEl.nextElementSibling) ? rangeEl.nextElementSibling.nodeName : util.isFormatElement(rangeEl.previousElementSibling) ? rangeEl.previousElementSibling.nodeName : 'P';
                                 newEl = util.createElement(newFormat);
@@ -20167,7 +20350,7 @@ const _Context = function (element, cons, options) {
             const textKey = !ctrl && !alt && !selectRange && !event._nonTextKeyCode.test(keyCode);
             if (textKey && range.collapsed && range.startContainer === range.endContainer && util.isBreak(range.commonAncestorContainer)) {
                 const zeroWidth = util.createTextNode(util.zeroWidthSpace);
-                core.insertNode(zeroWidth, null);
+                core.insertNode(zeroWidth, null, false);
                 core.setRange(zeroWidth, 1, zeroWidth, 1);
             }
 
@@ -20546,7 +20729,7 @@ const _Context = function (element, cons, options) {
             }
 
             cleanData = core.cleanHTML(cleanData, core.pasteTagsWhitelistRegExp);
-            const maxCharCount = core._charCount(options.charCounterType === 'byte-html' ? cleanData : plainText);
+            const maxCharCount = core._charCount(core._charTypeHTML ? cleanData : plainText);
 
             // paste event
             if (type === 'paste' && typeof functions.onPaste === 'function' && !functions.onPaste(e, cleanData, maxCharCount, core)) {
@@ -20571,7 +20754,7 @@ const _Context = function (element, cons, options) {
             }
 
             if (cleanData) {
-                functions.insertHTML(cleanData, true);
+                functions.insertHTML(cleanData, true, false);
                 return false;
             }
         },
@@ -20595,11 +20778,12 @@ const _Context = function (element, cons, options) {
                 const y = e.pageY + scrollTop + (options.iframe && !options.toolbarContainer ? context.element.toolbar.offsetHeight : 0);
                 const c = componentTop + (options.iframe ? scrollTop : offsets.top);
 
+                const isList = util.isListCell(component.parentNode);
                 let dir = '', top = '';
-                if (!util.isFormatElement(component.previousElementSibling) && y < (c + 20)) {
+                if ((isList ? !component.previousSibling : !util.isFormatElement(component.previousElementSibling)) && y < (c + 20)) {
                     top = componentTop;
                     dir = 't';
-                } else if (!util.isFormatElement(component.nextElementSibling) && y > (c + component.offsetHeight - 20)) {
+                } else if ((isList ? !component.nextSibling : !util.isFormatElement(component.nextElementSibling)) && y > (c + component.offsetHeight - 20)) {
                     top = componentTop + component.offsetHeight;
                     dir = 'b';
                 } else {
@@ -20610,7 +20794,7 @@ const _Context = function (element, cons, options) {
                 core._variable._lineBreakComp = component;
                 core._variable._lineBreakDir = dir;
                 lineBreakerStyle.top = (top - wScroll) + 'px';
-                core._lineBreakerButton.style.left = (util.getOffset(component).left + (component.offsetWidth / 2) - 17) + 'px';
+                core._lineBreakerButton.style.left = (util.getOffset(component).left + (component.offsetWidth / 2) - 15) + 'px';
                 lineBreakerStyle.display = 'block';
             } // off line breaker
             else if (lineBreakerStyle.display !== 'none') {
@@ -20624,25 +20808,24 @@ const _Context = function (element, cons, options) {
 
         _onLineBreak: function (e) {
             e.preventDefault();
+            
             const component = core._variable._lineBreakComp;
             const dir = !this ? core._variable._lineBreakDir : this;
+            const isList = util.isListCell(component.parentNode);
 
-            const format = util.createElement('P');
-            format.innerHTML = '<br>';
+            const format = util.createElement(isList ? 'BR' : util.isCell(component.parentNode) ? 'DIV' : 'P');
+            if (!isList) format.innerHTML = '<br>';
+
+            if (core._charTypeHTML && !core.checkCharCount(format.outerHTML, 'byte-html')) return;
+
             component.parentNode.insertBefore(format, dir === 't' ? component : component.nextSibling);
-
             core._lineBreaker.style.display = 'none';
             core._variable._lineBreakComp = null;
 
-            core.setRange(format.firstChild, 1, format.firstChild, 1);
+            const focusEl = isList ? format : format.firstChild;
+            core.setRange(focusEl, 1, focusEl, 1);
             // history stack
             core.history.push(false);
-        },
-
-        _onChange_historyStack: function () {
-            event._applyTagEffects();
-            if (context.tool.save) context.tool.save.removeAttribute('disabled');
-            if (functions.onChange) functions.onChange(core.getContents(true), core);
         },
 
         _addEvent: function () {
@@ -20836,6 +21019,29 @@ const _Context = function (element, cons, options) {
         imageUploadHandler: null,
 
         /**
+         * @description It replaces the default callback function of the video upload
+         * @param xmlHttp xmlHttpRequest object
+         * @param info Input information
+         * - inputWidth: Value of width input
+         * - inputHeight: Value of height input
+         * - align: Align Check Value
+         * - isUpdate: Update video if true, create video if false
+         * - element: If isUpdate is true, the currently selected video.
+         * @param core Core object
+         */
+        videoUploadHandler: null,
+
+        /**
+         * @description It replaces the default callback function of the audio upload
+         * @param xmlHttp xmlHttpRequest object
+         * @param info Input information
+         * - isUpdate: Update audio if true, create audio if false
+         * - element: If isUpdate is true, the currently selected audio.
+         * @param core Core object
+         */
+        audioUploadHandler: null,
+
+        /**
          * @description Called before the image is uploaded
          * If false is returned, no image upload is performed.
          * If new fileList are returned,  replaced the previous fileList
@@ -20855,6 +21061,13 @@ const _Context = function (element, cons, options) {
          *                [upload files] : uploadHandler(files or [new File(...),])
          *                [error]        : uploadHandler("Error message")
          *                [Just finish]  : uploadHandler()
+         * @example Also you can call directly image register not execute "uploadHandler"
+                This work is not execute default upload handler
+                const response = { // Same format as "imageUploadUrl" response
+                    "errorMessage": "insert error message",
+                    "result": [ { "url": "...", "name": "...", "size": "999" }, ]
+                };
+                core.plugins.image.register.call(core, info, response);
          * @returns {Boolean|Array|undefined}
          */
         onImageUploadBefore: null,
@@ -20876,6 +21089,13 @@ const _Context = function (element, cons, options) {
          *                [upload files] : uploadHandler(files or [new File(...),])
          *                [error]        : uploadHandler("Error message")
          *                [Just finish]  : uploadHandler()
+         * @example Also you can call directly video register not execute "uploadHandler"
+                This work is not execute default upload handler
+                const response = { // Same format as "videoUploadUrl" response
+                    "errorMessage": "insert error message",
+                    "result": [ { "url": "...", "name": "...", "size": "999" }, ]
+                };
+                core.plugins.video.register.call(core, info, response);
          * @returns {Boolean|Array|undefined}
          */
         onVideoUploadBefore: null,
@@ -20894,6 +21114,13 @@ const _Context = function (element, cons, options) {
          *                [upload files] : uploadHandler(files or [new File(...),])
          *                [error]        : uploadHandler("Error message")
          *                [Just finish]  : uploadHandler()
+         * @example Also you can call directly audio register not execute "uploadHandler"
+                This work is not execute default upload handler
+                const response = { // Same format as "audioUploadUrl" response
+                    "errorMessage": "insert error message",
+                    "result": [ { "url": "...", "name": "...", "size": "999" }, ]
+                };
+                core.plugins.audio.register.call(core, info, response);
          * @returns {Boolean|Array|undefined}
          */
         onAudioUploadBefore: null,
@@ -21038,7 +21265,7 @@ const _Context = function (element, cons, options) {
             // initialize core and add event listeners
             core._init(true, _initHTML);
             event._addEvent();
-            core._charCount('');
+            core._setCharCount();
             event._offStickyToolbar();
             event.onResize_window();
         },
@@ -21107,7 +21334,7 @@ const _Context = function (element, cons, options) {
          */
         getCharCount: function (charCounterType) {
             charCounterType = typeof charCounterType === 'string' ? charCounterType : options.charCounterType;
-            return core._getCharLength((charCounterType === 'byte-html' ? context.element.wysiwyg.innerHTML : context.element.wysiwyg.textContent), charCounterType);
+            return core.getCharLength((core._charTypeHTML ? context.element.wysiwyg.innerHTML : context.element.wysiwyg.textContent), charCounterType);
         },
 
         /**
@@ -21159,16 +21386,27 @@ const _Context = function (element, cons, options) {
          * @description Inserts an HTML element or HTML string or plain string at the current cursor position
          * @param {Element|String} html HTML Element or HTML string or plain string
          * @param {Boolean} notCleaningData If true, inserts the HTML string without refining it with core.cleanHTML.
+         * @param {Boolean} checkCharCount If true, if "options.maxCharCount" is exceeded when "element" is added, null is returned without addition.
          */
-        insertHTML: function (html, notCleaningData) {
+        insertHTML: function (html, notCleaningData, checkCharCount) {
             if (typeof html === 'string') {
                 if (!notCleaningData) html = core.cleanHTML(html, null);
                 try {
                     const dom = _d.createRange().createContextualFragment(html);
                     const domTree = dom.childNodes;
+
+                    if (checkCharCount) {
+                        const type = core._charTypeHTML ? 'outerHTML' : 'textContent';
+                        let checkHTML = '';
+                        for (let i = 0, len = domTree.length; i < len; i++) {
+                            checkHTML += domTree[i][type];
+                        }
+                        if (!core.checkCharCount(checkHTML, null)) return;
+                    }
+
                     let c, a, t;
                     while ((c = domTree[0])) {
-                        t = core.insertNode(c, a);
+                        t = core.insertNode(c, a, false);
                         a = c;
                     }
                     const offset = a.nodeType === 3 ? (t.endOffset || a.textContent.length): a.childNodes.length;
@@ -21178,13 +21416,13 @@ const _Context = function (element, cons, options) {
                 }
             } else {
                 if (util.isComponent(html)) {
-                    core.insertComponent(html, false);
+                    core.insertComponent(html, false, checkCharCount);
                 } else {
                     let afterNode = null;
                     if (util.isFormatElement(html) || util.isMedia(html)) {
                         afterNode = util.getFormatElement(core.getSelectionNode(), null);	
                     }
-                    core.insertNode(html, afterNode);
+                    core.insertNode(html, afterNode, checkCharCount);
                 }
             }
             
@@ -21350,7 +21588,7 @@ const _Context = function (element, cons, options) {
     // initialize core and add event listeners
     core._init(false, null);
     event._addEvent();
-    core._charCount('');
+    core._setCharCount();
     event._offStickyToolbar();
     event.onResize_window();
 
