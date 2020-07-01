@@ -54,7 +54,7 @@ export default interface SetOptions {
     mode?: string;
     lang?: object;
     linkProtocol?: string;
-    icons: object;
+    icons?: object;
     attributesWhitelist?: object;
     pasteTagsWhitelist?: string;
     imageGalleryUrl?: string;

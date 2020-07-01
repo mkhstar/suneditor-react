@@ -11505,7 +11505,7 @@ var external_react_default = /*#__PURE__*/__webpack_require__.n(external_react_)
    mirror_horizontal: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 14.75 15.74"><g><path d="M13.75,3.76l5.9,15.74h-5.9V3.76ZM4.9,19.5,10.8,3.76V19.5H4.9Z" transform="translate(-4.9 -3.76)"/></g></svg>',
    mirror_vertical: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.74 14.75"><g><path d="M20.15,13.1,4.41,19V13.1H20.15ZM4.41,4.25l15.74,5.9H4.41V4.25Z" transform="translate(-4.41 -4.25)"/></g></svg>',
    checked: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.75 12.1"><g><path d="M4.59,12.23l.12.18L9.43,17.5a.58.58,0,0,0,.84,0L20,7.45h0a.58.58,0,0,0,0-.84l-.85-.85a.58.58,0,0,0-.84,0H18.2l-8.12,8.41a.29.29,0,0,1-.42,0l-3.4-3.63a.58.58,0,0,0-.84,0l-.85.85a.6.6,0,0,0-.14.21.51.51,0,0,0,0,.44c.05.06.1.13.16.19Z" transform="translate(-4.38 -5.58)"/></g></svg>',
-   line_break: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 21L14.9 3H17L9.1 21H7Z" /></svg>',
+   line_break: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19,6a1,1,0,0,0-1,1v4a1,1,0,0,1-1,1H7.41l1.3-1.29A1,1,0,0,0,7.29,9.29l-3,3a1,1,0,0,0-.21.33,1,1,0,0,0,0,.76,1,1,0,0,0,.21.33l3,3a1,1,0,0,0,1.42,0,1,1,0,0,0,0-1.42L7.41,14H17a3,3,0,0,0,3-3V7A1,1,0,0,0,19,6Z"/></svg>',
    audio: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14,3.23V5.29C16.89,6.15 19,8.83 19,12C19,15.17 16.89,17.84 14,18.7V20.77C18,19.86 21,16.28 21,12C21,7.72 18,4.14 14,3.23M16.5,12C16.5,10.23 15.5,8.71 14,7.97V16C15.5,15.29 16.5,13.76 16.5,12M3,9V15H7L12,20V4L7,9H3Z" /></svg>',
    image_gallery: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="30 30 150 150"><g><path d="M152.775,120.548V51.651c0-12.271-9.984-22.254-22.254-22.254H43.727c-12.271,0-22.254,9.983-22.254,22.254v68.896c0,12.27,9.983,22.254,22.254,22.254h86.795C142.791,142.802,152.775,132.817,152.775,120.548z M36.394,51.651c0-4.042,3.291-7.333,7.333-7.333h86.795c4.042,0,7.332,3.291,7.332,7.333v23.917l-14.938-17.767c-1.41-1.678-3.487-2.649-5.68-2.658h-0.029c-2.184,0-4.255,0.954-5.674,2.613L76.709,98.519l-9.096-9.398c-1.427-1.474-3.392-2.291-5.448-2.273c-2.052,0.025-4.004,0.893-5.396,2.4L36.394,111.32V51.651z M41.684,127.585l20.697-22.416l9.312,9.622c1.461,1.511,3.489,2.334,5.592,2.27c2.101-0.066,4.075-1.013,5.44-2.612l34.436-40.308l20.693,24.613v21.794c0,4.042-3.29,7.332-7.332,7.332H43.727C43.018,127.88,42.334,127.775,41.684,127.585z M182.616,152.5V75.657c0-4.12-3.34-7.46-7.461-7.46c-4.119,0-7.46,3.34-7.46,7.46V152.5c0,4.112-3.347,7.46-7.461,7.46h-94c-4.119,0-7.46,3.339-7.46,7.459c0,4.123,3.341,7.462,7.46,7.462h94C172.576,174.881,182.616,164.841,182.616,152.5z"/></g></svg>',
    // More icons
@@ -13195,12 +13195,80 @@ const util_util = {
         }
     },
 
-    _setDefaultOptionStyle: function (options) {
+    _setDefaultOptionStyle: function (options, defaultStyle) {
         let optionStyle = '';
         if (options.height) optionStyle += 'height:' + options.height + ';';
         if (options.minHeight) optionStyle += 'min-height:' + options.minHeight + ';';
         if (options.maxHeight) optionStyle += 'max-height:' + options.maxHeight + ';';
-        return optionStyle;
+        if (options.position) optionStyle += 'position:' + options.position + ';';
+        if (options.width) optionStyle += 'width:' + options.width + ';';
+        if (options.minWidth) optionStyle += 'min-width:' + options.minWidth + ';';
+        if (options.maxWidth) optionStyle += 'max-width:' + options.maxWidth + ';';
+
+        let top = '', frame = '', editor = '';
+        defaultStyle = optionStyle + defaultStyle;
+        const styleArr = defaultStyle.split(';');
+        for (let i = 0, len = styleArr.length, s; i < len; i++) {
+            s = styleArr[i].trim();
+            if (!s) continue;
+            if (/^(min-|max-)?width\s*:/.test(s)) {
+                top += s + ';';
+                continue;
+            }
+            if (/^(min-|max-)?height\s*:/.test(s)) {
+                if (/^height/.test(s) && s.split(':')[1].trim() === 'auto') {
+                    options.height = 'auto';
+                }
+                frame += s + ';';
+                continue;
+            }
+            editor += s + ';';
+        }
+
+        return {
+            top: top,
+            frame: frame,
+            editor: editor
+        };
+    },
+
+    _setIframeDocument: function (frame, options) {
+        frame.setAttribute('scrolling', 'auto');
+        frame.contentDocument.head.innerHTML = '' +
+            '<meta charset="utf-8" />' +
+            '<meta name="viewport" content="width=device-width, initial-scale=1">' +
+            '<title></title>' + 
+            this._setIframeCssTags(options);
+        frame.contentDocument.body.className = 'sun-editor-editable';
+        frame.contentDocument.body.setAttribute('contenteditable', true);
+    },
+
+    _setIframeCssTags: function (options) {
+        const linkNames = options.iframeCSSFileName;
+        const wRegExp = this._w.RegExp;
+        let tagString = '';
+
+        for (let f = 0, len = linkNames.length, path; f < len; f++) {
+            path = [];
+
+            if (/(^https?:\/\/)|(^data:text\/css,)/.test(linkNames[f])) {
+                path.push(linkNames[f]);
+            } else {
+                const CSSFileName = new wRegExp('(^|.*[\\/])' + linkNames[f] + '(\\..+)?\\.css(?:\\?.*|;.*)?$', 'i');
+                for (let c = document.getElementsByTagName('link'), i = 0, len = c.length, styleTag; i < len; i++) {
+                    styleTag = c[i].href.match(CSSFileName);
+                    if (styleTag) path.push(styleTag[0]);
+                }
+            }
+
+            if (!path || path.length === 0) throw '[SUNEDITOR.constructor.iframe.fail] The suneditor CSS files installation path could not be automatically detected. Please set the option property "iframeCSSFileName" before creating editor instances.';
+
+            for (let i = 0, len = path.length; i < len; i++) {
+                tagString += '<link href="' + path[i] + '" rel="stylesheet">';
+            }
+        }
+
+        return tagString + (options.height === 'auto' ? '<style>\n/** Iframe height auto */\nbody{height: min-content; overflow: hidden;}\n</style>' : '');
     }
 };
 
@@ -13298,7 +13366,6 @@ const util_util = {
         }
     
         /** append html */
-        editor_div.appendChild(wysiwyg_div);
         editor_div.appendChild(textarea);
         if (placeholder_span) editor_div.appendChild(placeholder_span);
         if (!toolbarContainer) relative.appendChild(tool_bar.element);
@@ -13448,20 +13515,17 @@ const util_util = {
 
         if (el.resizingBar) relative.removeChild(el.resizingBar);
         if (bottomBar.resizingBar) relative.appendChild(bottomBar.resizingBar);
+
+        editorArea.innerHTML = '';
+        editorArea.appendChild(code);
+        if (placeholder_span) editorArea.appendChild(placeholder_span);
+
+        code = this._checkCodeMirror(mergeOptions, code);
         
         el.resizingBar = bottomBar.resizingBar;
         el.navigation = bottomBar.navigation;
         el.charWrapper = bottomBar.charWrapper;
         el.charCounter = bottomBar.charCounter;
-
-        editorArea.innerHTML = '';
-        editorArea.appendChild(wysiwygFrame);
-        editorArea.appendChild(code);
-
-        if (placeholder_span) editorArea.appendChild(placeholder_span);
-
-        code = this._checkCodeMirror(mergeOptions, code);
-
         el.wysiwygFrame = wysiwygFrame;
         el.code = code;
         el.placeholder = placeholder_span;
@@ -13484,11 +13548,7 @@ const util_util = {
      */
     _initElements: function (options, topDiv, toolBar, toolBarArrow) {
         /** top div */
-        topDiv.style.width = options.width;
-        topDiv.style.minWidth = options.minWidth;
-        topDiv.style.maxWidth = options.maxWidth;
-        topDiv.style.display = options.display;
-        if (typeof options.position === 'string') topDiv.style.position = options.position;
+        topDiv.style.cssText = options._editorStyles.top;
 
         /** toolbar */
         if (/inline/i.test(options.mode)) {
@@ -13509,59 +13569,18 @@ const util_util = {
             wysiwygDiv.setAttribute('contenteditable', true);
             wysiwygDiv.setAttribute('scrolling', 'auto');
             wysiwygDiv.className += ' sun-editor-editable';
+            wysiwygDiv.style.cssText = options._editorStyles.frame + options._editorStyles.editor;
         } else {
-            const cssTags = (function () {
-                const linkNames = options.iframeCSSFileName;
-                let tagString = '';
-
-                for (let f = 0, len = linkNames.length, path; f < len; f++) {
-                    path = [];
-
-                    if (/(^https?:\/\/)|(^data:text\/css,)/.test(linkNames[f])) {
-                        path.push(linkNames[f]);
-                    } else {
-                        const CSSFileName = new RegExp('(^|.*[\\/])' + linkNames[f] + '(\\..+)?\\.css(?:\\?.*|;.*)?$', 'i');
-        
-                        for (let c = document.getElementsByTagName('link'), i = 0, len = c.length, styleTag; i < len; i++) {
-                            styleTag = c[i].href.match(CSSFileName);
-                            if (styleTag) path.push(styleTag[0]);
-                        }
-                    }
-        
-                    if (!path || path.length === 0) throw '[SUNEDITOR.constructor.iframe.fail] The suneditor CSS files installation path could not be automatically detected. Please set the option property "iframeCSSFileName" before creating editor instances.';
-        
-                    for (let i = 0, len = path.length; i < len; i++) {
-                        tagString += '<link href="' + path[i] + '" rel="stylesheet">';
-                    }
-                }
-
-                return tagString;
-            })() + (options.height === 'auto' ? '<style>\n/** Iframe height auto */\nbody{height: min-content; overflow: hidden;}\n</style>' : '');
-
             wysiwygDiv.allowFullscreen = true;
             wysiwygDiv.frameBorder = 0;
-            wysiwygDiv.addEventListener('load', function () {
-                this.setAttribute('scrolling', 'auto');
-                this.contentDocument.head.innerHTML = '' +
-                    '<meta charset="utf-8" />' +
-                    '<meta name="viewport" content="width=device-width, initial-scale=1">' +
-                    '<title></title>' + 
-                    cssTags;
-                this.contentDocument.body.className = 'sun-editor-editable';
-                this.contentDocument.body.setAttribute('contenteditable', true);
-            });
+            wysiwygDiv.style.cssText = options._editorStyles.frame;
         }
-        
-        wysiwygDiv.style.cssText = lib_util._setDefaultOptionStyle(options);
 
         // textarea for code view
         const textarea = document.createElement('TEXTAREA');
         textarea.className = 'se-wrapper-inner se-wrapper-code';
+        textarea.style.cssText = options._editorStyles.frame;
         textarea.style.display = 'none';
-
-        textarea.style.height = options.height;
-        textarea.style.minHeight = options.minHeight;
-        textarea.style.maxHeight = options.maxHeight;
         if (options.height === 'auto') textarea.style.overflow = 'hidden';
 
         /** resize bar */
@@ -13669,7 +13688,7 @@ const util_util = {
         options.minHeight = (lib_util.isNumber(options.minHeight) ? options.minHeight + 'px' : options.minHeight) || '';
         options.maxHeight = (lib_util.isNumber(options.maxHeight) ? options.maxHeight + 'px' : options.maxHeight) || '';
         /** Editing area default style */
-        options.defaultStyle = lib_util._setDefaultOptionStyle(options) + (typeof options.defaultStyle === 'string' ? options.defaultStyle : '');
+        options.defaultStyle = typeof options.defaultStyle === 'string' ? options.defaultStyle : '';
         /** Defining menu items */
         options.font = !options.font ? null : options.font;
         options.fontSize = !options.fontSize ? null : options.fontSize;
@@ -13754,6 +13773,9 @@ const util_util = {
             }
             return _default;
         }, {});
+
+        /** _init options */
+        options._editorStyles = lib_util._setDefaultOptionStyle(options, options.defaultStyle);
     },
 
     /**
@@ -13778,9 +13800,9 @@ const util_util = {
             removeFormat: ['', lang.toolbar.removeFormat, 'removeFormat', '', icons.erase],
             indent: ['_se_command_indent', lang.toolbar.indent + (shortcutsDisable.indexOf('indent') > -1 ? '' : ' (' + cmd + '+])'), 'indent', '', icons.outdent],
             outdent: ['_se_command_outdent', lang.toolbar.outdent + (shortcutsDisable.indexOf('indent') > -1 ? '' : ' (' + cmd + '+[)'), 'outdent', '', icons.indent],
-            fullScreen: ['se-code-view-enabled se-resizing-enabled', lang.toolbar.fullScreen, 'fullScreen', '', icons.expansion],
-            showBlocks: ['', lang.toolbar.showBlocks, 'showBlocks', '', icons.show_blocks],
-            codeView: ['se-code-view-enabled se-resizing-enabled', lang.toolbar.codeView, 'codeView', '', icons.code_view],
+            fullScreen: ['se-code-view-enabled se-resizing-enabled _se_command_fullScreen', lang.toolbar.fullScreen, 'fullScreen', '', icons.expansion],
+            showBlocks: ['_se_command_showBlocks', lang.toolbar.showBlocks, 'showBlocks', '', icons.show_blocks],
+            codeView: ['se-code-view-enabled se-resizing-enabled _se_command_codeView', lang.toolbar.codeView, 'codeView', '', icons.code_view],
             undo: ['_se_command_undo se-resizing-enabled', lang.toolbar.undo + (shortcutsDisable.indexOf('undo') > -1 ? '' : ' (' + cmd + '+Z)'), 'undo', '', icons.undo],
             redo: ['_se_command_redo se-resizing-enabled', lang.toolbar.redo + (shortcutsDisable.indexOf('undo') > -1 ? '' : ' (' + cmd + '+Y / ' + cmd + '+SHIFT+Z)'), 'redo', '', icons.redo],
             preview: ['se-resizing-enabled', lang.toolbar.preview, 'preview', '', icons.preview],
@@ -14070,7 +14092,7 @@ const _Context = function (element, cons, options) {
             charCounter: cons._charCounter,
             editorArea: cons._editorArea,
             wysiwygFrame: cons._wysiwygArea,
-            wysiwyg: options.iframe ? cons._wysiwygArea.contentDocument.body : cons._wysiwygArea,
+            wysiwyg: cons._wysiwygArea, // if (options.iframe) cons._wysiwygArea.contentDocument.body
             code: cons._codeArea,
             placeholder: cons._placeholder,
             loading: cons._loading,
@@ -14093,7 +14115,10 @@ const _Context = function (element, cons, options) {
             redo: cons._toolBar.querySelector('._se_command_redo'),
             save: cons._toolBar.querySelector('._se_command_save'),
             outdent: cons._toolBar.querySelector('._se_command_outdent'),
-            indent: cons._toolBar.querySelector('._se_command_indent')
+            indent: cons._toolBar.querySelector('._se_command_indent'),
+            fullScreen: cons._toolBar.querySelector('._se_command_fullScreen'),
+            showBlocks: cons._toolBar.querySelector('._se_command_showBlocks'),
+            codeView: cons._toolBar.querySelector('._se_command_codeView')
         },
         options: options,
         option: options
@@ -14766,6 +14791,14 @@ const _Context = function (element, cons, options) {
         commandMap: null,
 
         /**
+         * @description Style button related to edit area
+         * @property {Element} fullScreen fullScreen button element
+         * @property {Element} showBlocks showBlocks button element
+         * @property {Element} codeView codeView button element
+         */
+        _styleCommandMap: null,
+
+        /**
          * @description Map of default command
          * @private
          */
@@ -14824,7 +14857,7 @@ const _Context = function (element, cons, options) {
 
             if (!this.plugins[pluginName]) {
                 throw Error('[SUNEDITOR.core.callPlugin.fail] The called plugin does not exist or is in an invalid format. (pluginName:"' + pluginName + '")');
-            } else if (!this.initPlugins[pluginName]){
+            } else if (!this.initPlugins[pluginName]) {
                 this.plugins[pluginName].add(this, _target);
                 this.initPlugins[pluginName] = true;
             } else if (typeof this._targetPlugins[pluginName] === 'object' && !!_target) {
@@ -15214,14 +15247,11 @@ const _Context = function (element, cons, options) {
             for (let key in commandMap) {
                 if (activePlugins.indexOf(key) > -1) {
                     plugins[key].active.call(this, null);
-                }
-                else if (commandMap.OUTDENT && /^OUTDENT$/i.test(key)) {
+                } else if (commandMap.OUTDENT && /^OUTDENT$/i.test(key)) {
                     commandMap.OUTDENT.setAttribute('disabled', true);
-                }
-                else if (commandMap.INDENT && /^INDENT$/i.test(key)) {
+                } else if (commandMap.INDENT && /^INDENT$/i.test(key)) {
                     commandMap.INDENT.removeAttribute('disabled');
-                }
-                else {
+                } else {
                     util.removeClass(commandMap[key], 'active');
                 }
             }
@@ -15285,13 +15315,13 @@ const _Context = function (element, cons, options) {
          */
         _editorRange: function () {
             const selection = this.getSelection();
+            if (!selection) return null;
             let range = null;
             let selectionNode = null;
 
             if (selection.rangeCount > 0) {
                 range = selection.getRangeAt(0);
-            }
-            else {
+            } else {
                 range = this._createDefaultRange();
             }
 
@@ -15445,7 +15475,7 @@ const _Context = function (element, cons, options) {
             if (!this._resetRangeToTextNode()) return [];
             let range = this.getRange();
 
-            if (util.isWysiwygDiv(range.commonAncestorContainer)) {
+            if (util.isWysiwygDiv(range.startContainer)) {
                 const children = context.element.wysiwyg.children;
                 if (children.length === 0) return [];
 
@@ -15680,7 +15710,7 @@ const _Context = function (element, cons, options) {
             const container = util.getParentElement(element, util.isComponent);
             const t_style = context.element.lineBreaker_t.style;
             const b_style = context.element.lineBreaker_b.style;
-            element = this.context.resizing.resizeContainer.style.display === 'block' ? this.context.resizing.resizeContainer : element;
+            const target = this.context.resizing.resizeContainer.style.display === 'block' ? this.context.resizing.resizeContainer : element;
 
             const isList = util.isListCell(container.parentNode);
             let componentTop, wScroll, w;
@@ -15689,10 +15719,10 @@ const _Context = function (element, cons, options) {
                 this._variable._lineBreakComp = container;
                 wScroll = context.element.wysiwyg.scrollTop;
                 componentTop = util.getOffset(element, context.element.wysiwygFrame).top + wScroll;
-                w = (element.offsetWidth / 2) / 2;
+                w = (target.offsetWidth / 2) / 2;
 
                 t_style.top = (componentTop - wScroll - 12) + 'px';
-                t_style.left = (util.getOffset(element).left + w) + 'px';
+                t_style.left = (util.getOffset(target).left + w) + 'px';
                 t_style.display = 'block';
             } else {
                 t_style.display = 'none';
@@ -15703,11 +15733,11 @@ const _Context = function (element, cons, options) {
                     this._variable._lineBreakComp = container;
                     wScroll = context.element.wysiwyg.scrollTop;
                     componentTop = util.getOffset(element, context.element.wysiwygFrame).top + wScroll;
-                    w = (element.offsetWidth / 2) / 2;
+                    w = (target.offsetWidth / 2) / 2;
                 }
 
-                b_style.top = (componentTop + element.offsetHeight - wScroll - 12) + 'px';
-                b_style.left = (util.getOffset(element).left + element.offsetWidth - w - 24) + 'px';
+                b_style.top = (componentTop + target.offsetHeight - wScroll - 12) + 'px';
+                b_style.left = (util.getOffset(target).left + target.offsetWidth - w - 24) + 'px';
                 b_style.display = 'block';
             } else {
                 b_style.display = 'none';
@@ -16189,8 +16219,7 @@ const _Context = function (element, cons, options) {
                         listParent = null;
                         nested = false;
                     }
-                }
-                else {
+                } else {
                     if (parentDepth >= depth) {
                         parentDepth = depth;
                         pElement = originParent;
@@ -16215,9 +16244,7 @@ const _Context = function (element, cons, options) {
                 const depthFormat = util.getParentElement(beforeTag, function (current) { return this.isRangeFormatElement(current) && !this.isList(current); }.bind(util));
                 const splitRange = util.splitElement(beforeTag, null, !depthFormat ? 0 : util.getElementDepth(depthFormat) + 1);
                 splitRange.parentNode.insertBefore(rangeElement, splitRange);
-            }
-            // basic
-            else {
+            } else { // basic
                 pElement.insertBefore(rangeElement, beforeTag);
                 removeItems(rangeElement, beforeTag);
             }
@@ -16339,8 +16366,7 @@ const _Context = function (element, cons, options) {
                 if (selectedFormats && lineIndex === -1) {
                     if (!rangeEl) rangeEl = rangeElement.cloneNode(false);
                     rangeEl.appendChild(insNode);
-                }
-                else {
+                } else {
                     if (selectedFormats) next = selectedFormats[lineIndex + 1];
                     if (rangeEl && rangeEl.children.length > 0) {
                         parent.insertBefore(rangeEl, rangeElement);
@@ -16594,6 +16620,7 @@ const _Context = function (element, cons, options) {
                 appendNode = util.createElement('DIV');
             }
 
+            const wRegExp = _w.RegExp;
             const newNodeName = appendNode.nodeName;
 
             /* checked same style property */
@@ -16617,7 +16644,7 @@ const _Context = function (element, cons, options) {
                         for (let i = 0; i < checkAttrs.length; i++) {
                             if (sNode.nodeType === 1) {
                                 const s = checkAttrs[i];
-                                const classReg = /^\./.test(s) ? new _w.RegExp('\\s*' + s.replace(/^\./, '') + '(\\s+|$)', 'ig') : false;
+                                const classReg = /^\./.test(s) ? new wRegExp('\\s*' + s.replace(/^\./, '') + '(\\s+|$)', 'ig') : false;
     
                                 const styleCheck = isRemoveNode ? !!sNode.style[s] : (!!sNode.style[s] && !!appendNode.style[s] && sNode.style[s] === appendNode.style[s]);
                                 const classCheck = classReg === false ? false : isRemoveNode ? !!sNode.className.match(classReg) : !!sNode.className.match(classReg) && !!appendNode.className.match(classReg);
@@ -16648,12 +16675,12 @@ const _Context = function (element, cons, options) {
 
                 if (styleRegExp) {
                     styleRegExp += ')\\s*:[^;]*\\s*(?:;|$)';
-                    styleRegExp = new _w.RegExp(styleRegExp, 'ig');
+                    styleRegExp = new wRegExp(styleRegExp, 'ig');
                 }
 
                 if (classRegExp) {
                     classRegExp += ')(?=\\s+|$)';
-                    classRegExp = new _w.RegExp(classRegExp, 'ig');
+                    classRegExp = new wRegExp(classRegExp, 'ig');
                 }
             }
 
@@ -16663,10 +16690,11 @@ const _Context = function (element, cons, options) {
                     removeNodeRegExp += '|' + removeNodeArray[i];
                 }
                 removeNodeRegExp += ')$';
-                removeNodeRegExp = new _w.RegExp(removeNodeRegExp, 'i');
+                removeNodeRegExp = new wRegExp(removeNodeRegExp, 'i');
             }
 
             /** validation check function*/
+            const wBoolean = _w.Boolean;
             const _removeCheck = {v: false};
             const validation = function (checkNode) {
                 const vNode = checkNode.cloneNode(false);
@@ -16710,7 +16738,7 @@ const _Context = function (element, cons, options) {
                 }
 
                 // change
-                if (style || classes || vNode.nodeName !== newNodeName || (_w.Boolean(styleRegExp) !== _w.Boolean(originStyle)) || (_w.Boolean(classRegExp) !== _w.Boolean(originClasses))) {
+                if (style || classes || vNode.nodeName !== newNodeName || (wBoolean(styleRegExp) !== wBoolean(originStyle)) || (wBoolean(classRegExp) !== wBoolean(originClasses))) {
                     if (styleRegExp && originStyle.length > 0) vNode.style.cssText = style;
                     if (!vNode.style.cssText) {
                         vNode.removeAttribute('style');
@@ -16778,9 +16806,7 @@ const _Context = function (element, cons, options) {
                 if (start.container === end.container && util.onlyZeroWidthSpace(start.container)) {
                     start.offset = end.offset = 1;
                 }
-            }
-            // multi line 
-            else {
+            } else { // multi line 
                 // end
                 if (endLength > 0) {
                     newNode = appendNode.cloneNode(false);
@@ -16927,8 +16953,9 @@ const _Context = function (element, cons, options) {
             let endPass = false;
             let pCurrent, newNode, appendNode, cssText, anchorNode;
 
+            const wRegExp = _w.RegExp;
             function checkCss (vNode) {
-                const regExp = new _w.RegExp('(?:;|^|\\s)(?:' + cssText + 'null)\\s*:[^;]*\\s*(?:;|$)', 'ig');
+                const regExp = new wRegExp('(?:;|^|\\s)(?:' + cssText + 'null)\\s*:[^;]*\\s*(?:;|$)', 'ig');
                 let style = '';
 
                 if (regExp && vNode.style.cssText.length > 0) {
@@ -18089,11 +18116,9 @@ const _Context = function (element, cons, options) {
                     this.setRange(first, 0, last, last.textContent.length);
                     break;
                 case 'codeView':
-                    util.toggleClass(target, 'active');
                     this.toggleCodeView();
                     break;
                 case 'fullScreen':
-                    util.toggleClass(target, 'active');
                     this.toggleFullScreen(target);
                     break;
                 case 'indent':
@@ -18117,7 +18142,6 @@ const _Context = function (element, cons, options) {
                     this.preview();
                     break;
                 case 'showBlocks':
-                    util.toggleClass(target, 'active');
                     this.toggleDisplayBlocks();
                     break;
                 case 'save':
@@ -18131,7 +18155,7 @@ const _Context = function (element, cons, options) {
 
                     if (context.tool.save) context.tool.save.setAttribute('disabled', true);
                     break;
-                default : // 'STRONG', 'U', 'EM', 'DEL', 'SUB', 'SUP'
+                default : // 'STRONG', 'U', 'EM', 'DEL', 'SUB', 'SUP'..
                     command = this._defaultCommand[command.toLowerCase()] || command;
                     if (!this.commandMap[command]) this.commandMap[command] = target;
 
@@ -18206,7 +18230,13 @@ const _Context = function (element, cons, options) {
          * @description Add or remove the class name of "body" so that the code block is visible
          */
         toggleDisplayBlocks: function () {
-            util.toggleClass(context.element.wysiwyg, 'se-show-block');
+            const wysiwyg = context.element.wysiwyg;
+            util.toggleClass(wysiwyg, 'se-show-block');
+            if (util.hasClass(wysiwyg, 'se-show-block')) {
+                util.addClass(this._styleCommandMap.showBlocks, 'active');
+            } else {
+                util.removeClass(this._styleCommandMap.showBlocks, 'active');
+            }
             this._resourcesStateChange();
         },
 
@@ -18242,6 +18272,7 @@ const _Context = function (element, cons, options) {
                 }
 
                 this.nativeFocus();
+                util.removeClass(this._styleCommandMap.codeView, 'active');
 
                 // history stack
                 this.history.push(false);
@@ -18268,6 +18299,7 @@ const _Context = function (element, cons, options) {
                 
                 this._variable._range = null;
                 context.element.code.focus();
+                util.addClass(this._styleCommandMap.codeView, 'active');
             }
 
             this._checkPlaceholder();
@@ -18391,8 +18423,9 @@ const _Context = function (element, cons, options) {
                     editorArea.style.overflow = 'auto';
                     this._iframeAutoHeight();
                 }
-            }
-            else {
+
+                util.addClass(this._styleCommandMap.fullScreen, 'active');
+            } else {
                 _var.isFullScreen = false;
 
                 wysiwygFrame.style.cssText = _var._wysiwygOriginCssText;
@@ -18421,6 +18454,8 @@ const _Context = function (element, cons, options) {
 
                 event.onScroll_window();
                 util.changeElement(element.firstElementChild, icons.expansion);
+
+                util.removeClass(this._styleCommandMap.fullScreen, 'active');
             }
 
             if (typeof functions.toggleFullScreen === 'function') functions.toggleFullScreen(this._variable.isFullScreen, this);
@@ -18735,8 +18770,8 @@ const _Context = function (element, cons, options) {
          */
         convertHTMLForCodeView: function (html) {
             let returnHTML = '';
-            const reg = _w.RegExp;
-            const brReg = new reg('^(BLOCKQUOTE|PRE|TABLE|THEAD|TBODY|TR|TH|TD|OL|UL|IMG|IFRAME|VIDEO|AUDIO|FIGURE|FIGCAPTION|HR|BR|CANVAS|SELECT)$', 'i');
+            const wRegExp = _w.RegExp;
+            const brReg = new wRegExp('^(BLOCKQUOTE|PRE|TABLE|THEAD|TBODY|TR|TH|TD|OL|UL|IMG|IFRAME|VIDEO|AUDIO|FIGURE|FIGCAPTION|HR|BR|CANVAS|SELECT)$', 'i');
             const isFormatElement = util.isFormatElement.bind(util);
             const wDoc = typeof html === 'string' ? _d.createRange().createContextualFragment(html) : html;
 
@@ -18769,7 +18804,7 @@ const _Context = function (element, cons, options) {
                     
                     node.innerHTML = node.innerHTML;
                     const tag = node.nodeName.toLowerCase();
-                    returnHTML += (lineBR || (elementRegTest ? '' : br)) + (elementIndent || nodeRegTest ? indent : '') + node.outerHTML.match(reg('<' + tag + '[^>]*>', 'i'))[0] + br;
+                    returnHTML += (lineBR || (elementRegTest ? '' : br)) + (elementIndent || nodeRegTest ? indent : '') + node.outerHTML.match(wRegExp('<' + tag + '[^>]*>', 'i'))[0] + br;
                     recursionFunc(node, indent + indentSize, '');
                     returnHTML += (nodeRegTest ? indent : '') + '</' + tag + '>' + (lineBR || br || elementRegTest ? '\n' :  false || /^(TH|TD)$/i.test(node.nodeName) ? '\n' : '');
                 }
@@ -18953,8 +18988,6 @@ const _Context = function (element, cons, options) {
             this._wd = _d;
             this._charTypeHTML = options.charCounterType === 'byte-html';
 
-            if (options.iframe && options.height === 'auto') this._iframeAuto = this._wd.body;
-            
             if (!options.iframe && typeof _w.ShadowRoot === 'function') {
                 let child = context.element.wysiwygFrame;
                 while (child) {
@@ -18969,10 +19002,11 @@ const _Context = function (element, cons, options) {
                 }
             }
             
+            const wRegExp = _w.RegExp;
             // set whitelist
             const defaultAttr = 'contenteditable|colspan|rowspan|target|href|src|class|type|controls|data-format|data-size|data-file-size|data-file-name|data-origin|data-align|data-image-link|data-rotate|data-proportion|data-percentage|origin-size|data-exp|data-font-size';
             this._allowHTMLComments = options._editorTagsWhitelist.indexOf('//') > -1;
-            this._htmlCheckWhitelistRegExp = new _w.RegExp('^(' + options._editorTagsWhitelist.replace('|//', '') + ')$', 'i');
+            this._htmlCheckWhitelistRegExp = new wRegExp('^(' + options._editorTagsWhitelist.replace('|//', '') + ')$', 'i');
             this.editorTagsWhitelistRegExp = util.createTagsWhitelist(options._editorTagsWhitelist.replace('|//', '|<!--|-->'));
             this.pasteTagsWhitelistRegExp = util.createTagsWhitelist(options.pasteTagsWhitelist);
 
@@ -18984,12 +19018,12 @@ const _Context = function (element, cons, options) {
                     if (k === 'all') {
                         allAttr = _attr[k] + '|';
                     } else {
-                        tagsAttr[k] = new _w.RegExp('((?:' + _attr[k] + '|' + defaultAttr + ')\s*=\s*"[^"]*")', 'ig');
+                        tagsAttr[k] = new wRegExp('((?:' + _attr[k] + '|' + defaultAttr + ')\s*=\s*"[^"]*")', 'ig');
                     }
                 }
             }
 
-            this._attributesWhitelistRegExp = new _w.RegExp('((?:' + allAttr + defaultAttr + ')\s*=\s*"[^"]*")', 'ig');
+            this._attributesWhitelistRegExp = new wRegExp('((?:' + allAttr + defaultAttr + ')\s*=\s*"[^"]*")', 'ig');
             this._attributesTagsWhitelist = tagsAttr;
 
             // set modes
@@ -19043,8 +19077,8 @@ const _Context = function (element, cons, options) {
 
             this.managedTagsInfo.query = managedClass.toString();
             this._fileManager.queryString = this._fileManager.tags.join(',');
-            this._fileManager.regExp = new _w.RegExp('^(' +  this._fileManager.tags.join('|') + ')$', 'i');
-            this._fileManager.pluginRegExp = new _w.RegExp('^(' +  (filePluginRegExp.length === 0 ? 'undefined' : filePluginRegExp.join('|')) + ')$', 'i');
+            this._fileManager.regExp = new wRegExp('^(' +  this._fileManager.tags.join('|') + ')$', 'i');
+            this._fileManager.pluginRegExp = new wRegExp('^(' +  (filePluginRegExp.length === 0 ? 'undefined' : filePluginRegExp.join('|')) + ')$', 'i');
             
             // cache editor's element
             this._variable._originCssText = context.element.topArea.style.cssText;
@@ -19059,15 +19093,14 @@ const _Context = function (element, cons, options) {
             this.addModule([_notice]);
 
             // Init, validate
-            if (!options.iframe) this._initWysiwygArea(reload, _initHTML);
             _w.setTimeout(function () {
-                // after iframe loaded
                 if (options.iframe) {
                     this._wd = context.element.wysiwygFrame.contentDocument;
                     context.element.wysiwyg = this._wd.body;
-                    this._initWysiwygArea(reload, _initHTML);
+                    if (options._editorStyles.editor) context.element.wysiwyg.style.cssText = options._editorStyles.editor;
                     if (options.height === 'auto') this._iframeAuto = this._wd.body;
                 }
+                this._initWysiwygArea(reload, _initHTML);
 
                 this._checkComponents();
                 this._componentsInfoInit = false;
@@ -19080,18 +19113,28 @@ const _Context = function (element, cons, options) {
             }.bind(this));
         },
 
+        /**
+         * @description Caching basic buttons to use
+         * @private
+         */
         _cachingButtons: function () {
             this.codeViewDisabledButtons = context.element.toolbar.querySelectorAll('.se-toolbar button:not([class~="se-code-view-enabled"])');
             this.resizingDisabledButtons = context.element.toolbar.querySelectorAll('.se-toolbar button:not([class~="se-resizing-enabled"])');
+            const tool = context.tool;
             this.commandMap = {
-                STRONG: context.tool.bold,
-                U: context.tool.underline,
-                EM: context.tool.italic,
-                DEL: context.tool.strike,
-                SUB: context.tool.subscript,
-                SUP: context.tool.superscript,
-                OUTDENT: context.tool.outdent,
-                INDENT: context.tool.indent
+                STRONG: tool.bold,
+                U: tool.underline,
+                EM: tool.italic,
+                DEL: tool.strike,
+                SUB: tool.subscript,
+                SUP: tool.superscript,
+                OUTDENT: tool.outdent,
+                INDENT: tool.indent
+            };
+            this._styleCommandMap = {
+                fullScreen: tool.fullScreen,
+                showBlocks: tool.showBlocks,
+                codeView: tool.codeView
             };
         },
 
@@ -19102,10 +19145,6 @@ const _Context = function (element, cons, options) {
          * @private
          */
         _initWysiwygArea: function (reload, _initHTML) {
-            // Default style
-            if (options.defaultStyle) context.element.wysiwyg.style.cssText = options.defaultStyle;
-
-            // Set html
             if (!reload) {
                 context.element.wysiwyg.innerHTML = this.convertContentsForEditor(context.element.originElement.value);
             } else if (_initHTML) {
@@ -19234,6 +19273,36 @@ const _Context = function (element, cons, options) {
 
             this.effectNode = null;
             this.nativeFocus();
+        },
+
+        /**
+         * @description Initialization after "setOptions"
+         * @param {Object} el context.element
+         * @param {String} _initHTML Initial html string
+         * @private
+         */
+        _setOptionsInit: function (el, _initHTML) {
+            this.context = context = lib_context(el.originElement, this._getConstructed(el), options);
+            this._componentsInfoReset = true;
+            this._editorInit(true, _initHTML);
+        },
+
+        /**
+         * @description Initializ editor
+         * @param {Boolean} reload Is relooad?
+         * @param {String} _initHTML initial html string when "reload" is true
+         * @private
+         */
+        _editorInit: function (reload, _initHTML) {
+            // initialize core and add event listeners
+            this._init(reload, _initHTML);
+            event._addEvent();
+            this._setCharCount();
+            event._offStickyToolbar();
+            event.onResize_window();
+
+            // toolbar visibility
+            context.element.toolbar.style.visibility = '';
         },
 
         /**
@@ -19416,14 +19485,11 @@ const _Context = function (element, cons, options) {
                 
                 if (activePlugins.indexOf(key) > -1) {
                     plugins[key].active.call(core, null);
-                }
-                else if (commandMap.OUTDENT && /^OUTDENT$/i.test(key)) {
+                } else if (commandMap.OUTDENT && /^OUTDENT$/i.test(key)) {
                     commandMap.OUTDENT.setAttribute('disabled', true);
-                }
-                else if (commandMap.INDENT && /^INDENT$/i.test(key)) {
+                } else if (commandMap.INDENT && /^INDENT$/i.test(key)) {
                     commandMap.INDENT.removeAttribute('disabled');
-                }
-                else {
+                } else {
                     util.removeClass(commandMap[key], 'active');
                 }
             }
@@ -20450,14 +20516,11 @@ const _Context = function (element, cons, options) {
             for (let key in commandMap) {
                 if (activePlugins.indexOf(key) > -1) {
                     plugins[key].active.call(core, null);
-                }
-                else if (commandMap.OUTDENT && /^OUTDENT$/i.test(key)) {
+                } else if (commandMap.OUTDENT && /^OUTDENT$/i.test(key)) {
                     commandMap.OUTDENT.setAttribute('disabled', true);
-                }
-                else if (commandMap.INDENT && /^INDENT$/i.test(key)) {
+                } else if (commandMap.INDENT && /^INDENT$/i.test(key)) {
                     commandMap.INDENT.removeAttribute('disabled');
-                }
-                else {
+                } else {
                     util.removeClass(commandMap[key], 'active');
                 }
             }
@@ -21191,6 +21254,7 @@ const _Context = function (element, cons, options) {
 
             context.element = newContext.element;
             context.tool = newContext.tool;
+            if (options.iframe) context.element.wysiwyg = core._wd.body;
             core._cachingButtons();
             core.history._resetCachingButton();
 
@@ -21211,7 +21275,11 @@ const _Context = function (element, cons, options) {
                 }
             }
 
-            event._applyTagEffects();
+            if (core.hasFocus) event._applyTagEffects();
+
+            if (core._variable.isCodeView) util.addClass(core._styleCommandMap.codeView, 'active');
+            if (core._variable.isFullScreen) util.addClass(core._styleCommandMap.fullScreen, 'active');
+            if (util.hasClass(context.element.wysiwyg, 'se-show-block')) util.addClass(core._styleCommandMap.showBlocks, 'active');
         },
 
         /**
@@ -21221,6 +21289,11 @@ const _Context = function (element, cons, options) {
         setOptions: function (_options) {
             event._removeEvent();
             core._resetComponents();
+            
+            util.removeClass(core._styleCommandMap.showBlocks, 'active');
+            util.removeClass(core._styleCommandMap.codeView, 'active');
+            core._variable.isCodeView = false;
+            core._iframeAuto = null;
 
             core.plugins = _options.plugins || core.plugins;
             const mergeOptions = [options, _options].reduce(function (init, option) {
@@ -21237,9 +21310,11 @@ const _Context = function (element, cons, options) {
                 return init;
             }, {});
 
+            const el = context.element;
+            const _initHTML = el.wysiwyg.innerHTML;
+
             // set option
-            const cons = lib_constructor._setOptions(mergeOptions, context, core.plugins, options);
-            cons.toolbar.element.style.visibility = '';
+            const cons = lib_constructor._setOptions(mergeOptions, context, core.plugins, options);        
 
             if (cons.callButtons) {
                 pluginCallButtons = cons.callButtons;
@@ -21251,23 +21326,23 @@ const _Context = function (element, cons, options) {
             }
 
             // reset context
-            const _initHTML = context.element.wysiwyg.innerHTML;
-            const el = context.element;
-
             if (el._menuTray.children.length === 0) this._menuTray = {};
-            
             _responsiveButtons = cons.toolbar.responsiveButtons;
             options = mergeOptions;
             core.lang = lang = options.lang;
-            core.context = context = lib_context(context.element.originElement, core._getConstructed(el), options);
-            core._componentsInfoReset = true;
 
-            // initialize core and add event listeners
-            core._init(true, _initHTML);
-            event._addEvent();
-            core._setCharCount();
-            event._offStickyToolbar();
-            event.onResize_window();
+            if (options.iframe) {
+                el.wysiwygFrame.addEventListener('load', function () {
+                    util._setIframeDocument(this, options);
+                    core._setOptionsInit(el, _initHTML);
+                });
+            }
+
+            el.editorArea.appendChild(el.wysiwygFrame);
+
+            if (!options.iframe) {
+                core._setOptionsInit(el, _initHTML);
+            }
         },
 
         /**
@@ -21277,12 +21352,25 @@ const _Context = function (element, cons, options) {
          * @param {String} style Style string
          */
         setDefaultStyle: function (style) {
-            const optionStyle = util._setDefaultOptionStyle(options);
+            const newStyles = options._editorStyles = util._setDefaultOptionStyle(options, style);
+            const el = context.element;
 
-            if (typeof style === 'string' && style.trim().length > 0) {
-                context.element.wysiwyg.style.cssText = optionStyle + style;
+            // top area
+            el.topArea.style.cssText = newStyles.top;
+            // code view
+            el.code.style.cssText = options._editorStyles.frame;
+            el.code.style.display = 'none';
+            if (options.height === 'auto') {
+                el.code.style.overflow = 'hidden';
             } else {
-                context.element.wysiwyg.style.cssText = optionStyle;
+                el.code.style.overflow = '';
+            }
+            // wysiwyg frame
+            if (!options.iframe) {
+                el.wysiwygFrame.style.cssText = newStyles.frame + newStyles.editor;
+            } else {
+                el.wysiwygFrame.style.cssText = newStyles.frame;
+                el.wysiwyg.style.cssText = newStyles.editor;
             }
         },
 
@@ -21585,18 +21673,39 @@ const _Context = function (element, cons, options) {
         }
     };
 
-    // initialize core and add event listeners
-    core._init(false, null);
-    event._addEvent();
-    core._setCharCount();
-    event._offStickyToolbar();
-    event.onResize_window();
-
-    // toolbar visibility
-    context.element.toolbar.style.visibility = '';
-
+    /************ Core init ************/
     // functions
     core.functions = functions;
+
+    // Create to sibling node
+    let contextEl = context.element;
+    let originEl = contextEl.originElement;
+    let topEl = contextEl.topArea;
+    originEl.style.display = 'none';
+    topEl.style.display = 'block';
+
+    // init
+    if (options.iframe) {
+        contextEl.wysiwygFrame.addEventListener('load', function () {
+            util._setIframeDocument(this, options);
+            core._editorInit(false, null);
+        });
+    }
+
+    // insert editor element
+    if (typeof originEl.nextElementSibling === 'object') {
+        originEl.parentNode.insertBefore(topEl, originEl.nextElementSibling);
+    } else {
+        originEl.parentNode.appendChild(topEl);
+    }
+
+    contextEl.editorArea.appendChild(contextEl.wysiwygFrame);
+    contextEl = originEl = topEl = null;
+
+    // init
+    if (!options.iframe) {
+        core._editorInit(false, null);
+    }
 
     return functions;
 });
@@ -21667,16 +21776,6 @@ const _Context = function (element, cons, options) {
 
         if (cons.constructed._top.id && document.getElementById(cons.constructed._top.id)) {
             throw Error('[SUNEDITOR.create.fail] The ID of the suneditor you are trying to create already exists (ID:"' + cons.constructed._top.id + '")');
-        }
-
-        element.style.display = 'none';
-        cons.constructed._top.style.display = 'block';
-
-        /** Create to sibling node */
-        if (typeof element.nextElementSibling === 'object') {
-            element.parentNode.insertBefore(cons.constructed._top, element.nextElementSibling);
-        } else {
-            element.parentNode.appendChild(cons.constructed._top);
         }
 
         return lib_core(lib_context(element, cons.constructed, cons.options), cons.pluginCallButtons, cons.plugins, cons.options.lang, options, cons._icons, cons._responsiveButtons);
