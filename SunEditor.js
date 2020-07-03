@@ -57,7 +57,7 @@ class SunEditor extends Component {
       toggleCodeView,
       toggleFullScreen,
       showInline,
-      showController
+      showController,
     } = this.props;
     if (onChange || name)
       this.editor.onChange = (content) => {
@@ -73,7 +73,6 @@ class SunEditor extends Component {
     if (onBlur)
       this.editor.onBlur = (e) => onBlur(e, this.editor.getContents());
     if (onFocus) this.editor.onFocus = (e) => onFocus(e);
-    if (onLoad) this.editor.onload = (_, reload) => onLoad(reload);
     if (onImageUploadBefore)
       this.editor.onImageUploadBefore = (files, info, _, uploadHandler) =>
         onImageUploadBefore(files, info, uploadHandler);
@@ -83,7 +82,7 @@ class SunEditor extends Component {
     if (onAudioUploadBefore)
       this.editor.onAudioUploadBefore = (files, info, _, uploadHandler) =>
         onAudioUploadBefore(files, info, uploadHandler);
-    if (onDrop) this.editor.onDrop = e => onDrop(e);
+    if (onDrop) this.editor.onDrop = (e) => onDrop(e);
     if (onPaste)
       this.editor.onPaste = (e, cleanData, maxCharCount) =>
         onPaste(e, cleanData, maxCharCount);
@@ -131,13 +130,21 @@ class SunEditor extends Component {
         onAudioUploadError(errorMessage, result);
     if (placeholder) setOptions.placeholder = placeholder;
     this.editor.setOptions(setOptions);
-    if (setContents) {
-      this.editor.setContents(setContents);
-      this.editor.core.focusEdge();
-    }
-    if (setDefaultStyle) this.editor.setDefaultStyle(setDefaultStyle);
-    if (insertHTML) this.editor.insertHTML(insertHTML);
-    if (appendContents) this.editor.appendContents(appendContents);
+    
+    this.editor.onload = (_, reload) => {
+      if (reload === false) {
+        if (setContents) {
+          this.editor.setContents(setContents);
+          this.editor.core.focusEdge();
+        }
+        if (setDefaultStyle) this.editor.setDefaultStyle(setDefaultStyle);
+        if (insertHTML) this.editor.insertHTML(insertHTML);
+        if (appendContents) this.editor.appendContents(appendContents);
+      }
+
+      if (onLoad) onLoad(reload);
+    };
+
     if (enable === true) this.editor.enabled();
     if (disable === true) this.editor.disabled();
     if (hide === true) this.editor.hide();
@@ -155,28 +162,35 @@ class SunEditor extends Component {
     else if (autoFocus === true)
       this.editor.core.context.element.wysiwyg.focus();
 
-    if (imageUploadHandler && typeof imageUploadHandler === 'function') this.editor.imageUploadHandler = imageUploadHandler;
-    if (toggleCodeView && typeof toggleCodeView === 'function') this.editor.toggleCodeView = isCodeView => toggleCodeView(isCodeView);
-    if (toggleFullScreen && typeof toggleFullScreen === 'function') this.editor.toggleFullScreen = isFullScreen => toggleFullScreen(isFullScreen);
-    if (showInline && typeof showInline === 'function') this.editor.showInline = (toolbar, context) => showInline(toolbar, context);
-    if (showController && typeof showController === 'function') this.editor.showController = (name, controllers) =>  showController(name, controllers);
-
+    if (imageUploadHandler && typeof imageUploadHandler === "function")
+      this.editor.imageUploadHandler = imageUploadHandler;
+    if (toggleCodeView && typeof toggleCodeView === "function")
+      this.editor.toggleCodeView = (isCodeView) => toggleCodeView(isCodeView);
+    if (toggleFullScreen && typeof toggleFullScreen === "function")
+      this.editor.toggleFullScreen = (isFullScreen) =>
+        toggleFullScreen(isFullScreen);
+    if (showInline && typeof showInline === "function")
+      this.editor.showInline = (toolbar, context) =>
+        showInline(toolbar, context);
+    if (showController && typeof showController === "function")
+      this.editor.showController = (name, controllers) =>
+        showController(name, controllers);
   }
 
   componentDidUpdate(prevProps) {
     // Props compared
-    
+
     if (prevProps.lang !== this.props.lang) {
-        this.editor.setOptions({lang: getLanguage(this.props.lang)});
+      this.editor.setOptions({ lang: getLanguage(this.props.lang) });
     }
     if (prevProps.height !== this.props.height) {
-        this.editor.setOptions({height: this.props.height});
+      this.editor.setOptions({ height: this.props.height });
     }
     if (prevProps.width !== this.props.width) {
-        this.editor.setOptions({width: this.props.width});
+      this.editor.setOptions({ width: this.props.width });
     }
     if (prevProps.setDefaultStyle !== this.props.setDefaultStyle) {
-        this.editor.setDefaultStyle(this.props.setDefaultStyle);
+      this.editor.setDefaultStyle(this.props.setDefaultStyle);
     }
     if (prevProps.setContents !== this.props.setContents) {
       !this.editor.core.hasFocus &&

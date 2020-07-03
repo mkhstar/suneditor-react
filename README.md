@@ -88,9 +88,9 @@ render() {
 //...
 // Accepts number representing px
 // or percentage string
-// eg width={100} or width="100%"
+// eg height={100} or height="100"
 render() {
-	return <SunEditor height="100%" />
+	return <SunEditor height="100" />
 }
 ```
 

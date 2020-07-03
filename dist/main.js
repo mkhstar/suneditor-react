@@ -22030,9 +22030,6 @@ var SunEditor_SunEditor = /*#__PURE__*/function (_Component) {
       if (onFocus) this.editor.onFocus = function (e) {
         return onFocus(e);
       };
-      if (onLoad) this.editor.onload = function (_, reload) {
-        return onLoad(reload);
-      };
       if (onImageUploadBefore) this.editor.onImageUploadBefore = function (files, info, _, uploadHandler) {
         return onImageUploadBefore(files, info, uploadHandler);
       };
@@ -22069,14 +22066,22 @@ var SunEditor_SunEditor = /*#__PURE__*/function (_Component) {
       if (placeholder) setOptions.placeholder = placeholder;
       this.editor.setOptions(setOptions);
 
-      if (setContents) {
-        this.editor.setContents(setContents);
-        this.editor.core.focusEdge();
-      }
+      this.editor.onload = function (_, reload) {
+        if (reload === false) {
+          if (setContents) {
+            _this2.editor.setContents(setContents);
 
-      if (setDefaultStyle) this.editor.setDefaultStyle(setDefaultStyle);
-      if (insertHTML) this.editor.insertHTML(insertHTML);
-      if (appendContents) this.editor.appendContents(appendContents);
+            _this2.editor.core.focusEdge();
+          }
+
+          if (setDefaultStyle) _this2.editor.setDefaultStyle(setDefaultStyle);
+          if (insertHTML) _this2.editor.insertHTML(insertHTML);
+          if (appendContents) _this2.editor.appendContents(appendContents);
+        }
+
+        if (onLoad) onLoad(reload);
+      };
+
       if (enable === true) this.editor.enabled();
       if (disable === true) this.editor.disabled();
       if (hide === true) this.editor.hide();
@@ -22089,17 +22094,17 @@ var SunEditor_SunEditor = /*#__PURE__*/function (_Component) {
       }
 
       if (autoFocus === false) this.editor.core.context.element.wysiwyg.blur();else if (autoFocus === true) this.editor.core.context.element.wysiwyg.focus();
-      if (imageUploadHandler && typeof imageUploadHandler === 'function') this.editor.imageUploadHandler = imageUploadHandler;
-      if (toggleCodeView && typeof toggleCodeView === 'function') this.editor.toggleCodeView = function (isCodeView) {
+      if (imageUploadHandler && typeof imageUploadHandler === "function") this.editor.imageUploadHandler = imageUploadHandler;
+      if (toggleCodeView && typeof toggleCodeView === "function") this.editor.toggleCodeView = function (isCodeView) {
         return toggleCodeView(isCodeView);
       };
-      if (toggleFullScreen && typeof toggleFullScreen === 'function') this.editor.toggleFullScreen = function (isFullScreen) {
+      if (toggleFullScreen && typeof toggleFullScreen === "function") this.editor.toggleFullScreen = function (isFullScreen) {
         return toggleFullScreen(isFullScreen);
       };
-      if (showInline && typeof showInline === 'function') this.editor.showInline = function (toolbar, context) {
+      if (showInline && typeof showInline === "function") this.editor.showInline = function (toolbar, context) {
         return showInline(toolbar, context);
       };
-      if (showController && typeof showController === 'function') this.editor.showController = function (name, controllers) {
+      if (showController && typeof showController === "function") this.editor.showController = function (name, controllers) {
         return showController(name, controllers);
       };
     }
