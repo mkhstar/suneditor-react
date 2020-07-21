@@ -59,10 +59,15 @@ export default interface SetOptions {
     pasteTagsWhitelist?: string;
     imageGalleryUrl?: string;
     shortcutsHint?: boolean;
-    shortcutsDisable?: boolean;
     toolbarContainer?: string | Element;
     addTagsWhitelist?: string;
     plugins?: Array<any>;
+    audioTagAttrs?: object;
+    tableCellControllerPosition?: string;
+    tabDisable?: string;
+    shortcutsDisable?: Array<string>;
+    videoTagAttrs?: object;
+    videoIframeAttrs?: object;
 }
 
 // const options: SetOptions = {fullPage: false, pasteTagsWhitelist: ''}

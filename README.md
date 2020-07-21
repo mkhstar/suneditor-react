@@ -549,6 +549,33 @@ render() {
 ```
 
 
+**onCopy**
+
+**_Has something been copied from the suneditor?_**
+
+```javascript
+handleCopy(e, clipboardData){
+	console.log(e, clipboardData)
+}
+render() {
+	return <SunEditor onCopy={handleCopy} />
+}
+```
+
+
+**onCut**
+
+**_Has something been cut from the suneditor?_**
+
+```javascript
+handleCut(e, clipboardData){
+	console.log(e, clipboardData)
+}
+render() {
+	return <SunEditor onCut={handleCut} />
+}
+```
+
 **onPaste**
 
 **_Has something been pasted into the suneditor?_**

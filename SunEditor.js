@@ -36,6 +36,8 @@ class SunEditor extends Component {
       onKeyUp,
       onDrop,
       onChange,
+      onCopy,
+      onCut,
       onImageUpload,
       onImageUploadError,
       onPaste,
@@ -64,9 +66,11 @@ class SunEditor extends Component {
         if (name) this.txtArea.current.value = content;
         if (onChange) onChange(content);
       };
-    if (onScroll) this.editor.onMouseDown = (e) => onMouseDown(e);
-    if (onInput) this.editor.onInput = (e) => onInput(e);
+    if (onCopy) this.editor.onCopy = (e, clipboardData) => onCopy(e, clipboardData);
+    if (onCut) this.editor.onCut = (e, clipboardData) => onCut(e, clipboardData);
+    if (onMouseDown) this.editor.onMouseDown = (e) => onMouseDown(e);
     if (onScroll) this.editor.onScroll = (e) => onScroll(e);
+    if (onInput) this.editor.onInput = (e) => onInput(e);
     if (onClick) this.editor.onClick = (e) => onClick(e);
     if (onKeyUp) this.editor.onKeyUp = (e) => onKeyUp(e);
     if (onKeyDown) this.editor.onKeyDown = (e) => onKeyDown(e);
@@ -252,6 +256,8 @@ SunEditor.propTypes = {
   onBlur: PropTypes.func,
   onFocus: PropTypes.func,
   onLoad: PropTypes.func,
+  onCut: PropTypes.func,
+  onCopy: PropTypes.func,
   onPaste: PropTypes.func,
   onImageUploadBefore: PropTypes.func,
   onImageUpload: PropTypes.func,

@@ -5,6 +5,8 @@ export interface SunEditorReactProps {
   onChange?: (content: string) => void;
   onInput?: (event: InputEvent) => void;
   onScroll?: (event: UIEvent) => void;
+  onCopy?: (event: ClipboardEvent, clipboardData: ClipboardEvent["clipboardData"]) => void;
+  onCut?: (event: ClipboardEvent, clipboardData: ClipboardEvent["clipboardData"]) => void;
   onClick?: (event: MouseEvent) => void;
   onMouseDown?: (event: MouseEvent) => void;
   onKeyUp?: (event: KeyboardEvent) => void;
@@ -62,6 +64,7 @@ export interface SunEditorReactProps {
   placeholder?: string;
   lang?: string | object;
   width?: number | string;
+  height?: number | string;
 }
 
 export const buttonList: {
