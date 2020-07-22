@@ -22279,19 +22279,16 @@ var SunEditor_SunEditor = /*#__PURE__*/function (_Component) {
       if (placeholder) setOptions.placeholder = placeholder;
       this.editor.setOptions(setOptions);
 
+      if (setContents) {
+        this.editor.setContents(setContents);
+        this.editor.core.focusEdge();
+      }
+
+      if (setDefaultStyle) this.editor.setDefaultStyle(setDefaultStyle);
+      if (insertHTML) this.editor.insertHTML(insertHTML);
+      if (appendContents) this.editor.appendContents(appendContents);
+
       this.editor.onload = function (_, reload) {
-        if (reload === false) {
-          if (setContents) {
-            _this2.editor.setContents(setContents);
-
-            _this2.editor.core.focusEdge();
-          }
-
-          if (setDefaultStyle) _this2.editor.setDefaultStyle(setDefaultStyle);
-          if (insertHTML) _this2.editor.insertHTML(insertHTML);
-          if (appendContents) _this2.editor.appendContents(appendContents);
-        }
-
         if (onLoad) onLoad(reload);
       };
 

@@ -135,17 +135,15 @@ class SunEditor extends Component {
     if (placeholder) setOptions.placeholder = placeholder;
     this.editor.setOptions(setOptions);
     
+    if (setContents) {
+      this.editor.setContents(setContents);
+      this.editor.core.focusEdge();
+    }
+    if (setDefaultStyle) this.editor.setDefaultStyle(setDefaultStyle);
+    if (insertHTML) this.editor.insertHTML(insertHTML);
+    if (appendContents) this.editor.appendContents(appendContents);
+    
     this.editor.onload = (_, reload) => {
-      if (reload === false) {
-        if (setContents) {
-          this.editor.setContents(setContents);
-          this.editor.core.focusEdge();
-        }
-        if (setDefaultStyle) this.editor.setDefaultStyle(setDefaultStyle);
-        if (insertHTML) this.editor.insertHTML(insertHTML);
-        if (appendContents) this.editor.appendContents(appendContents);
-      }
-
       if (onLoad) onLoad(reload);
     };
 
