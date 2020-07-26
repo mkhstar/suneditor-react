@@ -137,7 +137,7 @@ class SunEditor extends Component {
     
     if (setContents) {
       this.editor.setContents(setContents);
-      this.editor.core.focusEdge();
+      if (autoFocus === true) this.editor.core.focusEdge();
     }
     if (setDefaultStyle) this.editor.setDefaultStyle(setDefaultStyle);
     if (insertHTML) this.editor.insertHTML(insertHTML);
