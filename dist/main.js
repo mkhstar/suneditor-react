@@ -19446,7 +19446,9 @@ const _Context = function (element, cons, options) {
             this.history.reset(true);
             this._resourcesStateChange();
 
-            if (typeof functions.onload === 'function') return functions.onload(this, reload);
+            _w.setTimeout(function () {
+              if (typeof functions.onload === 'function') functions.onload(core, reload);
+            });
         },
 
         /**
@@ -22279,31 +22281,27 @@ var SunEditor_SunEditor = /*#__PURE__*/function (_Component) {
       if (placeholder) setOptions.placeholder = placeholder;
       this.editor.setOptions(setOptions);
 
-      if (setContents) {
-        this.editor.setContents(setContents);
-        this.editor.core.focusEdge();
-      }
-
-      if (setDefaultStyle) this.editor.setDefaultStyle(setDefaultStyle);
-      if (insertHTML) this.editor.insertHTML(insertHTML);
-      if (appendContents) this.editor.appendContents(appendContents);
-
       this.editor.onload = function (_, reload) {
+        if (setContents) {
+          _this2.editor.setContents(setContents);
+
+          _this2.editor.core.focusEdge();
+        }
+
+        if (setDefaultStyle) _this2.editor.setDefaultStyle(setDefaultStyle);
+        if (insertHTML) _this2.editor.insertHTML(insertHTML);
+        if (appendContents) _this2.editor.appendContents(appendContents);
+        if (_this2.editor.util.isIE) _this2.editor.core._createDefaultRange();
+        if (enable === true) _this2.editor.enabled();
+        if (disable === true) _this2.editor.disabled();
+        if (hide === true) _this2.editor.hide();
+        if (show === true) _this2.editor.show();
+        if (showToolbar === true) _this2.editor.toolbar.show();else _this2.editor.toolbar.hide();
+        if (enableToolbar === true) _this2.editor.toolbar.enabled();else _this2.editor.toolbar.disabled();
+        if (autoFocus === false) _this2.editor.core.context.element.wysiwyg.blur();else if (autoFocus === true) _this2.editor.core.context.element.wysiwyg.focus();
         if (onLoad) onLoad(reload);
       };
 
-      if (enable === true) this.editor.enabled();
-      if (disable === true) this.editor.disabled();
-      if (hide === true) this.editor.hide();
-      if (show === true) this.editor.show();
-      if (showToolbar === true) this.editor.toolbar.show();else this.editor.toolbar.hide();
-      if (enableToolbar === true) this.editor.toolbar.enabled();else this.editor.toolbar.disabled();
-
-      if (this.editor.util.isIE) {
-        this.editor.core._createDefaultRange();
-      }
-
-      if (autoFocus === false) this.editor.core.context.element.wysiwyg.blur();else if (autoFocus === true) this.editor.core.context.element.wysiwyg.focus();
       if (imageUploadHandler && typeof imageUploadHandler === "function") this.editor.imageUploadHandler = imageUploadHandler;
       if (toggleCodeView && typeof toggleCodeView === "function") this.editor.toggleCodeView = function (isCodeView) {
         return toggleCodeView(isCodeView);
@@ -22350,6 +22348,10 @@ var SunEditor_SunEditor = /*#__PURE__*/function (_Component) {
 
       if (prevProps.appendContents !== this.props.appendContents) {
         this.editor.appendContents(this.props.appendContents);
+      }
+
+      if (prevProps.insertHTML !== this.props.insertHTML) {
+        this.editor.insertHTML(this.props.insertHTML);
       }
 
       if (prevProps.enable !== this.props.enable) {

@@ -40,7 +40,7 @@
   },
   "dependencies": {
     "prop-types": "^15.7.2",
-    "suneditor": "^2.32.0"
+    "suneditor": "^2.32.1"
   },
   "browserslist": [
     "last 1 version",

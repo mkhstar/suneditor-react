@@ -134,35 +134,33 @@ class SunEditor extends Component {
         onAudioUploadError(errorMessage, result);
     if (placeholder) setOptions.placeholder = placeholder;
     this.editor.setOptions(setOptions);
-    
-    if (setContents) {
-      this.editor.setContents(setContents);
-      this.editor.core.focusEdge();
-    }
-    if (setDefaultStyle) this.editor.setDefaultStyle(setDefaultStyle);
-    if (insertHTML) this.editor.insertHTML(insertHTML);
-    if (appendContents) this.editor.appendContents(appendContents);
-    
+
     this.editor.onload = (_, reload) => {
+      if (setContents) {
+        this.editor.setContents(setContents);
+        this.editor.core.focusEdge();
+      }
+      if (setDefaultStyle) this.editor.setDefaultStyle(setDefaultStyle);
+      if (insertHTML) this.editor.insertHTML(insertHTML);
+      if (appendContents) this.editor.appendContents(appendContents);
+
+      if (this.editor.util.isIE) this.editor.core._createDefaultRange();
+      if (enable === true) this.editor.enabled();
+      if (disable === true) this.editor.disabled();
+      if (hide === true) this.editor.hide();
+      if (show === true) this.editor.show();
+      if (showToolbar === true) this.editor.toolbar.show();
+      else this.editor.toolbar.hide();
+      if (enableToolbar === true) this.editor.toolbar.enabled();
+      else this.editor.toolbar.disabled();
+
+      if (autoFocus === false) this.editor.core.context.element.wysiwyg.blur();
+      else if (autoFocus === true)
+        this.editor.core.context.element.wysiwyg.focus();
+
+
       if (onLoad) onLoad(reload);
     };
-
-    if (enable === true) this.editor.enabled();
-    if (disable === true) this.editor.disabled();
-    if (hide === true) this.editor.hide();
-    if (show === true) this.editor.show();
-    if (showToolbar === true) this.editor.toolbar.show();
-    else this.editor.toolbar.hide();
-    if (enableToolbar === true) this.editor.toolbar.enabled();
-    else this.editor.toolbar.disabled();
-
-    if (this.editor.util.isIE) {
-      this.editor.core._createDefaultRange();
-    }
-
-    if (autoFocus === false) this.editor.core.context.element.wysiwyg.blur();
-    else if (autoFocus === true)
-      this.editor.core.context.element.wysiwyg.focus();
 
     if (imageUploadHandler && typeof imageUploadHandler === "function")
       this.editor.imageUploadHandler = imageUploadHandler;
