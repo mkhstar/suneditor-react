@@ -14,7 +14,7 @@ export interface SunEditorReactProps {
   onFocus?: (event: FocusEvent) => void;
   onBlur?: (event: FocusEvent, editorContents: string) => void;
   onLoad?: (reload: boolean) => void;
-  onDrop?: (event: DragEvent) => void;
+  onDrop?: (event: DragEvent) => boolean;
   onPaste?: (event: ClipboardEvent, cleanData: string, maxCharCount: boolean) => void;
   onImageUpload?: (
     targetImgElement: HTMLImageElement,
