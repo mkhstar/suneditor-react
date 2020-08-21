@@ -201,6 +201,9 @@ class SunEditor extends Component {
     if (prevProps.appendContents !== this.props.appendContents) {
       this.editor.appendContents(this.props.appendContents);
     }
+    if (prevProps.insertHTML !== this.props.insertHTML) {
+      this.editor.insertHTML(this.props.insertHTML);
+    }
     if (prevProps.enable !== this.props.enable) {
       if (this.props.enable === true) this.editor.enabled();
       else this.editor.disabled();
