@@ -66,8 +66,10 @@ class SunEditor extends Component {
         if (name) this.txtArea.current.value = content;
         if (onChange) onChange(content);
       };
-    if (onCopy) this.editor.onCopy = (e, clipboardData) => onCopy(e, clipboardData);
-    if (onCut) this.editor.onCut = (e, clipboardData) => onCut(e, clipboardData);
+    if (onCopy)
+      this.editor.onCopy = (e, clipboardData) => onCopy(e, clipboardData);
+    if (onCut)
+      this.editor.onCut = (e, clipboardData) => onCut(e, clipboardData);
     if (onMouseDown) this.editor.onMouseDown = (e) => onMouseDown(e);
     if (onScroll) this.editor.onScroll = (e) => onScroll(e);
     if (onInput) this.editor.onInput = (e) => onInput(e);
@@ -136,28 +138,30 @@ class SunEditor extends Component {
     this.editor.setOptions(setOptions);
 
     this.editor.onload = (_, reload) => {
-      if (setContents) {
-        this.editor.setContents(setContents);
-        this.editor.core.focusEdge();
+      if (reload === false) {
+        if (setContents) {
+          this.editor.setContents(setContents);
+          this.editor.core.focusEdge();
+        }
+        if (setDefaultStyle) this.editor.setDefaultStyle(setDefaultStyle);
+        if (insertHTML) this.editor.insertHTML(insertHTML);
+        if (appendContents) this.editor.appendContents(appendContents);
+
+        if (this.editor.util.isIE) this.editor.core._createDefaultRange();
+        if (enable === true) this.editor.enabled();
+        if (disable === true) this.editor.disabled();
+        if (hide === true) this.editor.hide();
+        if (show === true) this.editor.show();
+        if (showToolbar === true) this.editor.toolbar.show();
+        else this.editor.toolbar.hide();
+        if (enableToolbar === true) this.editor.toolbar.enabled();
+        else this.editor.toolbar.disabled();
+
+        if (autoFocus === false)
+          this.editor.core.context.element.wysiwyg.blur();
+        else if (autoFocus === true)
+          this.editor.core.context.element.wysiwyg.focus();
       }
-      if (setDefaultStyle) this.editor.setDefaultStyle(setDefaultStyle);
-      if (insertHTML) this.editor.insertHTML(insertHTML);
-      if (appendContents) this.editor.appendContents(appendContents);
-
-      if (this.editor.util.isIE) this.editor.core._createDefaultRange();
-      if (enable === true) this.editor.enabled();
-      if (disable === true) this.editor.disabled();
-      if (hide === true) this.editor.hide();
-      if (show === true) this.editor.show();
-      if (showToolbar === true) this.editor.toolbar.show();
-      else this.editor.toolbar.hide();
-      if (enableToolbar === true) this.editor.toolbar.enabled();
-      else this.editor.toolbar.disabled();
-
-      if (autoFocus === false) this.editor.core.context.element.wysiwyg.blur();
-      else if (autoFocus === true)
-        this.editor.core.context.element.wysiwyg.focus();
-
 
       if (onLoad) onLoad(reload);
     };
