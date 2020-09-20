@@ -82,7 +82,7 @@ module.exports =
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 43);
+/******/ 	return __webpack_require__(__webpack_require__.s = 45);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -99,7 +99,7 @@ module.exports =
 if (false) { var throwOnDirectAccess, ReactIs; } else {
   // By explicitly using `prop-types` you are opting into new production behavior.
   // http://fb.me/prop-types-in-prod
-  module.exports = __webpack_require__(41)();
+  module.exports = __webpack_require__(43)();
 }
 
 
@@ -428,7 +428,7 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
                     xmlHttp.setRequestHeader(key, uploadHeader[key]);
                 }
             }
-            xmlHttp.send(formData);  
+            xmlHttp.send(formData);
         },
 
         _callBackUpload: function (xmlHttp, callBack, errorCallBack) {
@@ -470,7 +470,7 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
          */
         checkInfo: function (pluginName, tagNames, uploadEventHandler, modifyHandler, resizing) {
             let tags = [];
-            for (let i in tagNames) {
+            for (let i = 0, len = tagNames.length; i < len; i++) {
                 tags = tags.concat([].slice.call(this.context.element.wysiwyg.getElementsByTagName(tagNames[i])));
             }
 
@@ -803,7 +803,7 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
             videoBox: {
                 title: 'Insert Video',
                 file: 'Select from files',
-                url: 'Media embed URL, YouTube'
+                url: 'Media embed URL, YouTube/Vimeo'
             },
             audioBox: {
                 title: 'Insert Audio',
@@ -861,7 +861,8 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
             bordered: 'Bordered',
             neon: 'Neon',
             translucent: 'Translucent',
-            shadow: 'Shadow'
+            shadow: 'Shadow',
+            code: 'Code'
         }
     };
 
@@ -1577,8 +1578,8 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
             }
 
             if (this.currentControllerName !== plugin) {
-                this.util.toggleDisabledButtons(true, this.resizingDisabledButtons);
-                this.controllersOn(contextResizing.resizeContainer, contextResizing.resizeButton, this.util.toggleDisabledButtons.bind(this, false, this.resizingDisabledButtons), targetElement, plugin);
+                this.util.setDisabledButtons(true, this.resizingDisabledButtons);
+                this.controllersOn(contextResizing.resizeContainer, contextResizing.resizeButton, this.util.setDisabledButtons.bind(this, false, this.resizingDisabledButtons), targetElement, plugin);
             }
     
             // button group
@@ -2265,20 +2266,24 @@ module.exports = require("react");
             let tagsHTML = '';
             let listHTML = '<div class="se-file-item-column">';
             let columns = 1;
-            for (let i = 0, item, tag; i < len; i++) {
+            for (let i = 0, item, tags; i < len; i++) {
                 item = items[i];
+                tags = !item.tag ? [] : typeof item.tag === 'string' ? item.tag.split(',') : item.tag;
+                tags = item.tag = tags.map(function (v) { return v.trim(); });
                 listHTML += drawItemHandler(item);
 
                 if ((i + 1) % splitSize === 0 && columns < columnSize && (i + 1) < len) {
                     columns++;
                     listHTML += '</div><div class="se-file-item-column">';
                 }
-
-                if (update) {
-                    tag = item.tag;
-                    if (tag && _tags.indexOf(tag) === -1) {
-                        _tags.push(tag);
-                        tagsHTML += '<a title="' + tag + '">' + tag + '</a>';
+                
+                if (update && tags.length > 0) {
+                    for (let t = 0, tLen = tags.length, tag; t < tLen; t++) {
+                        tag = tags[t];
+                        if (tag && _tags.indexOf(tag) === -1) {
+                            _tags.push(tag);
+                            tagsHTML += '<a title="' + tag + '">' + tag + '</a>';
+                        }
                     }
                 }
             }
@@ -2313,9 +2318,14 @@ module.exports = require("react");
                 this.util.addClass(selectTag, 'on');
             }
 
-            fileBrowserPlugin._drawListItem.call(this, selectedTags.length === 0 ? fileBrowserContext.items : fileBrowserContext.items.filter(function (item) {
-                return selectedTags.indexOf(item.tag) > -1;
-            }), false);
+            fileBrowserPlugin._drawListItem.call(this,
+                selectedTags.length === 0 ?
+                fileBrowserContext.items :
+                fileBrowserContext.items.filter(function (item) {
+                    return item.tag.some(function (tag) {
+                        return selectedTags.indexOf(tag) > -1;
+                    });
+                }), false);
         },
 
         onClickFile: function (e) {
@@ -2655,7 +2665,7 @@ __webpack_require__.r(__webpack_exports__);
             className: 'katex',
             method: function (element) {
                 if (!element.getAttribute('data-exp')) return;
-                const dom = this._d.createRange().createContextualFragment(this.plugins.math._renderer.call(this, element.getAttribute('data-exp')));
+                const dom = this._d.createRange().createContextualFragment(this.plugins.math._renderer.call(this, this.util.HTMLDecoder(element.getAttribute('data-exp'))));
                 element.innerHTML = dom.querySelector('.katex').innerHTML;
             }
         };
@@ -2686,7 +2696,7 @@ __webpack_require__.r(__webpack_exports__);
             if (!katexEl) return false;
             katexEl.className = '__se__katex ' + katexEl.className;
             katexEl.setAttribute('contenteditable', false);
-            katexEl.setAttribute('data-exp', mathExp);
+            katexEl.setAttribute('data-exp', this.util.HTMLEncoder(mathExp));
             katexEl.setAttribute('data-font-size', contextMath.fontSizeElement.value);
             katexEl.style.fontSize = contextMath.fontSizeElement.value;
 
@@ -2755,7 +2765,7 @@ __webpack_require__.r(__webpack_exports__);
         } else {
             const contextMath = this.context.math;
             if (contextMath._mathExp) {
-                const exp = contextMath._mathExp.getAttribute('data-exp');
+                const exp = this.util.HTMLDecoder(contextMath._mathExp.getAttribute('data-exp'));
                 const fontSize = contextMath._mathExp.getAttribute('data-font-size') || '1em';
                 this.context.dialog.updateModal = true;
                 contextMath.focusElement.value = exp;
@@ -2796,7 +2806,7 @@ __webpack_require__.r(__webpack_exports__);
         e.preventDefault();
 
         if (/update/.test(command)) {
-            this.context.math.focusElement.value = this.context.math._mathExp.getAttribute('data-exp');
+            this.context.math.focusElement.value = this.util.HTMLDecoder(this.context.math._mathExp.getAttribute('data-exp'));
             this.plugins.dialog.open.call(this, 'math', true);
         } else {
             /** delete */
@@ -2881,14 +2891,15 @@ __webpack_require__.r(__webpack_exports__);
         const srcName = item.src.split('/').pop();
         return  '<div class="se-file-item-img"><img src="' + item.src + '" alt="' + (item.alt || srcName) + '" data-command="pick">' +
                     '<div class="se-file-img-name se-file-name-back"></div>' +
-                    '<div class="se-file-img-name">' + (item.name || srcName) + '</div>' +
+                    '<div class="se-file-img-name __se__img_name">' + (item.name || srcName) + '</div>' +
                 '</div>';
     },
 
     setImage: function (target) {
         this.callPlugin('image', function () {
+            const file = {name: target.parentNode.querySelector('.__se__img_name').textContent, size: 0};
             this.context.image._altText = target.alt;
-            this.plugins.image.create_image.call(this, target.src, '', false, this.context.image._origin_w, this.context.image._origin_h, 'none', null);
+            this.plugins.image.create_image.call(this, target.src, '', false, this.context.image._origin_w, this.context.image._origin_h, 'none', file);
         }.bind(this), null);
     }
 });
@@ -3774,7 +3785,7 @@ __webpack_require__.r(__webpack_exports__);
         const oHr = this.util.createElement('HR');
         oHr.className = className;
         this.focus();
-        return this.insertComponent(oHr, false, true);
+        return this.insertComponent(oHr, false, true, false);
     },
 
     horizontalRulePick: function (e) {
@@ -4720,7 +4731,7 @@ __webpack_require__.r(__webpack_exports__);
         tableHTML += '</tbody>';
         oTable.innerHTML = tableHTML;
 
-        const changed = this.insertComponent(oTable, false, true);
+        const changed = this.insertComponent(oTable, false, true, false);
         
         if (changed) {
             const firstTd = oTable.querySelector('td div');
@@ -5955,9 +5966,8 @@ __webpack_require__.r(__webpack_exports__);
                 this.controllersOff();
 
                 if (emptyDiv !== this.context.element.wysiwyg) this.util.removeItemAllParents(emptyDiv, function (current) { return current.childNodes.length === 0; }, null);
+                this.focus();
         }
-
-        this.focus();
 
         // history stack
         this.history.push(false);
@@ -6087,6 +6097,11 @@ __webpack_require__.r(__webpack_exports__);
         listDiv.className = 'se-submenu se-list-layer se-list-format';
 
         const defaultList = {
+            code: {
+                name: this.lang.menu.code,
+                class: '__se__t-code',
+                tag: 'code',
+            },
             translucent: {
                 name: this.lang.menu.translucent,
                 style: 'opacity: 0.5;',
@@ -6098,7 +6113,7 @@ __webpack_require__.r(__webpack_exports__);
                 tag: 'span',
             }
         };
-        const styleList = !option.textStyles ? ['translucent', 'shadow'] : option.textStyles;
+        const styleList = !option.textStyles ? this._w.Object.keys(defaultList) : option.textStyles;
 
         let list = '<div class="se-list-inner"><ul class="se-list-basic">';
         for (let i = 0, len = styleList.length, t, tag, name, attrs, command, value, _class; i < len; i++) {
@@ -6157,7 +6172,7 @@ __webpack_require__.r(__webpack_exports__);
                 node = selectionNode;
                 active = false;
                 
-                while (!util.isFormatElement(node)) {
+                while (node && !util.isFormatElement(node) && !util.isComponent(node)) {
                     if (node.nodeName.toLowerCase() === btn.getAttribute('data-command').toLowerCase()) {
                         value = data[v];
                         if (/^\./.test(value) ? util.hasClass(node, value.replace(/^\./, '')) : !!node.style[value]) {
@@ -6257,6 +6272,7 @@ __webpack_require__.r(__webpack_exports__);
             _floatClassRegExp: '__se__float\\-[a-z]+',
             _v_link: {_linkValue: ''},
             _v_src: {_linkValue: ''},
+            svgDefaultSize: '30%',
             // @require @Override component
             _element: null,
             _cover: null,
@@ -6367,7 +6383,7 @@ __webpack_require__.r(__webpack_exports__);
                             '<div class="se-dialog-form">' +
                                 '<label>' + lang.dialogBox.imageBox.file + '</label>' +
                                 '<div class="se-dialog-form-files">' +
-                                    '<input class="se-input-form _se_image_file" type="file" accept="image/*"' + (option.imageMultipleFile ? ' multiple="multiple"' : '') + '/>' +
+                                    '<input class="se-input-form _se_image_file" type="file" accept="' + option.imageAccept + '"' + (option.imageMultipleFile ? ' multiple="multiple"' : '') + '/>' +
                                     '<button type="button" class="se-btn se-dialog-files-edge-button se-file-remove" title="' + lang.controller.remove + '">' + this.icons.cancel + '</button>' +
                                 '</div>' +
                             '</div>' ;
@@ -6660,7 +6676,14 @@ __webpack_require__.r(__webpack_exports__);
         };
 
         if (typeof this.functions.onImageUploadBefore === 'function') {
-            const result = this.functions.onImageUploadBefore(files, info, this, this.plugins.image.upload.bind(this, info));
+            const result = this.functions.onImageUploadBefore(files, info, this, function (data) {
+                if (data && this._w.Array.isArray(data.result)) {
+                    this.plugins.image.register.call(this, info, data);
+                } else {
+                    this.plugins.image.upload.call(this, info, data);
+                }
+            }.bind(this));
+            
             if (typeof result === 'undefined') return;
             if (!result) {
                 this.closeLoading();
@@ -6736,9 +6759,10 @@ __webpack_require__.r(__webpack_exports__);
 
     setup_reader: function (files, imgLinkValue, newWindowCheck, width, height, align, filesLen, isUpdate) {
         try {
-            const reader = new FileReader();
+            const wFileReader = this._w.FileReader;
     
-            for (let i = 0, file; i <= filesLen; i++) {
+            for (let i = 0, reader, file; i <= filesLen; i++) {
+                reader = new wFileReader();
                 file = files[i];
     
                 if (isUpdate) {
@@ -6837,13 +6861,14 @@ __webpack_require__.r(__webpack_exports__);
     },
 
     create_image: function (src, linkValue, linkNewWindow, width, height, align, file) {
+        const imagePlugin = this.plugins.image;
         const contextImage = this.context.image;
         this.context.resizing._resize_plugin = 'image';
 
         let oImg = this.util.createElement('IMG');
         oImg.src = src;
         oImg.alt = contextImage._altText;
-        oImg = this.plugins.image.onRender_link.call(this, oImg, linkValue, linkNewWindow);
+        oImg = imagePlugin.onRender_link.call(this, oImg, linkValue, linkNewWindow);
         oImg.setAttribute('data-rotate', '0');
 
         if (contextImage._resizing) {
@@ -6865,13 +6890,20 @@ __webpack_require__.r(__webpack_exports__);
         contextImage._container = container;
 
         // set size
-        this.plugins.image.applySize.call(this, width, height);
+        imagePlugin.applySize.call(this, width, height);
 
         // align
-        this.plugins.image.setAlign.call(this, align, oImg, cover, container);
+        imagePlugin.setAlign.call(this, align, oImg, cover, container);
 
-        if (this.insertComponent(container, true, true)) this.plugins.fileManager.setInfo.call(this, 'image', oImg, this.functions.onImageUpload, file, true);
+        oImg.onload = imagePlugin._image_create_onload.bind(this, oImg, contextImage.svgDefaultSize);
+        if (this.insertComponent(container, true, true, true)) this.plugins.fileManager.setInfo.call(this, 'image', oImg, this.functions.onImageUpload, file, true);
         this.context.resizing._resize_plugin = '';
+    },
+
+    _image_create_onload: function (oImg, svgDefaultSize) {
+        // svg exception handling
+        if (oImg.offsetWidth === 0) this.plugins.image.applySize.call(this, svgDefaultSize, '');
+        this.selectComponent.call(this, oImg, 'image');
     },
 
     update_image: function (init, openController, notHistoryPush) {
@@ -7454,9 +7486,6 @@ __webpack_require__.r(__webpack_exports__);
                 this.setRange(textNode, 0, textNode, textNode.textContent.length);
             }
 
-            // history stack
-            this.history.push(false);
-
             contextLink._linkValue = contextLink.preview.textContent = contextLink.focusElement.value = contextLink.linkAnchorText.value = '';
         }.bind(this);
 
@@ -7465,7 +7494,8 @@ __webpack_require__.r(__webpack_exports__);
         } finally {
             this.plugins.dialog.close.call(this);
             this.closeLoading();
-            this.focus();
+            // history stack
+            this.history.push(false);
         }
 
         return false;
@@ -7718,7 +7748,7 @@ __webpack_require__.r(__webpack_exports__);
                         '<div class="se-dialog-form">' +
                             '<label>' + lang.dialogBox.videoBox.file + '</label>' +
                             '<div class="se-dialog-form-files">' +
-                                '<input class="se-input-form _se_video_file" type="file" accept="video/*"' + (option.videoMultipleFile ? ' multiple="multiple"' : '') + '/>' +
+                                '<input class="se-input-form _se_video_file" type="file" accept="' + option.videoAccept + '"' + (option.videoMultipleFile ? ' multiple="multiple"' : '') + '/>' +
                                 '<button type="button" data-command="filesRemove" class="se-btn se-dialog-files-edge-button se-file-remove" title="' + lang.controller.remove + '">' + this.icons.cancel + '</button>' +
                             '</div>' +
                         '</div>' ;
@@ -7811,16 +7841,40 @@ __webpack_require__.r(__webpack_exports__);
         }
     },
 
+    _setTagAttrs: function (element) {
+        element.setAttribute('controls', true);
+
+        const attrs = this.context.options.videoTagAttrs;
+        if (!attrs) return;
+
+        for (let key in attrs) {
+            if (!this.util.hasOwn(attrs, key)) continue;
+            element.setAttribute(key, attrs[key]);
+        }
+    },
+
     createVideoTag: function () {
         const videoTag = this.util.createElement('VIDEO');
-        videoTag.setAttribute('controls', true);
+        this.plugins.video._setTagAttrs.call(this, videoTag);
         return videoTag;
+    },
+
+    _setIframeAttrs: function (element) {
+        element.frameBorder = '0';
+        element.allowFullscreen = true;
+
+        const attrs = this.context.options.videoIframeAttrs;
+        if (!attrs) return;
+
+        for (let key in attrs) {
+            if (!this.util.hasOwn(attrs, key)) continue;
+            element.setAttribute(key, attrs[key]);
+        }
     },
 
     createIframeTag: function () {
         const iframeTag = this.util.createElement('IFRAME');
-        iframeTag.frameBorder = '0';
-        iframeTag.allowFullscreen = true;
+        this.plugins.video._setIframeAttrs.call(this, iframeTag);
         return iframeTag;
     },
 
@@ -7995,7 +8049,14 @@ __webpack_require__.r(__webpack_exports__);
         };
 
         if (typeof this.functions.onVideoUploadBefore === 'function') {
-            const result = this.functions.onVideoUploadBefore(files, info, this, this.plugins.video.upload.bind(this, info));
+            const result = this.functions.onVideoUploadBefore(files, info, this, function (data) {
+                if (data && this._w.Array.isArray(data.result)) {
+                    this.plugins.video.register.call(this, info, data);
+                } else {
+                    this.plugins.video.upload.call(this, info, data);
+                }
+            }.bind(this));
+
             if (typeof result === 'undefined') return;
             if (!result) {
                 this.closeLoading();
@@ -8095,6 +8156,11 @@ __webpack_require__.r(__webpack_exports__);
                         url += '?' + contextVideo._youtubeQuery;
                     }
                 }
+            } else if (/vimeo\.com/.test(url)) {
+                if (url.endsWith('/')) {
+                    url = url.slice(0, -1);
+                }
+                url = 'https://player.vimeo.com/video/' + url.slice(url.lastIndexOf('/') + 1);
             }
 
             this.plugins.video.create_video.call(this, this.plugins.video.createIframeTag.call(this), url, contextVideo.inputX.value, contextVideo.inputY.value, contextVideo._align, null, this.context.dialog.updateModal);
@@ -8119,8 +8185,14 @@ __webpack_require__.r(__webpack_exports__);
             if (oFrame.src !== src) {
                 init = true;
                 const isYoutube = /youtu\.?be/.test(src);
-                if ((isYoutube && !/^iframe$/i.test(oFrame.nodeName)) || (!isYoutube && !/^videoo$/i.test(oFrame.nodeName))) {
-                    const newTag = isYoutube ? this.plugins.video.createIframeTag.call(this) : this.plugins.video.createVideoTag.call(this);
+                const isVimeo = /vimeo\.com/.test(src);
+                if ((isYoutube || isVimeo) && !/^iframe$/i.test(oFrame.nodeName)) {
+                    const newTag = this.plugins.video.createIframeTag.call(this);
+                    newTag.src = src;
+                    oFrame.parentNode.replaceChild(newTag, oFrame);
+                    contextVideo._element = oFrame = newTag;
+                } else if (!isYoutube && !isVimeo && !/^videoo$/i.test(oFrame.nodeName)) {
+                    const newTag = this.plugins.video.createVideoTag.call(this);
                     newTag.src = src;
                     oFrame.parentNode.replaceChild(newTag, oFrame);
                     contextVideo._element = oFrame = newTag;
@@ -8165,7 +8237,7 @@ __webpack_require__.r(__webpack_exports__);
 
         let changed = true;
         if (!isUpdate) {
-            changed = this.insertComponent(container, false, true);
+            changed = this.insertComponent(container, false, true, false);
         } else if (contextVideo._resizing && this.context.resizing._rotateVertical && changeSize) {
             this.plugins.resizing.setTransformSize.call(this, oFrame, null, null);
         }
@@ -8188,8 +8260,9 @@ __webpack_require__.r(__webpack_exports__);
         if (!oFrame) return;
 
         const contextVideo = this.context.video;
-        oFrame.frameBorder = '0';
-        oFrame.allowFullscreen = true;
+        
+        if (/^video$/i.test(oFrame.nodeName)) this.plugins.video._setTagAttrs.call(this, oFrame);
+        else this.plugins.video._setIframeAttrs.call(this, oFrame);
         
         const existElement = this.util.getParentElement(oFrame, this.util.isMediaComponent) || 
             this.util.getParentElement(oFrame, function (current) {
@@ -8225,8 +8298,6 @@ __webpack_require__.r(__webpack_exports__);
         contextVideo._cover = this.util.getParentElement(element, 'FIGURE');
         contextVideo._container = this.util.getParentElement(element, this.util.isMediaComponent);
         contextVideo._align = element.getAttribute('data-align') || 'none';
-
-        if (/^video$/i.test(element.nodeName)) element.setAttribute('controls', true);
 
         if (size) {
             contextVideo._element_w = size.w;
@@ -8607,7 +8678,7 @@ __webpack_require__.r(__webpack_exports__);
                         '<div class="se-dialog-form">' +
                             '<label>' + lang.dialogBox.audioBox.file + '</label>' +
                             '<div class="se-dialog-form-files">' +
-                                '<input class="se-input-form _se_audio_files" type="file" accept="audio/*"' + (option.audioMultipleFile ? ' multiple="multiple"' : '') + '/>' +
+                                '<input class="se-input-form _se_audio_files" type="file" accept="' + option.audioAccept + '"' + (option.audioMultipleFile ? ' multiple="multiple"' : '') + '/>' +
                                 '<button type="button" data-command="filesRemove" class="se-btn se-dialog-files-edge-button se-file-remove" title="' + lang.controller.remove + '">' + this.icons.cancel + '</button>' +
                             '</div>' +
                         '</div>';
@@ -8682,7 +8753,7 @@ __webpack_require__.r(__webpack_exports__);
     // create new audio tag
     _createAudioTag: function () {
         const oAudio = this.util.createElement('AUDIO');
-        oAudio.setAttribute('controls', true);
+        this.plugins.audio._setTagAttrs.call(this, oAudio);
 
         const w = this.context.audio._origin_w;
         const h = this.context.audio._origin_h;
@@ -8690,6 +8761,18 @@ __webpack_require__.r(__webpack_exports__);
         oAudio.style.cssText = (w ? ('width:' + w + '; ') : '') + (h ? ('height:' + h + ';') : '');
 
         return oAudio;
+    },
+
+    _setTagAttrs: function (element) {
+        element.setAttribute('controls', true);
+
+        const attrs = this.context.options.audioTagAttrs;
+        if (!attrs) return;
+
+        for (let key in attrs) {
+            if (!this.util.hasOwn(attrs, key)) continue;
+            element.setAttribute(key, attrs[key]);
+        }
     },
 
     _onLinkPreview: function (context, protocol, e) {
@@ -8839,7 +8922,14 @@ __webpack_require__.r(__webpack_exports__);
         };
 
         if (typeof this.functions.onAudioUploadBefore === 'function') {
-            const result = this.functions.onAudioUploadBefore(files, info, this, this.plugins.audio.upload.bind(this, info));
+            const result = this.functions.onAudioUploadBefore(files, info, this, function (data) {
+                if (data && this._w.Array.isArray(data.result)) {
+                    this.plugins.audio.register.call(this, info, data);
+                } else {
+                    this.plugins.audio.upload.call(this, info, data);
+                }
+            }.bind(this));
+
             if (typeof result === 'undefined') return;
             if (!result) {
                 this.closeLoading();
@@ -8928,7 +9018,7 @@ __webpack_require__.r(__webpack_exports__);
             element.src = src;
             const cover = this.plugins.component.set_cover.call(this, element);
             const container = this.plugins.component.set_container.call(this, cover, '');
-            if (!this.insertComponent(container, false, true)) {
+            if (!this.insertComponent(container, false, true, false)) {
                 this.focus();
                 return;
             }
@@ -8950,7 +9040,7 @@ __webpack_require__.r(__webpack_exports__);
 
     updateCover: function (element) {
         const contextAudio = this.context.audio;
-        element.setAttribute('controls', true);
+        this.plugins.audio._setTagAttrs.call(this, element);
         
         // find component element
         const existElement = this.util.getParentElement(element, this.util.isMediaComponent) || 
@@ -9156,7 +9246,7 @@ __webpack_require__.r(__webpack_exports__);
             videoBox: {
                 title: 'Indsæt Video',
                 file: 'Indsæt fra fil',
-                url: 'Indlejr video / YouTube'
+                url: 'Indlejr video / YouTube,Vimeo'
             },
             audioBox: {
                 title: 'Indsæt Audio',
@@ -9214,7 +9304,8 @@ __webpack_require__.r(__webpack_exports__);
             bordered: 'Afgrænsningslinje',
             neon: 'Neon',
             translucent: 'Gennemsigtig',
-            shadow: 'Skygge'
+            shadow: 'Skygge',
+            code: 'Code'
         }
     };
 
@@ -9345,7 +9436,7 @@ __webpack_require__.r(__webpack_exports__);
             videoBox: {
                 title: 'Video enfügen',
                 file: 'Datei auswählen',
-                url: 'Video-URL, YouTube'
+                url: 'Video-URL, YouTube/Vimeo'
             },
             audioBox: {
                 title: 'Audio enfügen',
@@ -9403,7 +9494,8 @@ __webpack_require__.r(__webpack_exports__);
             bordered: 'Umrandet',
             neon: 'Neon',
             translucent: 'Durchscheinend',
-            shadow: 'Schatten'
+            shadow: 'Schatten',
+            code: 'Quellcode'
         }
     };
 
@@ -9533,7 +9625,7 @@ __webpack_require__.r(__webpack_exports__);
 			videoBox: {
 				title: 'Insertar Video',
 				file: 'Seleccionar desde los archivos',
-				url: '¿URL del vídeo? Youtube'
+				url: '¿URL del vídeo? Youtube/Vimeo'
 			},
 			audioBox: {
                 title: 'Insertar Audio',
@@ -9591,7 +9683,8 @@ __webpack_require__.r(__webpack_exports__);
 			bordered: 'Bordeado',
 			neon: 'Neón',
 			translucent: 'Translúcido',
-			shadow: 'Sombreado'
+			shadow: 'Sombreado',
+            code: 'Código'
 		}
 	};
 
@@ -9721,7 +9814,7 @@ __webpack_require__.r(__webpack_exports__);
             videoBox: {
                 title: 'Insérer une Vidéo',
                 file: 'Sélectionner le fichier',
-                url: 'URL d’intégration du média, YouTube'
+                url: 'URL d’intégration du média, YouTube/Vimeo'
             },
             audioBox: {
                 title: 'Insertar une l\'audio',
@@ -9779,7 +9872,8 @@ __webpack_require__.r(__webpack_exports__);
             bordered: 'Ligne de démarcation',
             neon: 'Néon',
             translucent: 'Translucide',
-            shadow: 'L\'ombre'
+            shadow: 'L\'ombre',
+            code: 'Code'
         }
     };
 
@@ -9910,7 +10004,7 @@ __webpack_require__.r(__webpack_exports__);
             videoBox: {
                 title: '動画を挿入',
                 file: 'ファイルの選択',
-                url: 'メディア埋め込まアドレス,YouTube'
+                url: 'メディア埋め込みアドレス, YouTube/Vimeo'
             },
             audioBox: {
                 title: 'オーディオを挿入',
@@ -9968,7 +10062,8 @@ __webpack_require__.r(__webpack_exports__);
             bordered: '境界線',
             neon: 'ネオン',
             translucent: '半透明',
-            shadow: '影'
+            shadow: '影',
+            code: 'コード'
         }
     };
 
@@ -10098,7 +10193,7 @@ __webpack_require__.r(__webpack_exports__);
             videoBox: {
                 title: '동영상 삽입',
                 file: '파일 선택',
-                url: '미디어 임베드 주소, 유튜브'
+                url: '미디어 임베드 주소, 유튜브/비메오'
             },
             audioBox: {
                 title: '오디오 삽입',
@@ -10156,7 +10251,8 @@ __webpack_require__.r(__webpack_exports__);
             bordered: '경계선',
             neon: '네온',
             translucent: '반투명',
-            shadow: '그림자'
+            shadow: '그림자',
+            code: '코드'
         }
     };
 
@@ -10287,7 +10383,7 @@ __webpack_require__.r(__webpack_exports__);
             videoBox: {
                 title: 'Inserir vídeo',
                 file: 'Selecionar arquivos',
-                url: 'URL do YouTube'
+                url: 'URL do YouTube/Vimeo'
             },
             audioBox: {
                 title: 'Inserir audio',
@@ -10345,7 +10441,8 @@ __webpack_require__.r(__webpack_exports__);
             bordered: 'Com borda',
             neon: 'Néon',
             translucent: 'Translúcido',
-            shadow: 'Sombreado'
+            shadow: 'Sombreado',
+            code: 'Código'
         }
     };
 
@@ -10475,7 +10572,7 @@ __webpack_require__.r(__webpack_exports__);
             videoBox: {
                 title: 'Вставить видео',
                 file: 'Выберите файл',
-                url: 'Ссылка на видео'
+                url: 'Ссылка на видео, Youtube,Vimeo'
             },
             audioBox: {
                 title: 'Вставить аудио',
@@ -10533,7 +10630,8 @@ __webpack_require__.r(__webpack_exports__);
             bordered: 'Граничная Линия',
             neon: 'неон',
             translucent: 'полупрозрачный',
-            shadow: 'Тень'
+            shadow: 'Тень',
+            code: 'Код'
         }
     };
 
@@ -10663,7 +10761,7 @@ __webpack_require__.r(__webpack_exports__);
             videoBox: {
                 title: 'Inserisci Video',
                 file: 'Seleziona da file',
-                url: 'Indirizzo video, YouTube'
+                url: 'Indirizzo video, YouTube/Vimeo'
             },
             audioBox: {
                 title: 'Insertar Audio',
@@ -10721,7 +10819,8 @@ __webpack_require__.r(__webpack_exports__);
             bordered: 'Bordo',
             neon: 'Luminoso',
             translucent: 'Translucente',
-            shadow: 'Ombra'
+            shadow: 'Ombra',
+            code: 'Codice'
         }
     };
 
@@ -10852,7 +10951,7 @@ __webpack_require__.r(__webpack_exports__);
             videoBox: {
                 title: '插入视频',
                 file: '上传图片',
-                url: '嵌入网址'
+                url: '嵌入网址, Youtube,Vimeo'
             },
             audioBox: {
                 title: '插入音频',
@@ -10909,7 +11008,8 @@ __webpack_require__.r(__webpack_exports__);
             bordered: '边界线',
             neon: '霓虹灯',
             translucent: '半透明',
-            shadow: '阴影'
+            shadow: '阴影',
+            code: '代码'
         }
     };
 
@@ -11040,7 +11140,7 @@ __webpack_require__.r(__webpack_exports__);
             videoBox: {
                 title: 'Inserează video',
                 file: 'Selectează',
-                url: 'Include URL, youtube'
+                url: 'Include URL, youtube/vimeo'
             },
             audioBox: {
                 title: 'Inserează Audio',
@@ -11098,7 +11198,8 @@ __webpack_require__.r(__webpack_exports__);
             bordered: 'Mărginit',
             neon: 'Neon',
             translucent: 'Translucent',
-            shadow: 'Umbră'
+            shadow: 'Umbră',
+            code: 'Citat'
         }
     };
 
@@ -11228,7 +11329,7 @@ __webpack_require__.r(__webpack_exports__);
             videoBox: {
                 title: 'Wstaw wideo',
                 file: 'Wybierz plik',
-                url: 'Adres URL video, np. YouTube'
+                url: 'Adres URL video, np. YouTube/Vimeo'
             },
             audioBox: {
                 title: 'Wstaw audio',
@@ -11286,7 +11387,8 @@ __webpack_require__.r(__webpack_exports__);
             bordered: 'Z obwódką',
             neon: 'Neon',
             translucent: 'Półprzezroczysty',
-            shadow: 'Cień'
+            shadow: 'Cień',
+            code: 'Kod'
         }
     };
 
@@ -11316,6 +11418,384 @@ __webpack_require__.r(__webpack_exports__);
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
+/*
+ * wysiwyg web editor
+ *
+ * suneditor.js
+ * Copyright 2017 JiHong Lee.
+ * MIT license.
+ */
+
+
+(function (global, factory) {
+    if ( true && typeof module.exports === 'object') {
+        module.exports = global.document ?
+            factory(global, true) :
+            function (w) {
+                if (!w.document) {
+                    throw new Error('SUNEDITOR_LANG a window with a document');
+                }
+                return factory(w);
+            };
+    } else {
+        factory(global);
+    }
+}(typeof window !== 'undefined' ? window : this, function (window, noGlobal) {
+    const lang = {
+        code: 'ckb',
+        toolbar: {
+            default: 'بنه‌ڕه‌ت',
+            save: 'پاشه‌كه‌وتكردن',
+            font: 'فۆنت',
+            formats: 'Formats',
+            fontSize: 'قه‌باره‌',
+            bold: 'تۆخكردن',
+            underline: 'هێڵ به‌ژێردا بێنه‌',
+            italic: 'لار',
+            strike: 'هێڵ به‌ناودا بێنه‌',
+            subscript: 'ژێرسکریپت',
+            superscript: 'سەرنووس',
+            removeFormat: 'لابردنی فۆرمات',
+            fontColor: 'ره‌نگی فۆنت',
+            hiliteColor: 'ره‌نگی دیاركراو',
+            indent: 'بۆشایی بەجێهێشتن',
+            outdent: 'لابردنی بۆشایی',
+            align: 'ئاراسته‌',
+            alignLeft: 'لای چه‌پ',
+            alignRight: 'لای راست',
+            alignCenter: 'ناوه‌ند',
+            alignJustify: 'به‌رێكی دابه‌ش بكه‌',
+            list: 'لیست',
+            orderList: 'لیستی ریزكراو',
+            unorderList: 'لیستی ریزنه‌كراو',
+            horizontalRule: 'هێڵی ئاسۆیی',
+            hr_solid: 'پته‌و',
+            hr_dotted: 'نوكته‌ نوكته‌',
+            hr_dashed: 'داش داش',
+            table: 'خشته‌',
+            link: 'به‌سته‌ر',
+            math: 'بیركاری',
+            image: 'وێنه‌',
+            video: 'ڤیدیۆ',
+            audio: 'ده‌نگ',
+            fullScreen: 'پڕ به‌ شاشه‌',
+            showBlocks: 'بڵۆك نیشانبده',
+            codeView: 'بینینی كۆده‌كان',
+            undo: 'وەک خۆی لێ بکەوە',
+            redo: 'هەڵگەڕاندنەوە',
+            preview: 'پێشبینین',
+            print: 'پرینت',
+            tag_p: 'په‌ره‌گراف',
+            tag_div: 'ی ئاسایی (DIV)',
+            tag_h: 'سەرپەڕە',
+            tag_blockquote: 'ده‌ق',
+            tag_pre: 'كۆد',
+            template: 'قاڵب',
+            lineHeight: 'بڵندی دێر',
+            paragraphStyle: 'ستایلی په‌ره‌گراف',
+            textStyle: 'ستایلی نوسین',
+            imageGallery: 'گاله‌ری وێنه‌كان'
+        },
+        dialogBox: {
+            linkBox: {
+                title: 'به‌سته‌ر دابنێ',
+                url: 'به‌سته‌ر',
+                text: 'تێكستی به‌سته‌ر',
+                newWindowCheck: 'له‌ په‌نجه‌ره‌یه‌كی نوێ بكه‌ره‌وه‌'
+            },
+            mathBox: {
+                title: 'بیركاری',
+                inputLabel: 'نیشانه‌كانی بیركاری',
+                fontSizeLabel: 'قه‌باره‌ی فۆنت',
+                previewLabel: 'پێشبینین'
+            },
+            imageBox: {
+                title: 'وێنه‌یه‌ك دابنێ',
+                file: 'فایلێك هه‌ڵبژێره‌',
+                url: 'به‌سته‌ری وێنه‌',
+                altText: 'نوسینی جێگره‌وه‌'
+            },
+            videoBox: {
+                title: 'ڤیدیۆیه‌ك دابنێ',
+                file: 'فایلێك هه‌ڵبژێره‌',
+                url: 'YouTube/Vimeo به‌سته‌ری له‌ناودانان وه‌ك '
+            },
+            audioBox: {
+                title: 'ده‌نگێك دابنێ',
+                file: 'فایلێك هه‌ڵبژێره‌',
+                url: 'به‌سته‌ری ده‌نگ'
+            },
+            browser: {
+                tags: 'تاگه‌كان',
+                search: 'گه‌ران',
+            },
+            caption: 'پێناسه‌یه‌ك دابنێ',
+            close: 'داخستن',
+            submitButton: 'ناردن',
+            revertButton: 'بیگەڕێنەوە سەر باری سەرەتایی',
+            proportion: 'رێژه‌كان وه‌ك خۆی بهێڵه‌وه‌',
+            basic: 'سه‌ره‌تایی',
+            left: 'چه‌پ',
+            right: 'راست',
+            center: 'ناوەڕاست',
+            width: 'پانی',
+            height: 'به‌رزی',
+            size: 'قه‌باره‌',
+            ratio: 'رێژه‌'
+        },
+        controller: {
+            edit: 'دەسکاریکردن',
+            unlink: 'سڕینەوەی بەستەر',
+            remove: 'سڕینه‌وه‌',
+            insertRowAbove: 'ریزك له‌ سه‌ره‌وه‌ زیادبكه‌',
+            insertRowBelow: 'ریزێك له‌ خواره‌وه‌ زیادبكه‌',
+            deleteRow: 'ریز بسره‌وه‌',
+            insertColumnBefore: 'ستونێك له‌ پێشه‌وه‌ زیادبكه‌',
+            insertColumnAfter: 'ستونێك له‌ دواوه‌ زیادبكه‌',
+            deleteColumn: 'ستونێك بسره‌وه‌',
+            fixedColumnWidth: 'پانی ستون نه‌گۆربكه‌',
+            resize100: 'قه‌باره‌ بگۆره‌ بۆ ١٠٠%',
+            resize75: 'قه‌باره‌ بگۆره‌ بۆ ٧٥%',
+            resize50: 'قه‌باره‌ بگۆره‌ بۆ ٥٠%',
+            resize25: 'قه‌باره‌ بگۆره‌ بۆ ٢٥%',
+            autoSize: 'قه‌باره‌ی خۆكارانه‌',
+            mirrorHorizontal: 'هه‌ڵگه‌رێنه‌وه‌ به‌ده‌وری ته‌وه‌ره‌ی ئاسۆیی',
+            mirrorVertical: 'هه‌ڵگه‌رێنه‌وه‌ به‌ده‌وری ته‌وه‌ره‌ی ستونی',
+            rotateLeft: 'بسوڕێنه‌ به‌لای چه‌پدا',
+            rotateRight: 'بسورێنه‌ به‌لای راستدا',
+            maxSize: 'گه‌وره‌ترین قه‌باره‌',
+            minSize: 'بچوكترین قه‌باره‌',
+            tableHeader: 'سه‌ردێری خشته‌ك',
+            mergeCells: 'خانه‌كان تێكه‌ڵبكه‌',
+            splitCells: 'خانه‌كان لێك جیابكه‌وه‌',
+            HorizontalSplit: 'جیاكردنه‌وه‌ی ئاسۆیی',
+            VerticalSplit: 'جیاكردنه‌وه‌ی ستونی'
+        },
+        menu: {
+            spaced: 'بۆشای هه‌بێت',
+            bordered: 'لێواری هه‌بێت',
+            neon: 'نیۆن',
+            translucent: 'كه‌مێك وه‌ك شووشه‌',
+            shadow: 'سێبه‌ر',
+            code: 'كۆد'
+        }
+    };
+
+    if (typeof noGlobal === typeof undefined) {
+        if (!window.SUNEDITOR_LANG) {
+            Object.defineProperty(window, 'SUNEDITOR_LANG', {
+                enumerable: true,
+                writable: false,
+                configurable: false,
+                value: {}
+            });
+        }
+
+        Object.defineProperty(window.SUNEDITOR_LANG, 'ckb', {
+            enumerable: true,
+            writable: true,
+            configurable: true,
+            value: lang
+        });
+    }
+
+    return lang;
+}));
+
+/***/ }),
+/* 42 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+/*
+ * wysiwyg web editor
+ *
+ * suneditor.js
+ * Copyright 2017 JiHong Lee.
+ * MIT license.
+ */
+
+
+(function (global, factory) {
+    if ( true && typeof module.exports === 'object') {
+        module.exports = global.document ?
+            factory(global, true) :
+            function (w) {
+                if (!w.document) {
+                    throw new Error('SUNEDITOR_LANG a window with a document');
+                }
+                return factory(w);
+            };
+    } else {
+        factory(global);
+    }
+}(typeof window !== 'undefined' ? window : this, function (window, noGlobal) {
+    const lang = {
+        code: 'lv',
+        toolbar: {
+            default: 'Noklusējuma',
+            save: 'Saglabāt',
+            font: 'Fonts',
+            formats: 'Formāti',
+            fontSize: 'Fonta lielums',
+            bold: 'Treknraksts',
+            underline: 'Pasvītrot',
+            italic: 'Slīpraksts',
+            strike: 'Pārsvītrojums',
+            subscript: 'Apakšraksts',
+            superscript: 'Augšraksts',
+            removeFormat: 'Noņemt formātu',
+            fontColor: 'Fonta krāsa',
+            hiliteColor: 'Teksta iezīmēšanas krāsa',
+            indent: 'Palielināt atkāpi',
+            outdent: 'Samazināt atkāpi',
+            align: 'Izlīdzināt',
+            alignLeft: 'Līdzināt pa kreisi',
+            alignRight: 'Līdzināt pa labi',
+            alignCenter: 'Centrēt',
+            alignJustify: 'Taisnot',
+            list: 'Saraksts',
+            orderList: 'Numerācija',
+            unorderList: 'Aizzimes',
+            horizontalRule: 'Horizontāla līnija',
+            hr_solid: 'Ciets',
+            hr_dotted: 'Punktiņš',
+            hr_dashed: 'Braša',
+            table: 'Tabula',
+            link: 'Saite',
+            math: 'Matemātika',
+            image: 'Attēls',
+            video: 'Video',
+            audio: 'Audio',
+            fullScreen: 'Pilnekrāna režīms',
+            showBlocks: 'Parādit blokus',
+            codeView: 'Koda skats',
+            undo: 'Atsaukt',
+            redo: 'Atkārtot',
+            preview: 'Priekšskatījums',
+            print: 'Drukāt',
+            tag_p: 'Paragrāfs',
+            tag_div: 'Normāli (DIV)',
+            tag_h: 'Galvene',
+            tag_blockquote: 'Citāts',
+            tag_pre: 'Kods',
+            template: 'Veidne',
+            lineHeight: 'Līnijas augstums',
+            paragraphStyle: 'Paragrāfa stils',
+            textStyle: 'Teksta stils',
+            imageGallery: 'Attēlu galerija'
+        },
+        dialogBox: {
+            linkBox: {
+                title: 'Ievietot saiti',
+                url: 'Saites URL',
+                text: 'Parādāmais teksts',
+                newWindowCheck: 'Atvērt jaunā logā'
+            },
+            mathBox: {
+                title: 'Matemātika',
+                inputLabel: 'Matemātiskā notācija',
+                fontSizeLabel: 'Fonta lielums',
+                previewLabel: 'Priekšskatījums'
+            },
+            imageBox: {
+                title: 'Ievietot attēlu',
+                file: 'Izvēlieties no failiem',
+                url: 'Attēla URL',
+                altText: 'Alternatīvs teksts'
+            },
+            videoBox: {
+                title: 'Ievietot video',
+                file: 'Izvēlieties no failiem',
+                url: 'Multivides iegulšanas URL, YouTube/Vimeo'
+            },
+            audioBox: {
+                title: 'Ievietot audio',
+                file: 'Izvēlieties no failiem',
+                url: 'Audio URL'
+            },
+            browser: {
+                tags: 'Tagi',
+                search: 'Meklēt'
+            },
+            caption: 'Ievietot aprakstu',
+            close: 'Aizvērt',
+            submitButton: 'Iesniegt',
+            revertButton: 'Atjaunot',
+            proportion: 'Ierobežo proporcijas',
+            basic: 'Nav iesaiņojuma',
+            left: 'Pa kreisi',
+            right: 'Labajā pusē',
+            center: 'Centrs',
+            width: 'Platums',
+            height: 'Augstums',
+            size: 'Izmērs',
+            ratio: 'Attiecība'
+        },
+        controller: {
+            edit: 'Rediģēt',
+            unlink: 'Atsaistīt',
+            remove: 'Noņemt',
+            insertRowAbove: 'Ievietot rindu virs',
+            insertRowBelow: 'Ievietot rindu zemāk',
+            deleteRow: 'Dzēst rindu',
+            insertColumnBefore: 'Ievietot kolonnu pirms',
+            insertColumnAfter: 'Ievietot kolonnu aiz',
+            deleteColumn: 'Dzēst kolonnu',
+            fixColumnWidth: 'Fiksēts kolonnas platums',
+            resize100: 'Mainīt izmēru 100%',
+            resize75: 'Mainīt izmēru 75%',
+            resize50: 'Mainīt izmēru 50%',
+            resize25: 'Mainīt izmēru 25%',
+            autoSize: 'Automātiskais izmērs',
+            mirrorHorizontal: 'Spogulis, horizontāls',
+            mirrorVertical: 'Spogulis, vertikāls',
+            rotateLeft: 'Pagriezt pa kreisi',
+            rotateRight: 'Pagriezt pa labi',
+            maxSize: 'Maksimālais izmērs',
+            minSize: 'Minimālais izmērs',
+            tableHeader: 'Tabulas galvene',
+            mergeCells: 'Apvienot šūnas',
+            splitCells: 'Sadalīt šūnas',
+            HorizontalSplit: 'Horizontāls sadalījums',
+            VerticalSplit: 'Vertikāls sadalījums'
+        },
+        menu: {
+            spaced: 'Ar atstarpi',
+            bordered: 'Robežojās',
+            neon: 'Neona',
+            translucent: 'Caurspīdīgs',
+            shadow: 'Ēna',
+            code: 'Kods'
+        }
+    };
+
+    if (typeof noGlobal === typeof undefined) {
+        if (!window.SUNEDITOR_LANG) {
+            Object.defineProperty(window, 'SUNEDITOR_LANG', {
+                enumerable: true,
+                writable: false,
+                configurable: false,
+                value: {}
+            });
+        }
+
+        Object.defineProperty(window.SUNEDITOR_LANG, 'lv', {
+            enumerable: true,
+            writable: true,
+            configurable: true,
+            value: lang
+        });
+    }
+
+    return lang;
+}));
+
+/***/ }),
+/* 43 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
 /**
  * Copyright (c) 2013-present, Facebook, Inc.
  *
@@ -11325,7 +11805,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
-var ReactPropTypesSecret = __webpack_require__(42);
+var ReactPropTypesSecret = __webpack_require__(44);
 
 function emptyFunction() {}
 function emptyFunctionWithReset() {}
@@ -11383,7 +11863,7 @@ module.exports = function() {
 
 
 /***/ }),
-/* 42 */
+/* 44 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -11402,7 +11882,7 @@ module.exports = ReactPropTypesSecret;
 
 
 /***/ }),
-/* 43 */
+/* 45 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -11425,9 +11905,9 @@ var basic = [["font", "fontSize"], ["fontColor"], ["horizontalRule"], ["link", "
 var complex = [["undo", "redo"], ["font", "fontSize", "formatBlock"], ["bold", "underline", "italic", "strike", "subscript", "superscript"], ["removeFormat"], "/", ["fontColor", "hiliteColor"], ["outdent", "indent"], ["align", "horizontalRule", "list", "table"], ["link", "image", "video"], ["fullScreen", "showBlocks", "codeView"], ["preview", "print"], ["save", "template"]];
 var formatting = [["undo", "redo"], ["bold", "underline", "italic", "strike", "subscript", "superscript"], ["removeFormat"], ["outdent", "indent"], ["fullScreen", "showBlocks", "codeView"], ["preview", "print"]];
 /* harmony default export */ var misc_buttonList = ({
-  basic: basic,
-  complex: complex,
-  formatting: formatting
+  basic,
+  complex,
+  formatting
 });
 // EXTERNAL MODULE: external "react"
 var external_react_ = __webpack_require__(7);
@@ -11538,23 +12018,18 @@ var en_default = /*#__PURE__*/__webpack_require__.n(en);
  * @description utility function
  */
 const util_util = {
-    _d: document,
-    _w: window,
-    isIE: navigator.userAgent.indexOf('Trident') > -1,
-    isIE_Edge: (navigator.userAgent.indexOf('Trident') > -1) || (navigator.appVersion.indexOf('Edge') > -1),
-    isOSX_IOS: /(Mac|iPhone|iPod|iPad)/.test(navigator.platform),
-
-    /**
-     * @description Removes attribute values such as style and converts tags that do not conform to the "html5" standard.
-     * @param {String} text 
-     * @returns {String} HTML string
-     * @private
-     */
-    _tagConvertor: function (text) {
-        const ec = {'b': 'strong', 'i': 'em', 'ins': 'u', 'strike': 'del', 's': 'del'};
-        return text.replace(/(<\/?)(b|strong|i|em|ins|u|s|strike|del)\b\s*(?:[^>^<]+)?\s*(?=>)/ig, function (m, t, n) {
-            return t + ((typeof ec[n] === 'string') ? ec[n] : n);
-        });
+    _d: null,
+    _w: null,
+    isIE: null,
+    isIE_Edge: null,
+    isOSX_IOS: null,
+    _propertiesInit: function () {
+        if (this._d) return;
+        this._d =  document;
+        this._w = window;
+        this.isIE = navigator.userAgent.indexOf('Trident') > -1;
+        this.isIE_Edge = (navigator.userAgent.indexOf('Trident') > -1) || (navigator.appVersion.indexOf('Edge') > -1);
+        this.isOSX_IOS = /(Mac|iPhone|iPod|iPad)/.test(navigator.platform);
     },
 
     /**
@@ -11639,6 +12114,45 @@ const util_util = {
     createTextNode: function (text) {
         return this._d.createTextNode(text || '');
     },
+
+    /**
+     * @description The editor checks tags by string.
+     * If there is "<" or ">" in the attribute of tag, HTML is broken when checking the tag.
+     * When using an attribute with "<" or ">", use "HTMLEncoder" to save. (ex: math(katex))
+     * @param {String} contents HTML or Text string
+     * @returns {String}
+     */
+    HTMLEncoder: function (contents) {
+        const ec = {'<': '$lt;', '>': '$gt;'};
+        return contents.replace(/<|>/g, function (m) {
+            return (typeof ec[m] === 'string') ? ec[m] : m;
+        });
+    },
+
+    /**
+     * @description The editor checks tags by string.
+     * If there is "<" or ">" in the attribute of tag, HTML is broken when checking the tag.
+     * Decoder of data stored as "HTMLEncoder" (ex: math(katex))
+     * @param {String} contents HTML or Text string
+     * @returns {String}
+     */
+    HTMLDecoder: function (contents) {
+        const ec = {'$lt;': '<', '$gt;': '>'};
+        return contents.replace(/\$lt;|\$gt;/g, function (m) {
+            return (typeof ec[m] === 'string') ? ec[m] : m;
+        });
+    },
+
+    /**
+     * @description This method run Object.prototype.hasOwnProperty.call(obj, key)
+     * @param {Object} obj Object
+     * @param {String} key obj.key
+     * @returns {Boolean}
+     */
+    hasOwn: function (obj, key) {
+        return this._hasOwn.call(obj, key);
+    },
+    _hasOwn: Object.prototype.hasOwnProperty,
 
     /**
      * @deprecated
@@ -11791,12 +12305,12 @@ const util_util = {
 
     /**
      * @description It is judged whether it is a node related to the text style.
-     * (strong|span|font|b|var|i|em|u|ins|s|strike|del|sub|sup|mark|a|label)
+     * (strong|span|font|b|var|i|em|u|ins|s|strike|del|sub|sup|mark|a|label|code)
      * @param {Node} element The node to check
      * @returns {Boolean}
      */
     isTextStyleElement: function (element) {
-        return element && element.nodeType !== 3 && /^(strong|span|font|b|var|i|em|u|ins|s|strike|del|sub|sup|mark|a|label)$/i.test(element.nodeName);
+        return element && element.nodeType !== 3 && /^(strong|span|font|b|var|i|em|u|ins|s|strike|del|sub|sup|mark|a|label|code)$/i.test(element.nodeName);
     },
 
     /**
@@ -11873,6 +12387,15 @@ const util_util = {
      */
     isMediaComponent: function (element) {
         return element && /se-component/.test(element.className);
+    },
+
+    /**
+     * @description It is judged whether it is the not checking node. (class="katex", "__se__tag")
+     * @param {Node} element The node to check
+     * @returns {Boolean}
+     */
+    isNotCheckingNode: function (element) {
+        return element && /katex|__se__tag/.test(element.className);
     },
 
     /**
@@ -11999,7 +12522,7 @@ const util_util = {
      * @param {Function|null} validation Conditional function
      * @param {Boolean} multi If true, returns all items that meet the criteria otherwise, returns an empty array.
      * If false, returns only one item that meet the criteria otherwise return null.
-     * @returns {Array|Object}
+     * @returns {Array|Node|null}
      */
     getArrayItem: function (array, validation, multi) {
         if (!array || array.length === 0) return null;
@@ -12259,10 +12782,10 @@ const util_util = {
      * @returns {Number}
      */
     getNumber: function (text, maxDec) {
-        if (!text) return null;
+        if (!text) return 0;
         
         let number = (text + '').match(/-?\d+(\.\d+)?/);
-        if (!number || !number[0]) return null;
+        if (!number || !number[0]) return 0;
 
         number = number[0];
         return maxDec < 0 ? number * 1 : maxDec === 0 ? this._w.Math.round(number * 1) : (number * 1).toFixed(maxDec) * 1;
@@ -12337,6 +12860,33 @@ const util_util = {
         }
 
         return depth;
+    },
+
+    /**
+     * @description Compares two elements to find a common ancestor, and returns the order of the two elements.
+     * @param {Node} a Node to compare.
+     * @param {Node} b Node to compare.
+     * @returns {Object} { ancesstor, a, b, result: (a > b ? 1 : a < b ? -1 : 0) };
+     */
+    compareElements: function (a, b) {
+        let aNode = a, bNode = b;
+        while (aNode && bNode && aNode.parentNode !== bNode.parentNode) {
+            aNode = aNode.parentNode;
+            bNode = bNode.parentNode;
+        }
+
+        if (!aNode || !bNode) return { ancestor: null, a: a, b: b, result: 0 };
+
+        const children = aNode.parentNode.childNodes;
+        const aIndex = this.getArrayIndex(children, aNode);
+        const bIndex = this.getArrayIndex(children, bNode);
+
+        return {
+            ancestor: aNode.parentNode,
+            a: aNode,
+            b: bNode,
+            result: aIndex > bIndex ? 1 : aIndex < bIndex ? -1 : 0
+        };
     },
 
     /**
@@ -12605,7 +13155,7 @@ const util_util = {
      * @param {Boolean} disabled Disabled value
      * @param {Array|HTMLCollection|NodeList} buttonList Button array
      */
-    toggleDisabledButtons: function (disabled, buttonList) {
+    setDisabledButtons: function (disabled, buttonList) {
         for (let i = 0, len = buttonList.length; i < len; i++) {
             buttonList[i].disabled = disabled;
         }
@@ -12820,9 +13370,11 @@ const util_util = {
      */
     mergeSameTags: function (element, nodePathArray, onlyText) {
         const inst = this;
+        const nodePathLen = nodePathArray ? nodePathArray.length : 0;
         let offsets = null;
-        if (nodePathArray && nodePathArray.length > 0) {
-            offsets = this._w.Array.apply(null, new this._w.Array(nodePathArray.length)).map(this._w.Number.prototype.valueOf, 0);
+        
+        if (nodePathLen) {
+            offsets = this._w.Array.apply(null, new this._w.Array(nodePathLen)).map(this._w.Number.prototype.valueOf, 0);
         }
 
         (function recursionFunc(current, depth, depthIndex) {
@@ -12840,9 +13392,9 @@ const util_util = {
                 }
                 if (len === 1 && current.nodeName === child.nodeName && current.parentNode) {
                     // update nodePath
-                    if (nodePathArray) {
+                    if (nodePathLen) {
                         let path, c, p, cDepth, spliceDepth;
-                        for (let n in nodePathArray) {
+                        for (let n = 0; n < nodePathLen; n++) {
                             path = nodePathArray[n];
                             if (path && path[depth] === i) {
                                 c = child, p = current, cDepth = depth, spliceDepth = true;
@@ -12894,9 +13446,9 @@ const util_util = {
 
                         if (childLength > 0 && l.nodeType === 3 && r.nodeType === 3 && (l.textContent.length > 0 || r.textContent.length > 0)) childLength--;
 
-                        if (nodePathArray) {
+                        if (nodePathLen) {
                             let path = null;
-                            for (let n in nodePathArray) {
+                            for (let n = 0; n < nodePathLen; n++) {
                                 path = nodePathArray[n];
                                 if (path && path[depth] > i) {
                                     if (depth > 0 && path[depth - 1] !== depthIndex) continue;
@@ -12918,9 +13470,9 @@ const util_util = {
                     if (child.nodeType === 3) {
                         addOffset = child.textContent.length;
                         child.textContent += next.textContent;
-                        if (nodePathArray) {
+                        if (nodePathLen) {
                             let path = null;
-                            for (let n in nodePathArray) {
+                            for (let n = 0; n < nodePathLen; n++) {
                                 path = nodePathArray[n];
                                 if (path && path[depth] > i) {
                                     if (depth > 0 && path[depth - 1] !== depthIndex) continue;
@@ -13019,7 +13571,7 @@ const util_util = {
      */
     htmlRemoveWhiteSpace: function (html) {
         if (!html) return '';
-        return html.trim().replace(/<\/?(?!strong|span|font|b|var|i|em|u|ins|s|strike|del|sub|sup|mark|a|label)[^>^<]+>\s+(?=<)/ig, function (m) { return m.trim(); });
+        return html.trim().replace(/<\/?(?!strong|span|font|b|var|i|em|u|ins|s|strike|del|sub|sup|mark|a|label|code)[^>^<]+>\s+(?=<)/ig, function (m) { return m.trim(); });
     },
 
     /**
@@ -13046,17 +13598,27 @@ const util_util = {
      * @private
      */
     _isIgnoreNodeChange: function (element) {
-        return element.nodeType !== 3 && (this.isNonEditable(element) || !this.isTextStyleElement(element));
+        return element && element.nodeType !== 3 && (this.isNonEditable(element) || !this.isTextStyleElement(element));
     },
 
     /**
-     * @description Nodes that must remain undetached when changing text nodes
-     * @param {Node} element Element to check
+     * @description Nodes that must remain undetached when changing text nodes (A, Label, Code)
+     * @param {Node|String} element Element to check
      * @returns {Boolean}
      * @private
      */
     _isMaintainedNode: function (element) {
-        return element.nodeType !== 3 && /^(a|label)$/i.test(typeof element === 'string' ? element : element.nodeName);
+        return element && element.nodeType !== 3 && /^(a|label|code)$/i.test(typeof element === 'string' ? element : element.nodeName);
+    },
+
+    /**
+     * @description Node with font-size style
+     * @param {Node} element Element to check
+     * @returns {Boolean}
+     * @private
+     */
+    _isSizeNode: function (element) {
+        return element && element.nodeType !== 3 && this.isTextStyleElement(element) && !!element.style.fontSize;
     },
 
     /**
@@ -13066,16 +13628,17 @@ const util_util = {
      * @private
      */
     _notTextNode: function (element) {
-        return element.nodeType !== 3 && (this.isComponent(element) || /^(br|input|select|canvas|img|iframe|audio|video)$/i.test(typeof element === 'string' ? element : element.nodeName));
+        return element && element.nodeType !== 3 && (this.isComponent(element) || /^(br|input|select|canvas|img|iframe|audio|video)$/i.test(typeof element === 'string' ? element : element.nodeName));
     },
 
     /**
-     * @description Check not Allowed tags
+     * @description Check disallowed tags
      * @param {Node} element Element to check
+     * @returns {Boolean}
      * @private
      */
-    _notAllowedTags: function (element) {
-        return  /^(meta|script|link|style|[a-z]+\:[a-z]+)$/i.test(element.nodeName);
+    _disallowedTags: function (element) {
+        return /^(meta|script|link|style|[a-z]+\:[a-z]+)$/i.test(element.nodeName);
     },
 
     /**
@@ -13092,7 +13655,7 @@ const util_util = {
             regStr += '(?!\\b' + exclusionTags[i] + '\\b)';
         }
 
-        regStr += '[^>^<])+>';
+        regStr += ')[^>]>';
 
         return new RegExp(regStr, 'g');
     },
@@ -13108,19 +13671,19 @@ const util_util = {
          * It is can use ".children(util.getListChildren)" to exclude text nodes, but "documentFragment.children" is not supported in IE.
          * So check the node type and exclude the text no (current.nodeType !== 1)
          */
-        const emptyWhitelistTags = [], emptyTags = [], wrongList = [], withoutFormatCells = [];
-        const compClass = function (current) { return /katex|__se__tag/i.test(current.className); };
+        const removeTags = [], emptyTags = [], wrongList = [], withoutFormatCells = [];
+
         // wrong position
         const wrongTags = this.getListChildNodes(documentFragment, function (current) {
             if (current.nodeType !== 1) return false;
 
             // white list
-            if (!htmlCheckWhitelistRegExp.test(current.nodeName) && current.childNodes.length === 0) {
-                emptyWhitelistTags.push(current);
+            if (!htmlCheckWhitelistRegExp.test(current.nodeName) && current.childNodes.length === 0 && this.isNotCheckingNode(current)) {
+                removeTags.push(current);
                 return false;
             }
 
-            const nrtag = !this.getParentElement(current, compClass);
+            const nrtag = !this.getParentElement(current, this.isNotCheckingNode);
             // empty tags
             if ((!this.isTable(current) && !this.isListCell(current)) && (this.isFormatElement(current) || this.isRangeFormatElement(current) || this.isTextStyleElement(current)) && current.childNodes.length === 0 && nrtag) {
                 emptyTags.push(current);
@@ -13148,8 +13711,8 @@ const util_util = {
              !this.getParentElement(current, this.isComponent) && nrtag;
         }.bind(this));
 
-        for (let i in emptyWhitelistTags) {
-            this.removeItem(emptyWhitelistTags[i]);
+        for (let i = 0, len = removeTags.length; i < len; i++) {
+            this.removeItem(removeTags[i]);
         }
         
         const checkTags = [];
@@ -13168,7 +13731,7 @@ const util_util = {
             }
         }
 
-        for (let i in emptyTags) {
+        for (let i = 0, len = emptyTags.length; i < len; i++) {
             this.removeItem(emptyTags[i]);
         }
 
@@ -13288,7 +13851,6 @@ const util_util = {
 
 
 /* harmony default export */ var lib_constructor = ({
-    icons: null,
     /**
      * @description document create
      * @param {Element} element Textarea
@@ -13349,11 +13911,11 @@ const util_util = {
         // enter line
         const line_breaker = doc.createElement('DIV');
         line_breaker.className = 'se-line-breaker';
-        line_breaker.innerHTML = '<button class="se-btn">' + this.icons.line_break + '</button>';
+        line_breaker.innerHTML = '<button class="se-btn">' + options.icons.line_break + '</button>';
         const line_breaker_t = doc.createElement('DIV');
         line_breaker_t.className += 'se-line-breaker-component';
         const line_breaker_b = line_breaker_t.cloneNode(true);
-        line_breaker_t.innerHTML = line_breaker_b.innerHTML = this.icons.line_break;
+        line_breaker_t.innerHTML = line_breaker_b.innerHTML = options.icons.line_break;
     
         // resize operation background
         const resize_back = doc.createElement('DIV');
@@ -13406,8 +13968,7 @@ const util_util = {
             options: options,
             plugins: tool_bar.plugins,
             pluginCallButtons: tool_bar.pluginCallButtons,
-            _responsiveButtons: tool_bar.responsiveButtons,
-            _icons: this.icons
+            _responsiveButtons: tool_bar.responsiveButtons
         };
     },
 
@@ -13426,7 +13987,7 @@ const util_util = {
                 lineWrapping: true
             }, (options.codeMirror.options || {})].reduce(function (init, option) {
                 for (let key in option) {
-                    init[key] = option[key];
+                    if (lib_util.hasOwn(option, key)) init[key] = option[key];
                 }
                 return init;
             }, {});
@@ -13459,7 +14020,7 @@ const util_util = {
             throwOnError: false,
         }, (katex.options || {})].reduce(function (init, option) {
             for (let key in option) {
-                init[key] = option[key];
+                if (lib_util.hasOwn(option, key)) init[key] = option[key];
             }
             return init;
         }, {});
@@ -13651,10 +14212,12 @@ const util_util = {
      * @private
      */
     _initOptions: function (element, options) {
-        /** user options */
+        /** Values */
         options.lang = options.lang || en_default.a;
+        options.value = typeof options.value === 'string' ? options.value : null;
+        options.historyStackDelayTime = typeof options.historyStackDelayTime === 'number' ? options.historyStackDelayTime : 400;
         /** Whitelist */
-        options._defaultTagsWhitelist = typeof options._defaultTagsWhitelist === 'string' ? options._defaultTagsWhitelist : 'br|p|div|pre|blockquote|h[1-6]|ol|ul|li|hr|figure|figcaption|img|iframe|audio|video|source|table|thead|tbody|tr|th|td|a|b|strong|var|i|em|u|ins|s|span|strike|del|sub|sup';
+        options._defaultTagsWhitelist = typeof options._defaultTagsWhitelist === 'string' ? options._defaultTagsWhitelist : 'br|p|div|pre|blockquote|h[1-6]|ol|ul|li|hr|figure|figcaption|img|iframe|audio|video|source|table|thead|tbody|tr|th|td|a|b|strong|var|i|em|u|ins|s|span|strike|del|sub|sup|code';
         options._editorTagsWhitelist = options._defaultTagsWhitelist + (typeof options.addTagsWhitelist === 'string' && options.addTagsWhitelist.length > 0 ? '|' + options.addTagsWhitelist : '');
         options.pasteTagsWhitelist = typeof options.pasteTagsWhitelist === 'string' ? options.pasteTagsWhitelist : options._editorTagsWhitelist;
         options.attributesWhitelist = (!options.attributesWhitelist || typeof options.attributesWhitelist !== 'object') ? null : options.attributesWhitelist;
@@ -13712,6 +14275,7 @@ const util_util = {
         options.imageUploadUrl = typeof options.imageUploadUrl === 'string' ? options.imageUploadUrl : null;
         options.imageUploadSizeLimit = /\d+/.test(options.imageUploadSizeLimit) ? lib_util.getNumber(options.imageUploadSizeLimit, 0) : null;
         options.imageMultipleFile = !!options.imageMultipleFile;
+        options.imageAccept = (typeof options.imageAccept !== 'string' || options.imageAccept.trim() === "*") ? 'image/*' : options.imageAccept.trim() || 'image/*';
         /** Image - image gallery */
         options.imageGalleryUrl = typeof options.imageGalleryUrl === 'string' ? options.imageGalleryUrl : null;
         /** Video */
@@ -13732,6 +14296,9 @@ const util_util = {
         options.videoUploadUrl = typeof options.videoUploadUrl === 'string' ? options.videoUploadUrl : null;
         options.videoUploadSizeLimit = /\d+/.test(options.videoUploadSizeLimit) ? lib_util.getNumber(options.videoUploadSizeLimit, 0) : null;
         options.videoMultipleFile = !!options.videoMultipleFile;
+        options.videoTagAttrs = options.videoTagAttrs || null;
+        options.videoIframeAttrs = options.videoIframeAttrs || null;
+        options.videoAccept = (typeof options.videoAccept !== 'string' || options.videoAccept.trim() === "*") ? 'video/*' : options.videoAccept.trim() || 'video/*';
         /** Audio */
         options.audioWidth = !options.audioWidth ? '' : lib_util.isNumber(options.audioWidth) ? options.audioWidth + 'px' : options.audioWidth;
         options.audioHeight = !options.audioHeight ? '' : lib_util.isNumber(options.audioHeight) ? options.audioHeight + 'px' : options.audioHeight;
@@ -13741,6 +14308,8 @@ const util_util = {
         options.audioUploadUrl = typeof options.audioUploadUrl === 'string' ? options.audioUploadUrl : null;
         options.audioUploadSizeLimit = /\d+/.test(options.audioUploadSizeLimit) ? lib_util.getNumber(options.audioUploadSizeLimit, 0) : null;
         options.audioMultipleFile = !!options.audioMultipleFile;
+        options.audioTagAttrs = options.audioTagAttrs || null;
+        options.audioAccept = (typeof options.audioAccept !== 'string' || options.audioAccept.trim() === "*") ? 'audio/*' : options.audioAccept.trim() || 'audio/*';
         /** Table */
         options.tableCellControllerPosition = typeof options.tableCellControllerPosition === 'string' ? options.tableCellControllerPosition.toLowerCase() : 'cell';
         /** Key actions */
@@ -13767,9 +14336,9 @@ const util_util = {
         ];
 
         /** --- Define icons --- */
-        this.icons = (!options.icons || typeof options.icons !== 'object') ? defaultIcons : [defaultIcons, options.icons].reduce(function (_default, _new) {
+        options.icons = (!options.icons || typeof options.icons !== 'object') ? defaultIcons : [defaultIcons, options.icons].reduce(function (_default, _new) {
             for (let key in _new) {
-                _default[key] = _new[key];
+                if (lib_util.hasOwn(_new, key)) _default[key] = _new[key];
             }
             return _default;
         }, {});
@@ -13784,7 +14353,7 @@ const util_util = {
      * @private
      */
     _defaultButtons: function (options) {
-        const icons = this.icons;
+        const icons = options.icons;
         const lang = options.lang;
         const cmd = lib_util.isOSX_IOS ? '⌘' : 'CTRL';
         const shortcutsDisable = !options.shortcutsHint ? ['bold', 'strike', 'underline', 'italic', 'undo', 'indent'] : options.shortcutsDisable;
@@ -13862,10 +14431,11 @@ const util_util = {
      * @param {string} dataDisplay The data-display property of the button ('dialog', 'submenu', 'command')
      * @param {string} innerHTML Html in button
      * @param {string} _disabled Button disabled
+     * @param {Object} _icons Icons
      * @returns {Object}
      * @private
      */
-    _createButton: function (buttonClass, title, dataCommand, dataDisplay, innerHTML, _disabled) {
+    _createButton: function (buttonClass, title, dataCommand, dataDisplay, innerHTML, _disabled, _icons) {
         const oLi = lib_util.createElement('LI');
         const oButton = lib_util.createElement('BUTTON');
 
@@ -13877,7 +14447,7 @@ const util_util = {
         
         if (!innerHTML) innerHTML = '<span class="se-icon-text">!</span>';
         if (/^default\./i.test(innerHTML)) {
-            innerHTML = this.icons[innerHTML.replace(/^default\./i, '')];
+            innerHTML = _icons[innerHTML.replace(/^default\./i, '')];
         }
         if (/^text\./i.test(innerHTML)) {
             innerHTML = innerHTML.replace(/^text\./i, '');
@@ -13918,6 +14488,7 @@ const util_util = {
         tool_bar.appendChild(_buttonTray);
 
         /** create button list */
+        const icons = options.icons;
         const defaultButtonList = this._defaultButtons(options);
         const pluginCallButtons = {};
         const responsiveButtons = [];
@@ -13999,7 +14570,7 @@ const util_util = {
                         }
                     }
 
-                    buttonElement = this._createButton(module[0], module[1], module[2], module[3], module[4], module[5]);
+                    buttonElement = this._createButton(module[0], module[1], module[2], module[3], module[4], module[5], icons);
                     (more ? moreContainer : moduleElement.ul).appendChild(buttonElement.li);
 
                     if (plugins[pluginName]) {
@@ -14137,8 +14708,9 @@ const _Context = function (element, cons, options) {
 
 
 /* harmony default export */ var lib_history = (function (core, change) {
-    const _w = window;
+    const _w = core._w;
     const util = core.util;
+    const delayTime = core.context.options.historyStackDelayTime;
     let editor = core.context.element;
     let undo = core.context.tool.undo;
     let redo = core.context.tool.redo;
@@ -14222,14 +14794,14 @@ const _Context = function (element, cons, options) {
 
         /**
          * @description Saving the current status to the history object stack
-         * If "delay" is true, it will be saved after 500 miliseconds
+         * If "delay" is true, it will be saved after (options.historyStackDelayTime || 400) miliseconds
          * If the function is called again with the "delay" argument true before it is saved, the delay time is renewal
          * You can specify the delay time by sending a number.
-         * @param {Boolean|Number} delay If true, delays 400 milliseconds
+         * @param {Boolean|Number} delay If true, Add stack without delay time.
          */
         push: function (delay) {
             _w.setTimeout(core._resourcesStateChange.bind(core));
-            const time = typeof delay === 'number' ? (delay > 0 ? delay : 0) : (!delay ? 0 : 400);
+            const time = typeof delay === 'number' ? (delay > 0 ? delay : 0) : (!delay ? 0 : delayTime);
             
             if (!time || pushDelay) {
                 _w.clearTimeout(pushDelay);
@@ -14430,14 +15002,14 @@ const _Context = function (element, cons, options) {
  * @param {Object} plugins 
  * @param {Object} lang
  * @param {Object} options
- * @param {Object} _icons
+ * @param {Object} _responsiveButtons
  * @returns {Object} functions Object
  */
-/* harmony default export */ var lib_core = (function (context, pluginCallButtons, plugins, lang, options, _icons, _responsiveButtons) {
+/* harmony default export */ var lib_core = (function (context, pluginCallButtons, plugins, lang, options, _responsiveButtons) {
     const _d = context.element.originElement.ownerDocument || document;
     const _w = _d.defaultView || window;
     const util = lib_util;
-    const icons = _icons;
+    const icons = options.icons;
 
     /**
      * @description editor core object
@@ -14587,6 +15159,11 @@ const _Context = function (element, cons, options) {
         currentControllerTarget: null,
 
         /**
+         * @description The file component object of current selected file tag (getFileComponent)
+         */
+        currentFileComponentInfo: null,
+
+        /**
          * @description An array of buttons whose class name is not "se-code-view-enabled"
          */
         codeViewDisabledButtons: null,
@@ -14608,6 +15185,12 @@ const _Context = function (element, cons, options) {
          * @private
          */
         _htmlCheckWhitelistRegExp: null,
+
+        /**
+         * @description RegExp when using check disallowd tags. (b, i, ins, strike, s)
+         * @private
+         */
+        _disallowedTextTagsRegExp: null,
 
         /**
          * @description Editor tags whitelist (RegExp object)
@@ -14795,6 +15378,7 @@ const _Context = function (element, cons, options) {
          * @property {Element} fullScreen fullScreen button element
          * @property {Element} showBlocks showBlocks button element
          * @property {Element} codeView codeView button element
+         * @private
          */
         _styleCommandMap: null,
 
@@ -15073,6 +15657,7 @@ const _Context = function (element, cons, options) {
                 }
                 if (!util.hasClass(arg, 'se-controller')) {
                     this.currentControllerTarget = arg;
+                    this.currentFileComponentInfo = this.getFileComponent(arg);
                     continue;
                 }
                 if (arg.style) arg.style.display = 'block';
@@ -15098,6 +15683,7 @@ const _Context = function (element, cons, options) {
 
             this.currentControllerName = '';
             this.currentControllerTarget = null;
+            this.currentFileComponentInfo = null;
             this.effectNode = null;
             if (!this._bindControllersOff) return;
 
@@ -15169,6 +15755,7 @@ const _Context = function (element, cons, options) {
                         const format = util.createElement('P');
                         const br = util.createElement('BR');
                         format.appendChild(br);
+                        context.element.wysiwyg.appendChild(format);
                         this.setRange(br, 0, br, 0);
                     } else {
                         this.setRange(range.startContainer, range.startOffset, range.endContainer, range.endOffset);
@@ -15192,22 +15779,23 @@ const _Context = function (element, cons, options) {
 
             const fileComponentInfo = this.getFileComponent(focusEl);
             if (fileComponentInfo) {
-                this.selectComponent(fileComponentInfo.component, fileComponentInfo.pluginName);
+                this.selectComponent(fileComponentInfo.target, fileComponentInfo.pluginName);
             } else if (focusEl) {
                 focusEl = util.getChildElement(focusEl, function (current) { return current.childNodes.length === 0 || current.nodeType === 3; }, true);
                 if (!focusEl) this.nativeFocus();
                 else this.setRange(focusEl, focusEl.textContent.length, focusEl, focusEl.textContent.length);
             } else {
-                this.nativeFocus();
+                this.focus();
             }
         },
 
         /**
-         * @description Set current editor's range object
+         * @description Set current editor's range object and return.
          * @param {Node} startCon The startContainer property of the selection object.
          * @param {Number} startOff The startOffset property of the selection object.
          * @param {Node} endCon The endContainer property of the selection object.
          * @param {Number} endOff The endOffset property of the selection object.
+         * @returns {Object} Range object.
          */
         setRange: function (startCon, startOff, endCon, endOff) {
             if (!startCon || !endCon) return;
@@ -15220,7 +15808,9 @@ const _Context = function (element, cons, options) {
                 range.setStart(startCon, startOff);
                 range.setEnd(endCon, endOff);
             } catch (error) {
+                console.warn('[SUNEDITOR.core.focus.error] ' + error);
                 this.nativeFocus();
+                return;
             }
 
             const selection = this.getSelection();
@@ -15232,6 +15822,8 @@ const _Context = function (element, cons, options) {
             selection.addRange(range);
             this._editorRange();
             if (options.iframe) this.nativeFocus();
+
+            return range;
         },
 
         /**
@@ -15245,6 +15837,7 @@ const _Context = function (element, cons, options) {
             const commandMap = this.commandMap;
             const activePlugins = this.activePlugins;
             for (let key in commandMap) {
+                if (!util.hasOwn(commandMap, key)) continue;
                 if (activePlugins.indexOf(key) > -1) {
                     plugins[key].active.call(this, null);
                 } else if (commandMap.OUTDENT && /^OUTDENT$/i.test(key)) {
@@ -15262,7 +15855,24 @@ const _Context = function (element, cons, options) {
          * @returns {Object}
          */
         getRange: function () {
-            return this._variable._range || this._createDefaultRange();
+            const range = this._variable._range || this._createDefaultRange();
+            const selection = this.getSelection();
+            if (range.collapsed === selection.isCollapsed || !context.element.wysiwyg.contains(selection.focusNode)) return range;
+            
+            if (selection.rangeCount > 0) {
+                this._variable._range = selection.getRangeAt(0);
+                return this._variable._range;
+            } else {
+                const sc = selection.anchorNode, ec = selection.focusNode, so = selection.anchorOffset, eo = selection.focusOffset;
+                const compareValue = util.compareElements(sc, ec);
+                const rightDir = compareValue.ancestor && (compareValue.result === 0 ? so <= eo : compareValue.result > 1 ? true : false);
+                return this.setRange(
+                    rightDir ? sc : ec,
+                    rightDir ? so : eo,
+                    rightDir ? ec : sc,
+                    rightDir ? eo : so
+                );
+            }
         },
 
         /**
@@ -15342,12 +15952,19 @@ const _Context = function (element, cons, options) {
          * @private
          */
         _createDefaultRange: function () {
-            context.element.wysiwyg.focus();
+            const wysiwyg = context.element.wysiwyg;
+            wysiwyg.focus();
             const range = this._wd.createRange();
-            if (!context.element.wysiwyg.firstChild) this.execCommand('formatBlock', false, 'P');
 
-            range.setStart(context.element.wysiwyg.firstChild, 0);
-            range.setEnd(context.element.wysiwyg.firstChild, 0);
+            let focusEl = wysiwyg.firstElementChild;
+            if (!focusEl) {
+                focusEl = util.createElement('P');
+                focusEl.innerHTML = '<br>';
+                wysiwyg.appendChild(focusEl);
+            }
+
+            range.setStart(focusEl, 0);
+            range.setEnd(focusEl, 0);
             
             return range;
         },
@@ -15379,8 +15996,8 @@ const _Context = function (element, cons, options) {
             let tempCon, tempOffset, tempChild;
 
             if (util.isFormatElement(startCon)) {
-                startCon = startCon.childNodes[startOff] || startCon.firstChild;
-                startOff = 0;
+                startCon = startCon.childNodes[startOff] || startCon.lastChild;
+                startOff = startCon.textContent.length;
             }
             if (util.isFormatElement(endCon)) {
                 endCon = endCon.childNodes[endOff] || endCon.lastChild;
@@ -15615,15 +16232,16 @@ const _Context = function (element, cons, options) {
          * @param {Element} element Element to be inserted
          * @param {Boolean} notHistoryPush When true, it does not update the history stack and the selection object and return EdgeNodes (util.getEdgeChildNodes)
          * @param {Boolean} checkCharCount If true, if "options.maxCharCount" is exceeded when "element" is added, null is returned without addition.
+         * @param {Boolean} notSelect If true, Do not automatically select the inserted component.
          * @returns {Element}
          */
-        insertComponent: function (element, notHistoryPush, checkCharCount) {
+        insertComponent: function (element, notHistoryPush, checkCharCount, notSelect) {
             if (checkCharCount && !this.checkCharCount(element, null)) {
                 return null;
             }
 
-            this.getRange_addLine(this.getRange());
             const r = this.removeNode();
+            this.getRange_addLine(this.getRange());
             let oNode = null;
             let selectionNode = this.getSelectionNode();
             let formatEl = util.getFormatElement(selectionNode, null);
@@ -15641,12 +16259,14 @@ const _Context = function (element, cons, options) {
                 if (formatEl && util.onlyZeroWidthSpace(formatEl)) util.removeItem(formatEl);
             }
 
-            const fileComponentInfo = this.getFileComponent(element);
-            if (fileComponentInfo) {
-                this.selectComponent(fileComponentInfo.component, fileComponentInfo.pluginName);
-            } else if (oNode) {
-                oNode = util.getEdgeChildNodes(oNode, null).sc || oNode;
-                this.setRange(oNode, 0, oNode, 0);
+            if (!notSelect) {
+                const fileComponentInfo = this.getFileComponent(element);
+                if (fileComponentInfo) {
+                    this.selectComponent(fileComponentInfo.target, fileComponentInfo.pluginName);
+                } else if (oNode) {
+                    oNode = util.getEdgeChildNodes(oNode, null).sc || oNode;
+                    this.setRange(oNode, 0, oNode, 0);
+                }
             }
 
             // history stack
@@ -15657,26 +16277,27 @@ const _Context = function (element, cons, options) {
 
         /**
          * @description Gets the file component and that plugin name
-         * return: {component, pluginName} | null
+         * return: {target, component, pluginName} | null
          * @param {Element} element Target element (figure tag, component div, file tag)
          * @returns {Object|null}
          */
         getFileComponent: function (element) {
-            if (!element) return null;
+            if (!this._fileManager.queryString || !element) return null;
 
-            let fileComponent, pluginName;
+            let target, pluginName;
             if (/^FIGURE$/i.test(element.nodeName) || /se-component/.test(element.className)) {
-                fileComponent = element.querySelector(this._fileManager.queryString);
+                target = element.querySelector(this._fileManager.queryString);
             }
-            if (!fileComponent && element.nodeName && this._fileManager.regExp.test(element.nodeName)) {
-                fileComponent = element;
+            if (!target && element.nodeName && this._fileManager.regExp.test(element.nodeName)) {
+                target = element;
             }
 
-            if (fileComponent) {
-                pluginName = this._fileManager.pluginMap[fileComponent.nodeName.toLowerCase()];
+            if (target) {
+                pluginName = this._fileManager.pluginMap[target.nodeName.toLowerCase()];
                 if (pluginName) {
                     return {
-                        component: fileComponent,
+                        target: target,
+                        component: util.getParentElement(target, util.isComponent),
                         pluginName: pluginName
                     };
                 }
@@ -15691,6 +16312,7 @@ const _Context = function (element, cons, options) {
          * @param {String} pluginName Plugin name (image, video)
          */
         selectComponent: function (element, pluginName) {
+            if (!this.hasFocus) this.focus();
             const plugin = this.plugins[pluginName];
             if (!plugin) return;
             _w.setTimeout(function () {
@@ -15747,7 +16369,7 @@ const _Context = function (element, cons, options) {
         /**
          * @description Delete selected node and insert argument value node and return.
          * If the "afterNode" exists, it is inserted after the "afterNode"
-         * Inserting a text node merges with both text nodes on both sides and returns a new "{ startOffset, endOffset }".
+         * Inserting a text node merges with both text nodes on both sides and returns a new "{ container, startOffset, endOffset }".
          * @param {Node} oNode Element to be inserted
          * @param {Node|null} afterNode If the node exists, it is inserted after the node
          * @param {Boolean} checkCharCount If true, if "options.maxCharCount" is exceeded when "element" is added, null is returned without addition.
@@ -15758,9 +16380,10 @@ const _Context = function (element, cons, options) {
                 return null;
             }
 
-            const isComp = util.isFormatElement(oNode) || util.isRangeFormatElement(oNode) || util.isComponent(oNode);
+            const freeFormat = util.getFreeFormatElement(this.getSelectionNode(), null);
+            const isFormats = (!freeFormat && (util.isFormatElement(oNode) || util.isRangeFormatElement(oNode))) || util.isComponent(oNode);
 
-            if (!afterNode && isComp) {
+            if (!afterNode && isFormats) {
                 const r = this.removeNode();
                 if (r.container.nodeType === 3 || util.isBreak(r.container)) {
                     const depthFormat = util.getParentElement(r.container, function (current) { return this.isRangeFormatElement(current) || this.isListCell(current); }.bind(util));
@@ -15769,12 +16392,13 @@ const _Context = function (element, cons, options) {
                 }
             }
 
-            const range = (!afterNode && !isComp) ? this.getRange_addLine(this.getRange()) : this.getRange();
-            const startCon = range.startContainer;
-            const startOff = range.startOffset;
-            const endCon = range.endContainer;
-            const endOff = range.endOffset;
+            const range = (!afterNode && !isFormats) ? this.getRange_addLine(this.getRange()) : this.getRange();
             const commonCon = range.commonAncestorContainer;
+            const startOff = range.startOffset;
+            const endOff = range.endOffset;
+            const formatRange = range.startContainer === commonCon && util.isFormatElement(commonCon);
+            const startCon = formatRange ? commonCon.childNodes[startOff] : range.startContainer;
+            const endCon = formatRange ? commonCon.childNodes[endOff] : range.endContainer;
             let parentNode, originAfter = null;
 
             if (!afterNode) {
@@ -15818,7 +16442,7 @@ const _Context = function (element, cons, options) {
                         if (!this.isEdgePoint(startCon, startOff)) removeNode = startCon.splitText(startOff);
 
                         parentNode.removeChild(removeNode);
-                        if (parentNode.childNodes.length === 0 && isComp) {
+                        if (parentNode.childNodes.length === 0 && isFormats) {
                             parentNode.innerHTML = '<br>';
                         }
                     }
@@ -15826,7 +16450,7 @@ const _Context = function (element, cons, options) {
                         const removedTag = this.removeNode();
                         const container = removedTag.container;
                         const prevContainer = removedTag.prevContainer;
-                        if (container && container.childNodes.length === 0 && isComp) {
+                        if (container && container.childNodes.length === 0 && isFormats) {
                             if (util.isFormatElement(container)) {
                                 container.innerHTML = '<br>';
                             } else if (util.isRangeFormatElement(container)) {
@@ -15834,7 +16458,7 @@ const _Context = function (element, cons, options) {
                             }
                         }
 
-                        if (!isComp && prevContainer) {
+                        if (!isFormats && prevContainer) {
                             parentNode = prevContainer.nodeType === 3 ? prevContainer.parentNode : prevContainer;
                             if (parentNode.contains(container)) {
                                 afterNode = container;
@@ -15845,11 +16469,11 @@ const _Context = function (element, cons, options) {
                                 afterNode = null;
                             }
                         } else {
-                            parentNode = isComp ? commonCon : container;
-                            afterNode = isComp ? endCon : null;
+                            parentNode = isFormats ? commonCon : container;
+                            afterNode = isFormats ? endCon : null;
                         }
 
-                        while (afterNode && afterNode.parentNode !== commonCon) {
+                        while (afterNode && !util.isFormatElement(afterNode) && afterNode.parentNode !== commonCon) {
                             afterNode = afterNode.parentNode;
                         }
                     }
@@ -15882,21 +16506,25 @@ const _Context = function (element, cons, options) {
                     if (oldParent.childNodes.length === 0 && parentNode !== oldParent) util.removeItem(oldParent);
                 }
 
-                if (isComp && !util.isRangeFormatElement(parentNode) && !util.isListCell(parentNode) && !util.isWysiwygDiv(parentNode)) {
+                if (isFormats && !freeFormat && !util.isRangeFormatElement(parentNode) && !util.isListCell(parentNode) && !util.isWysiwygDiv(parentNode)) {
                     afterNode = parentNode.nextElementSibling;
                     parentNode = parentNode.parentNode;
                 }
-                parentNode.insertBefore(oNode, afterNode);
+                parentNode.insertBefore(oNode, parentNode === afterNode ? parentNode.lastChild : afterNode);
             } catch (e) {
                 parentNode.appendChild(oNode);
             } finally {
+                if (freeFormat && (util.isFormatElement(oNode) || util.isRangeFormatElement(oNode))) {
+                    oNode = this._setIntoFreeFormat(oNode);
+                }
+
                 if (!util.isComponent(oNode)) {
                     let offset = 1;
                     if (oNode.nodeType === 3) {
                         const previous = oNode.previousSibling;
                         const next = oNode.nextSibling;
-                        const previousText = (!previous ||  previous.nodeType !== 3 || util.onlyZeroWidthSpace(previous)) ? '' : previous.textContent;
-                        const nextText = (!next || next.nodeType !== 3 || util.onlyZeroWidthSpace(next)) ? '' : next.textContent;
+                        const previousText = (!previous ||  previous.nodeType === 1 || util.onlyZeroWidthSpace(previous)) ? '' : previous.textContent;
+                        const nextText = (!next || next.nodeType === 1 || util.onlyZeroWidthSpace(next)) ? '' : next.textContent;
         
                         if (previous && previousText.length > 0) {
                             oNode.textContent = previousText + oNode.textContent;
@@ -15907,11 +16535,16 @@ const _Context = function (element, cons, options) {
                             oNode.textContent += nextText;
                             util.removeItem(next);
                         }
-    
-                        return {
+
+                        const newRange = {
+                            container: oNode,
                             startOffset: previousText.length,
                             endOffset: oNode.textContent.length - nextText.length
                         };
+
+                        this.setRange(oNode, newRange.startOffset, oNode, newRange.endOffset);
+    
+                        return newRange;
                     } else if (!util.isBreak(oNode) && util.isFormatElement(parentNode)) {
                         let zeroWidth = null;
                         if (!oNode.previousSibling) {
@@ -15940,12 +16573,42 @@ const _Context = function (element, cons, options) {
             }
         },
 
+        _setIntoFreeFormat: function (oNode) {
+            const parentNode = oNode.parentNode;
+            let oNodeChildren, lastONode;
+            
+            while (util.isFormatElement(oNode) || util.isRangeFormatElement(oNode)) {
+                oNodeChildren = oNode.childNodes;
+                lastONode = null;
+                
+                while (oNodeChildren[0]) {
+                    lastONode = oNodeChildren[0];
+                    if (util.isFormatElement(lastONode) || util.isRangeFormatElement(lastONode)) {
+                        this._setIntoFreeFormat(lastONode);
+                        if (!oNode.parentNode) break;
+                        oNodeChildren = oNode.childNodes;
+                        continue;
+                    }
+                    
+                    parentNode.insertBefore(lastONode, oNode);
+                }
+                
+                if (oNode.childNodes.length === 0) util.removeItem(oNode);
+                oNode = util.createElement('BR');
+                parentNode.insertBefore(oNode, lastONode.nextSibling);
+            }
+
+            return oNode;
+        },
+
         /**
          * @description Delete the currently selected nodes and reset selection range
          * Returns {container: "the last element after deletion", offset: "offset", prevContainer: "previousElementSibling Of the deleted area"}
          * @returns {Object}
          */
         removeNode: function () {
+            if (!this._resetRangeToTextNode()) console.warn('[SUNEDITOR.core.removeNode.exception] An exception occurred while resetting the "Range" object.');
+
             const range = this.getRange();
             let container, offset = 0;
             let startCon = range.startContainer;
@@ -16567,6 +17230,7 @@ const _Context = function (element, cons, options) {
          * @param {Boolean|null} strictRemove If true, only nodes with all styles and classes removed from the nodes of "removeNodeArray" are removed.
          */
         nodeChange: function (appendNode, styleArray, removeNodeArray, strictRemove) {
+            this._resetRangeToTextNode();
             let range = this.getRange_addLine(this.getRange());
             styleArray = styleArray && styleArray.length > 0 ? styleArray : false;
             removeNodeArray = removeNodeArray && removeNodeArray.length > 0 ? removeNodeArray : false;
@@ -16786,15 +17450,16 @@ const _Context = function (element, cons, options) {
             // node Changes
             newNode = appendNode.cloneNode(false);
 
-            const isRemoveAnchor = isRemoveFormat || (isRemoveNode && (function (arr, _isMaintainedNode) {
+            const isRemoveAnchor = isRemoveFormat || (isRemoveNode && (function (arr) {
                 for (let n = 0, len = arr.length; n < len; n++) {
-                    if (_isMaintainedNode(arr[n])) return true;
+                    if (util._isMaintainedNode(arr[n]) || util._isSizeNode(arr[n])) return true;
                 }
                 return false;
-            })(removeNodeArray, util._isMaintainedNode));
+            })(removeNodeArray));
 
-            const _getMaintainedNode = this._util_getMaintainedNode.bind(util, isRemoveAnchor);
-            const _isMaintainedNode = this._util_isMaintainedNode.bind(util, isRemoveAnchor);
+            const isSizeNode = util._isSizeNode(newNode);
+            const _getMaintainedNode = this._util_getMaintainedNode.bind(util, isRemoveAnchor, isSizeNode);
+            const _isMaintainedNode = this._util_isMaintainedNode.bind(util, isRemoveAnchor, isSizeNode);
 
             // one line
             if (oneLine) {
@@ -16806,6 +17471,7 @@ const _Context = function (element, cons, options) {
                 if (start.container === end.container && util.onlyZeroWidthSpace(start.container)) {
                     start.offset = end.offset = 1;
                 }
+                this._setCommonListStyle(newRange.ancestor, null);
             } else { // multi line 
                 // end
                 if (endLength > 0) {
@@ -16814,24 +17480,35 @@ const _Context = function (element, cons, options) {
                 }
 
                 // mid
-                for (let i = endLength - 1, renewedEndContainer; i > 0; i--) {
+                for (let i = endLength - 1, newRange; i > 0; i--) {
                     newNode = appendNode.cloneNode(false);
-                    renewedEndContainer = this._nodeChange_middleLine(lineNodes[i], newNode, validation, isRemoveFormat, isRemoveNode, _removeCheck, end.container);
-                    if (renewedEndContainer) end.container = renewedEndContainer;
+                    newRange = this._nodeChange_middleLine(lineNodes[i], newNode, validation, isRemoveFormat, isRemoveNode, _removeCheck, end.container);
+                    if (newRange.endContainer) {
+                        end.ancestor = null;
+                        end.container = newRange.endContainer;
+                    }
+                    this._setCommonListStyle(newRange.ancestor, null);
                 }
 
                 // start
                 newNode = appendNode.cloneNode(false);
                 start = this._nodeChange_startLine(lineNodes[0], newNode, validation, startCon, startOff, isRemoveFormat, isRemoveNode, _removeCheck, _getMaintainedNode, _isMaintainedNode, end.container);
 
-                if (start.endContainer) end.container = start.endContainer;
+                if (start.endContainer) {
+                    end.ancestor = null;
+                    end.container = start.endContainer;
+                }
 
                 if (endLength <= 0) {
                     end = start;
                 } else if (!end.container) {
+                    end.ancestor = null;
                     end.container = start.container;
                     end.offset = start.container.textContent.length;
                 }
+
+                this._setCommonListStyle(start.ancestor, null);
+                this._setCommonListStyle(end.ancestor || util.getFormatElement(end.container), null);
             }
 
             // set range
@@ -16840,6 +17517,36 @@ const _Context = function (element, cons, options) {
 
             // history stack
             this.history.push(false);
+        },
+
+        /**
+         * @description If certain styles are applied to all child nodes of the list cell, the style of the list cell is also changed. (bold, color, size)
+         * @param {Element} el List cell element. <li>
+         * @param {Element|null} child Variable for recursive call. ("null" on the first call)
+         * @private
+         */
+        _setCommonListStyle: function (el, child) {
+            if (!util.isListCell(el)) return;
+            if (!child) el.removeAttribute('style');
+            
+            const children = util.getArrayItem((child || el).childNodes, function (current) { return !util.isBreak(current) && !util.onlyZeroWidthSpace(current.textContent.trim()); }, true);
+            if (children[0] && children.length === 1){
+                child = children[0];
+                if (!child || child.nodeType !== 1) return;
+
+                const childStyle = child.style;
+                const elStyle = el.style;
+
+                // bold
+                if (/STRONG/i.test(child.nodeName)) elStyle.fontWeight = 'bold'; // bold
+                else if (childStyle.fontWeight) elStyle.fontWeight = childStyle.fontWeight;
+
+                // styles
+                if (childStyle.color) elStyle.color = childStyle.color; // color
+                if (childStyle.fontSize) elStyle.fontSize = childStyle.fontSize; // size
+
+                this._setCommonListStyle(el, child);
+            }
         },
 
         /**
@@ -16861,24 +17568,25 @@ const _Context = function (element, cons, options) {
 
         /**
          * @description Return the parent maintained tag. (bind and use a util object)
-         * @param {Boolean} isRemove Delete maintained tag
          * @param {Element} element Element
          * @returns {Element}
          * @private
          */
-        _util_getMaintainedNode: function (isRemove, element) {
-            return element && !isRemove ? this.getParentElement(element, function (current) {return this._isMaintainedNode(current);}.bind(this)) : null;
+        _util_getMaintainedNode: function (_isRemove, _isSizeNode, element) {
+            if (!element || _isRemove) return null;
+            return this.getParentElement(element, this._isMaintainedNode.bind(this)) || (!_isSizeNode ? this.getParentElement(element, this._isSizeNode.bind(this)) : null);
         },
 
         /**
          * @description Check if element is a tag that should be persisted. (bind and use a util object)
-         * @param {Boolean} isRemove Delete maintained tag
          * @param {Element} element Element
          * @returns {Element}
          * @private
          */
-        _util_isMaintainedNode: function (isRemove, element) {
-            return element && !isRemove && element.nodeType !== 3 && this._isMaintainedNode(element);
+        _util_isMaintainedNode: function (_isRemove, _isSizeNode, element) {
+            if (!element || _isRemove || element.nodeType !== 1) return false;
+            const anchor = this._isMaintainedNode(element);
+            return this.getParentElement(element, this._isMaintainedNode.bind(this)) ? anchor : (anchor || (!_isSizeNode ? this._isSizeNode(element) : false));
         },
 
         /**
@@ -16893,7 +17601,7 @@ const _Context = function (element, cons, options) {
          * @param {Boolean} isRemoveFormat Is the remove all formats command?
          * @param {Boolean} isRemoveNode "newInnerNode" is remove node?
          * @param {Boolean} collapsed range.collapsed
-         * @returns {{startContainer: *, startOffset: *, endContainer: *, endOffset: *}}
+         * @returns {{ancestor: *, startContainer: *, startOffset: *, endContainer: *, endOffset: *}}
          * @private
          */
         _nodeChange_oneLine: function (element, newInnerNode, validation, startCon, startOff, endCon, endOff, isRemoveFormat, isRemoveNode, collapsed, _removeCheck, _getMaintainedNode, _isMaintainedNode) {
@@ -17162,12 +17870,10 @@ const _Context = function (element, cons, options) {
                         while (newNode.parentNode !== null && newNode !== el && newNode !== newInnerNode) {
                             vNode = endPass ? newNode.cloneNode(false) : validation(newNode);
                             if (newNode.nodeType === 1 && !util.isBreak(child) && vNode && checkCss(newNode)) {
-                                if (vNode) {
-                                    if (_isMaintainedNode(vNode)) {
-                                        if (!anchorNode) anchors.push(vNode);
-                                    } else {
-                                        pCurrent.push(vNode);
-                                    }
+                                if (_isMaintainedNode(newNode)) {
+                                    if (!anchorNode) anchors.push(vNode);
+                                } else {
+                                    pCurrent.push(vNode);
                                 }
                                 cssText += newNode.style.cssText.substr(0, newNode.style.cssText.indexOf(':')) + '|';
                             }
@@ -17235,6 +17941,7 @@ const _Context = function (element, cons, options) {
             // not remove tag
             if (isRemoveNode && !isRemoveFormat && !_removeCheck.v) {
                 return {
+                    ancestor: element,
                     startContainer: startCon,
                     startOffset: startOff,
                     endContainer: endCon,
@@ -17320,6 +18027,7 @@ const _Context = function (element, cons, options) {
             endContainer = util.getNodeFromPath(endPath, pNode);
 
             return {
+                ancestor: pNode,
                 startContainer: startContainer,
                 startOffset: startOffset + newOffsets[0],
                 endContainer: endContainer,
@@ -17337,7 +18045,7 @@ const _Context = function (element, cons, options) {
          * @param {Boolean} isRemoveFormat Is the remove all formats command?
          * @param {Boolean} isRemoveNode "newInnerNode" is remove node?
          * @returns {null|Node} If end container is renewed, returned renewed node
-         * @returns {Object} { container, offset, endContainer }
+         * @returns {Object} { ancestor, container, offset, endContainer }
          * @private
          */
         _nodeChange_startLine: function (element, newInnerNode, validation, startCon, startOff, isRemoveFormat, isRemoveNode, _removeCheck, _getMaintainedNode, _isMaintainedNode, _endContainer) {
@@ -17363,6 +18071,7 @@ const _Context = function (element, cons, options) {
                     util.copyTagAttributes(parentCon, newInnerNode);
     
                     return {
+                        ancestor: element,
                         container: startCon,
                         offset: startOff
                     };
@@ -17414,7 +18123,7 @@ const _Context = function (element, cons, options) {
                         while (newNode.parentNode !== null && newNode !== el && newNode !== newInnerNode) {
                             vNode = validation(newNode);
                             if (newNode.nodeType === 1 && vNode) {
-                                if (_isMaintainedNode(vNode)) {
+                                if (_isMaintainedNode(newNode)) {
                                     if (!anchorNode) anchors.push(vNode);
                                 } else {
                                     pCurrent.push(vNode);
@@ -17551,6 +18260,7 @@ const _Context = function (element, cons, options) {
             // not remove tag
             if (isRemoveNode && !isRemoveFormat && !_removeCheck.v) {
                 return {
+                    ancestor: element,
                     container: startCon,
                     offset: startOff,
                     endContainer: _endContainer
@@ -17608,6 +18318,7 @@ const _Context = function (element, cons, options) {
             }
 
             return {
+                ancestor: pNode,
                 container: container,
                 offset: offset,
                 endContainer: _endContainer
@@ -17622,7 +18333,7 @@ const _Context = function (element, cons, options) {
          * @param {Boolean} isRemoveFormat Is the remove all formats command?
          * @param {Boolean} isRemoveNode "newInnerNode" is remove node?
          * @param {Node} _endContainer Offset node of last line already modified (end.container)
-         * @returns {null|Node} If end container is renewed, returned renewed node
+         * @returns {Object} { ancestor, endContainer: "If end container is renewed, returned renewed node" }
          * @private
          */
         _nodeChange_middleLine: function (element, newInnerNode, validation, isRemoveFormat, isRemoveNode, _removeCheck, _endContainer) {
@@ -17659,7 +18370,10 @@ const _Context = function (element, cons, options) {
 
                 if (len > 0 && i === len) {
                     element.innerHTML = tempNode.innerHTML;
-                    return endPath ? util.getNodeFromPath(endPath, element) : null;
+                    return {
+                        ancestor: element,
+                        endContainer: endPath ? util.getNodeFromPath(endPath, element) : null
+                    };
                 }
             }
 
@@ -17710,7 +18424,7 @@ const _Context = function (element, cons, options) {
             })(element, newInnerNode);
 
             // not remove tag
-            if (noneChange || (isRemoveNode && !isRemoveFormat && !_removeCheck.v)) return _endContainer;
+            if (noneChange || (isRemoveNode && !isRemoveFormat && !_removeCheck.v)) return { ancestor: element, endContainer: _endContainer };
 
             pNode.appendChild(newInnerNode);
 
@@ -17735,7 +18449,7 @@ const _Context = function (element, cons, options) {
 
             // node change
             element.parentNode.replaceChild(pNode, element);
-            return _endContainer;
+            return { ancestor: pNode, endContainer: _endContainer };
         },
 
         /**
@@ -17747,7 +18461,7 @@ const _Context = function (element, cons, options) {
          * @param {Number} endOff The endOffset property of the selection object.
          * @param {Boolean} isRemoveFormat Is the remove all formats command?
          * @param {Boolean} isRemoveNode "newInnerNode" is remove node?
-         * @returns {Object} { container, offset }
+         * @returns {Object} { ancestor, container, offset }
          * @private
          */
         _nodeChange_endLine: function (element, newInnerNode, validation, endCon, endOff, isRemoveFormat, isRemoveNode, _removeCheck, _getMaintainedNode, _isMaintainedNode) {
@@ -17773,6 +18487,7 @@ const _Context = function (element, cons, options) {
                     util.copyTagAttributes(parentCon, newInnerNode);
     
                     return {
+                        ancestor: element,
                         container: endCon,
                         offset: endOff
                     };
@@ -17818,7 +18533,7 @@ const _Context = function (element, cons, options) {
                         while (newNode.parentNode !== null && newNode !== el && newNode !== newInnerNode) {
                             vNode = validation(newNode);
                             if (vNode && newNode.nodeType === 1) {
-                                if (_isMaintainedNode(vNode)) {
+                                if (_isMaintainedNode(newNode)) {
                                     if (!anchorNode) anchors.push(vNode);
                                 } else {
                                     pCurrent.push(vNode);
@@ -17963,6 +18678,7 @@ const _Context = function (element, cons, options) {
             // not remove tag
             if (isRemoveNode && !isRemoveFormat && !_removeCheck.v) {
                 return {
+                    ancestor: element,
                     container: endCon,
                     offset: endOff
                 };
@@ -18004,6 +18720,7 @@ const _Context = function (element, cons, options) {
                 if (!isRemoveNode && newInnerNode.textContent.length === 0) {
                     util.removeEmptyNode(pNode, null);
                     return {
+                        ancestor: null,
                         container: null,
                         offset: 0
                     };
@@ -18034,6 +18751,7 @@ const _Context = function (element, cons, options) {
             }
 
             return {
+                ancestor: pNode,
                 container: container,
                 offset: offset
             };
@@ -18246,7 +18964,7 @@ const _Context = function (element, cons, options) {
         toggleCodeView: function () {
             const isCodeView = this._variable.isCodeView;
             this.controllersOff();
-            util.toggleDisabledButtons(!isCodeView, this.codeViewDisabledButtons);
+            util.setDisabledButtons(!isCodeView, this.codeViewDisabledButtons);
 
             if (isCodeView) {
                 this._setCodeDataToEditor();
@@ -18533,6 +19251,10 @@ const _Context = function (element, cons, options) {
          * @description Open the preview window.
          */
         preview: function () {
+            core.submenuOff();
+            core.containerOff();
+            core.controllersOff();
+            
             const contentsHTML = this.getContents(true);
             const windowObject = _w.open('', '_blank');
             windowObject.mimeType = 'text/html';
@@ -18630,7 +19352,7 @@ const _Context = function (element, cons, options) {
         _makeLine: function (node, requireFormat) {
             // element
             if (node.nodeType === 1) {
-                if (util._notAllowedTags(node)) return '';
+                if (util._disallowedTags(node)) return '';
                 if (!requireFormat || (util.isFormatElement(node) || util.isRangeFormatElement(node) || util.isComponent(node) || util.isMedia(node) || (util.isAnchor(node) && util.isMedia(node.firstElementChild)))) {
                     return node.outerHTML;
                 } else {
@@ -18657,6 +19379,35 @@ const _Context = function (element, cons, options) {
         },
 
         /**
+         * @description Removes attribute values such as style and converts tags that do not conform to the "html5" standard.
+         * @param {String} text 
+         * @returns {String} HTML string
+         * @private
+         */
+        _tagConvertor: function (text) {
+            if (!this._disallowedTextTagsRegExp) return text;
+
+            const ec = {'b': 'strong', 'i': 'em', 'ins': 'u', 'strike': 'del', 's': 'del'};
+            return text.replace(this._disallowedTextTagsRegExp, function (m, t, n) {
+                return t + (typeof ec[n] === 'string' ? ec[n] : n);
+            });
+        },
+
+        /**
+         * @description Delete disallowed tags
+         * @param {String} html HTML string
+         * @returns {String}
+         * @private
+         */
+        _deleteDisallowedTags: function (html) {
+            return html
+                .replace(/\n/g, '')
+                .replace(/<(script|style).*>(\n|.)*<\/(script|style)>/gi, '')
+                .replace(/<[a-z0-9]+\:[a-z0-9]+[^>^\/]*>[^>]*<\/[a-z0-9]+\:[a-z0-9]+>/gi, '')
+                .replace(this.editorTagsWhitelistRegExp, '');
+        },
+
+        /**
          * @description Gets the clean HTML code for editor
          * @param {String} html HTML string
          * @param {String|RegExp} whitelist Regular expression of allowed tags.
@@ -18664,13 +19415,12 @@ const _Context = function (element, cons, options) {
          * @returns {String}
          */
         cleanHTML: function (html, whitelist) {
-            html = html
-                .replace(/\n/g, '')
-                .replace(/<(script|style).*>(\n|.)*<\/(script|style)>/g, '')
-                .replace(this.editorTagsWhitelistRegExp, '')
+            html = this._deleteDisallowedTags(html)
                 .replace(/(<[a-zA-Z0-9]+)[^>]*(?=>)/g, function (m, t) {
+                    if (/^<[a-z0-9]+\:[a-z0-9]+/i.test(m)) return m;
+
                     let v = null;
-                    const tAttr = this._attributesTagsWhitelist[t.match(/(?!<)[a-zA-Z]+/)[0].toLowerCase()];
+                    const tAttr = this._attributesTagsWhitelist[t.match(/(?!<)[a-zA-Z0-9]+/)[0].toLowerCase()];
                     if (tAttr) v = m.match(tAttr);
                     else v = m.match(this._attributesWhitelistRegExp);
 
@@ -18703,7 +19453,7 @@ const _Context = function (element, cons, options) {
                 const textCompList = dom.querySelectorAll(this.managedTagsInfo.query);
                 for (let i = 0, len = textCompList.length, initMethod, classList; i < len; i++) {
                     classList = [].slice.call(textCompList[i].classList);
-                    for (let c in classList) {
+                    for (let c = 0, cLen = classList.length; c < cLen; c++) {
                         initMethod = this.managedTagsInfo.map[classList[c]];
                         if (initMethod) {
                             initMethod(textCompList[i]);
@@ -18719,7 +19469,7 @@ const _Context = function (element, cons, options) {
 
             for (let i = 0, len = domTree.length, t; i < len; i++) {
                 t = domTree[i];
-                if (t.nodeType === 1 && !util.isTextStyleElement(t) && !util.isBreak(t) && !util._notAllowedTags(t)) {
+                if (t.nodeType === 1 && !util.isTextStyleElement(t) && !util.isBreak(t) && !util._disallowedTags(t)) {
                     requireFormat = true;
                     break;
                 }
@@ -18730,7 +19480,7 @@ const _Context = function (element, cons, options) {
             }
 
             cleanHTML = util.htmlRemoveWhiteSpace(cleanHTML);
-            return util._tagConvertor(!cleanHTML ? html : !whitelist ? cleanHTML : cleanHTML.replace(typeof whitelist === 'string' ? util.createTagsWhitelist(whitelist) : whitelist, ''));
+            return this._tagConvertor(!cleanHTML ? html : !whitelist ? cleanHTML : cleanHTML.replace(typeof whitelist === 'string' ? util.createTagsWhitelist(whitelist) : whitelist, ''));
         },
 
         /**
@@ -18739,12 +19489,8 @@ const _Context = function (element, cons, options) {
          * @returns {String}
          */
         convertContentsForEditor: function (contents) {
-            contents = contents
-                .replace(/\n/g, '')
-                .replace(/<(script|style).*>(\n|.)*<\/(script|style)>/g, '')
-                .replace(this.editorTagsWhitelistRegExp, '');
-                
-            const dom = _d.createRange().createContextualFragment(contents);
+            const dom = _d.createRange().createContextualFragment(this._deleteDisallowedTags(contents));
+
             try {
                 util._consistencyCheckOfHTML(dom, this._htmlCheckWhitelistRegExp);
             } catch (error) {
@@ -18760,7 +19506,7 @@ const _Context = function (element, cons, options) {
             if (cleanHTML.length === 0) return '<p><br></p>';
 
             cleanHTML = util.htmlRemoveWhiteSpace(cleanHTML);
-            return util._tagConvertor(cleanHTML);
+            return this._tagConvertor(cleanHTML);
         },
 
         /**
@@ -18798,7 +19544,7 @@ const _Context = function (element, cons, options) {
                         continue;
                     }
                     if (node.childNodes.length === 0) {
-                        returnHTML += (/^(HR)$/i.test(node.nodeName) ? '\n' : '') + elementIndent + node.outerHTML + br;
+                        returnHTML += (/^HR$/i.test(node.nodeName) ? '\n' : '') + elementIndent + node.outerHTML + br;
                         continue;
                     }
                     
@@ -18941,7 +19687,7 @@ const _Context = function (element, cons, options) {
          * @private
          */
         _checkComponents: function () {
-            for (let i in this._fileInfoPluginsCheck) {
+            for (let i = 0, len = this._fileInfoPluginsCheck.length; i < len; i++) {
                 this._fileInfoPluginsCheck[i]();
             }
         },
@@ -18951,7 +19697,7 @@ const _Context = function (element, cons, options) {
          * @private
          */
         _resetComponents: function () {
-            for (let i in this._fileInfoPluginsReset) {
+            for (let i = 0, len = this._fileInfoPluginsReset.length; i < len; i++) {
                 this._fileInfoPluginsReset[i]();
             }
         },
@@ -18980,10 +19726,11 @@ const _Context = function (element, cons, options) {
         /**
          * @description Initializ core variable
          * @param {Boolean} reload Is relooad?
-         * @param {String} _initHTML initial html string when "reload" is true
+         * @param {String} _initHTML initial html string
          * @private
          */
         _init: function (reload, _initHTML) {
+            const wRegExp = _w.RegExp;
             this._ww = options.iframe ? context.element.wysiwygFrame.contentWindow : _w;
             this._wd = _d;
             this._charTypeHTML = options.charCounterType === 'byte-html';
@@ -19001,8 +19748,15 @@ const _Context = function (element, cons, options) {
                     child = child.parentNode;
                 }
             }
-            
-            const wRegExp = _w.RegExp;
+
+            // set disallow text nodes
+            const disallowTextTags = ['b', 'i', 'ins', 's', 'strike'];
+            const allowTextTags = !options.addTagsWhitelist ? [] : options.addTagsWhitelist.split('|').filter(function (v) { return /b|i|ins|s|strike/i.test(v); });
+            for (let i = 0; i < allowTextTags.length; i++) {
+                disallowTextTags.splice(disallowTextTags.indexOf(allowTextTags[i].toLowerCase()), 1);
+            }
+            this._disallowedTextTagsRegExp = disallowTextTags.length === 0 ? null : new wRegExp('(<\\/?)(' + disallowTextTags.join('|') + ')\\b\\s*(?:[^>^<]+)?\\s*(?=>)', 'gi');
+
             // set whitelist
             const defaultAttr = 'contenteditable|colspan|rowspan|target|href|src|class|type|controls|data-format|data-size|data-file-size|data-file-name|data-origin|data-align|data-image-link|data-rotate|data-proportion|data-percentage|origin-size|data-exp|data-font-size';
             this._allowHTMLComments = options._editorTagsWhitelist.indexOf('//') > -1;
@@ -19015,6 +19769,7 @@ const _Context = function (element, cons, options) {
             let allAttr = '';
             if (!!_attr) {
                 for (let k in _attr) {
+                    if (!util.hasOwn(_attr, k)) continue;
                     if (k === 'all') {
                         allAttr = _attr[k] + '|';
                     } else {
@@ -19050,6 +19805,7 @@ const _Context = function (element, cons, options) {
             let filePluginRegExp = [];
             let plugin, button;
             for (let key in plugins) {
+                if (!util.hasOwn(plugins, key)) continue;
                 plugin = plugins[key];
                 button = pluginCallButtons[key];
                 if (plugin.active && button) {
@@ -19060,12 +19816,13 @@ const _Context = function (element, cons, options) {
                     this._fileInfoPluginsCheck.push(plugin.checkFileInfo.bind(this));
                     this._fileInfoPluginsReset.push(plugin.resetFileInfo.bind(this));
                 }
-                if (plugin.fileTags) {
+                if (_w.Array.isArray(plugin.fileTags)) {
+                    const fileTags = plugin.fileTags;
                     this.callPlugin(key, null, button);
-                    this._fileManager.tags = this._fileManager.tags.concat(plugin.fileTags);
+                    this._fileManager.tags = this._fileManager.tags.concat(fileTags);
                     filePluginRegExp.push(key);
-                    for (let tag in plugin.fileTags) {
-                        this._fileManager.pluginMap[plugin.fileTags[tag].toLowerCase()] = key;
+                    for (let tag = 0, tLen = fileTags.length; tag < tLen; tag++) {
+                        this._fileManager.pluginMap[fileTags[tag].toLowerCase()] = key;
                     }
                 }
                 if (plugin.managedTags) {
@@ -19093,24 +19850,14 @@ const _Context = function (element, cons, options) {
             this.addModule([_notice]);
 
             // Init, validate
-            _w.setTimeout(function () {
-                if (options.iframe) {
-                    this._wd = context.element.wysiwygFrame.contentDocument;
-                    context.element.wysiwyg = this._wd.body;
-                    if (options._editorStyles.editor) context.element.wysiwyg.style.cssText = options._editorStyles.editor;
-                    if (options.height === 'auto') this._iframeAuto = this._wd.body;
-                }
-                this._initWysiwygArea(reload, _initHTML);
-
-                this._checkComponents();
-                this._componentsInfoInit = false;
-                this._componentsInfoReset = false;
-                
-                this.history.reset(true);
-                this._resourcesStateChange();
-
-                if (typeof functions.onload === 'function') return functions.onload(this, reload);
-            }.bind(this));
+            if (options.iframe) {
+                this._wd = context.element.wysiwygFrame.contentDocument;
+                context.element.wysiwyg = this._wd.body;
+                if (options._editorStyles.editor) context.element.wysiwyg.style.cssText = options._editorStyles.editor;
+                if (options.height === 'auto') this._iframeAuto = this._wd.body;
+            }
+            
+            this._initWysiwygArea(reload, _initHTML);
         },
 
         /**
@@ -19139,17 +19886,13 @@ const _Context = function (element, cons, options) {
         },
 
         /**
-         * @description Initializ wysiwyg area (Only called from core._init())
+         * @description Initializ wysiwyg area (Only called from core._init)
          * @param {Boolean} reload Is relooad?
-         * @param {String} _initHTML initial html string when "reload" is true
+         * @param {String} _initHTML initial html string
          * @private
          */
         _initWysiwygArea: function (reload, _initHTML) {
-            if (!reload) {
-                context.element.wysiwyg.innerHTML = this.convertContentsForEditor(context.element.originElement.value);
-            } else if (_initHTML) {
-                context.element.wysiwyg.innerHTML = _initHTML;
-            }
+            context.element.wysiwyg.innerHTML = reload ? _initHTML : this.convertContentsForEditor(typeof _initHTML === 'string' ? _initHTML : context.element.originElement.value);
         },
 
         /**
@@ -19203,7 +19946,6 @@ const _Context = function (element, cons, options) {
 
         /**
          * @description If there is no default format, add a format and move "selection".
-         * Alternative code for - execCommand('formatBlock');
          * @param {String|null} formatName Format tag name (default: 'P')
          * @private
          */
@@ -19290,7 +20032,7 @@ const _Context = function (element, cons, options) {
         /**
          * @description Initializ editor
          * @param {Boolean} reload Is relooad?
-         * @param {String} _initHTML initial html string when "reload" is true
+         * @param {String} _initHTML initial html string
          * @private
          */
         _editorInit: function (reload, _initHTML) {
@@ -19303,6 +20045,17 @@ const _Context = function (element, cons, options) {
 
             // toolbar visibility
             context.element.toolbar.style.visibility = '';
+
+            this._checkComponents();
+            this._componentsInfoInit = false;
+            this._componentsInfoReset = false;
+
+            this.history.reset(true);
+            this._resourcesStateChange();
+
+            _w.setTimeout(function () {
+              if (typeof functions.onload === 'function') functions.onload(core, reload);
+            });
         },
 
         /**
@@ -19481,8 +20234,7 @@ const _Context = function (element, cons, options) {
 
             /** remove class, display text */
             for (let key in commandMap) {
-                if (commandMapNodes.indexOf(key) > -1) continue;
-                
+                if (commandMapNodes.indexOf(key) > -1 || !util.hasOwn(commandMap, key)) continue;
                 if (activePlugins.indexOf(key) > -1) {
                     plugins[key].active.call(core, null);
                 } else if (commandMap.OUTDENT && /^OUTDENT$/i.test(key)) {
@@ -19585,7 +20337,7 @@ const _Context = function (element, cons, options) {
             const fileComponentInfo = core.getFileComponent(targetElement);
             if (fileComponentInfo) {
                 e.preventDefault();
-                core.selectComponent(fileComponentInfo.component, fileComponentInfo.pluginName);
+                core.selectComponent(fileComponentInfo.target, fileComponentInfo.pluginName);
                 return;
             }
 
@@ -19613,7 +20365,7 @@ const _Context = function (element, cons, options) {
             const selectionNode = core.getSelectionNode();
             const formatEl = util.getFormatElement(selectionNode, null);
             const rangeEl = util.getRangeFormatElement(selectionNode, null);
-            if ((!formatEl || formatEl === rangeEl) && !util.isNonEditable(targetElement)) {
+            if ((!formatEl || formatEl === rangeEl) && !util.isNonEditable(targetElement) && !util.isList(rangeEl)) {
                 const range = core.getRange();
                 if (util.getFormatElement(range.startContainer) === util.getFormatElement(range.endContainer)) {
                     if (util.isList(rangeEl)) {
@@ -20020,7 +20772,7 @@ const _Context = function (element, cons, options) {
                                 e.preventDefault();
                                 e.stopPropagation();
                                 if (formatEl.textContent.length === 0) util.removeItem(formatEl);
-                                core.selectComponent(fileComponentInfo.component, fileComponentInfo.pluginName);
+                                core.selectComponent(fileComponentInfo.target, fileComponentInfo.pluginName);
                             }
                             break;
                         }
@@ -20074,7 +20826,7 @@ const _Context = function (element, cons, options) {
                             const fileComponentInfo = core.getFileComponent(nextEl);
                             if (fileComponentInfo) {
                                 e.stopPropagation();
-                                core.selectComponent(fileComponentInfo.component, fileComponentInfo.pluginName);
+                                core.selectComponent(fileComponentInfo.target, fileComponentInfo.pluginName);
                             }
 
                             break;
@@ -20462,7 +21214,7 @@ const _Context = function (element, cons, options) {
 
             const formatEl = util.getFormatElement(selectionNode, null);
             const rangeEl = util.getRangeFormatElement(selectionNode, null);
-            if (((!formatEl && range.collapsed) || formatEl === rangeEl) && !util.isComponent(selectionNode)) {
+            if (((!formatEl && range.collapsed) || formatEl === rangeEl) && !util.isComponent(selectionNode) && !util.isList(selectionNode)) {
                 core._setDefaultFormat(util.isRangeFormatElement(rangeEl) ? 'DIV' : 'P');
                 selectionNode = core.getSelectionNode();
             }
@@ -20514,6 +21266,7 @@ const _Context = function (element, cons, options) {
             const commandMap = core.commandMap;
             const activePlugins = core.activePlugins;
             for (let key in commandMap) {
+                if (!util.hasOwn(commandMap, key)) continue;
                 if (activePlugins.indexOf(key) > -1) {
                     plugins[key].active.call(core, null);
                 } else if (commandMap.OUTDENT && /^OUTDENT$/i.test(key)) {
@@ -20704,17 +21457,56 @@ const _Context = function (element, cons, options) {
             return false;
         },
 
-        onCut_wysiwyg: function () {
-            _w.setTimeout(function () {
-                // history stack
-                core.history.push(false);
-            });
-        },
-
         onPaste_wysiwyg: function (e) {
             const clipboardData = util.isIE ? _w.clipboardData : e.clipboardData;
             if (!clipboardData) return true;
             return event._dataTransferAction('paste', e, clipboardData);
+        },
+
+        _setClipboardComponent: function (e, info, clipboardData) {
+            e.preventDefault();
+            e.stopPropagation();
+            clipboardData.setData('text/html', info.component.outerHTML);
+        },
+
+        onCopy_wysiwyg: function (e) {
+            const clipboardData = util.isIE ? _w.clipboardData : e.clipboardData;
+            if (typeof functions.onCopy === 'function' && !functions.onCopy(e, clipboardData, core)) {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }
+
+            const info = core.currentFileComponentInfo;
+            if (info && !util.isIE) {
+                event._setClipboardComponent(e, info, clipboardData);
+                util.addClass(info.component, 'se-component-copy');
+                // copy effect
+                _w.setTimeout(function () {
+                    util.removeClass(info.component, 'se-component-copy');
+                }, 150);
+            }
+        },
+
+        onCut_wysiwyg: function (e) {
+            const clipboardData = util.isIE ? _w.clipboardData : e.clipboardData;
+            if (typeof functions.onCut === 'function' && !functions.onCut(e, clipboardData, core)) {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }
+
+            const info = core.currentFileComponentInfo;
+            if (info && !util.isIE) {
+                event._setClipboardComponent(e, info, clipboardData);
+                util.removeItem(info.component);
+                core.controllersOff();
+            }
+
+            _w.setTimeout(function () {
+                // history stack
+                core.history.push(false);
+            });
         },
 
         onDrop_wysiwyg: function (e) {
@@ -20905,6 +21697,7 @@ const _Context = function (element, cons, options) {
             eventWysiwyg.addEventListener('keydown', event.onKeyDown_wysiwyg, false);
             eventWysiwyg.addEventListener('keyup', event.onKeyUp_wysiwyg, false);
             eventWysiwyg.addEventListener('paste', event.onPaste_wysiwyg, false);
+            eventWysiwyg.addEventListener('copy', event.onCopy_wysiwyg, false);
             eventWysiwyg.addEventListener('cut', event.onCut_wysiwyg, false);
             eventWysiwyg.addEventListener('drop', event.onDrop_wysiwyg, false);
             eventWysiwyg.addEventListener('scroll', event.onScroll_wysiwyg, false);
@@ -20964,6 +21757,7 @@ const _Context = function (element, cons, options) {
             eventWysiwyg.removeEventListener('keydown', event.onKeyDown_wysiwyg);
             eventWysiwyg.removeEventListener('keyup', event.onKeyUp_wysiwyg);
             eventWysiwyg.removeEventListener('paste', event.onPaste_wysiwyg);
+            eventWysiwyg.removeEventListener('copy', event.onCopy_wysiwyg);
             eventWysiwyg.removeEventListener('cut', event.onCut_wysiwyg);
             eventWysiwyg.removeEventListener('drop', event.onDrop_wysiwyg);
             eventWysiwyg.removeEventListener('scroll', event.onScroll_wysiwyg);
@@ -21031,6 +21825,8 @@ const _Context = function (element, cons, options) {
         onKeyUp: null,
         onDrop: null,
         onChange: null,
+        onCopy: null,
+        onCut: null,
         onPaste: null,
         onFocus: null,
         onBlur: null,
@@ -21120,17 +21916,15 @@ const _Context = function (element, cons, options) {
          * }
          * @param {Object} core Core object
          * @param {Function} uploadHandler If undefined is returned, it waits until "uploadHandler" is executed.
-         *                "uploadHandler" is an upload function with "core" and "info" bound. (plugin.upload.bind(core, info))
+         *                "uploadHandler" is an upload function with "core" and "info" bound.
          *                [upload files] : uploadHandler(files or [new File(...),])
          *                [error]        : uploadHandler("Error message")
          *                [Just finish]  : uploadHandler()
-         * @example Also you can call directly image register not execute "uploadHandler"
-                This work is not execute default upload handler
-                const response = { // Same format as "imageUploadUrl" response
-                    "errorMessage": "insert error message",
-                    "result": [ { "url": "...", "name": "...", "size": "999" }, ]
-                };
-                core.plugins.image.register.call(core, info, response);
+         *                [directly register] : uploadHandler(response) // Same format as "imageUploadUrl" response
+         *                                   ex) {
+         *                                      // "errorMessage": "insert error message",
+         *                                      "result": [ { "url": "...", "name": "...", "size": "999" }, ]
+         *                                   }
          * @returns {Boolean|Array|undefined}
          */
         onImageUploadBefore: null,
@@ -21148,17 +21942,15 @@ const _Context = function (element, cons, options) {
          * }
          * @param {Object} core Core object
          * @param {Function} uploadHandler If undefined is returned, it waits until "uploadHandler" is executed.
-         *                "uploadHandler" is an upload function with "core" and "info" bound. (plugin.upload.bind(core, info))
+         *                "uploadHandler" is an upload function with "core" and "info" bound.
          *                [upload files] : uploadHandler(files or [new File(...),])
          *                [error]        : uploadHandler("Error message")
          *                [Just finish]  : uploadHandler()
-         * @example Also you can call directly video register not execute "uploadHandler"
-                This work is not execute default upload handler
-                const response = { // Same format as "videoUploadUrl" response
-                    "errorMessage": "insert error message",
-                    "result": [ { "url": "...", "name": "...", "size": "999" }, ]
-                };
-                core.plugins.video.register.call(core, info, response);
+         *                [directly register] : uploadHandler(response) // Same format as "videoUploadUrl" response
+         *                                   ex) {
+         *                                      // "errorMessage": "insert error message",
+         *                                      "result": [ { "url": "...", "name": "...", "size": "999" }, ]
+         *                                   }
          * @returns {Boolean|Array|undefined}
          */
         onVideoUploadBefore: null,
@@ -21173,17 +21965,15 @@ const _Context = function (element, cons, options) {
          * }
          * @param {Object} core Core object
          * @param {Function} uploadHandler If undefined is returned, it waits until "uploadHandler" is executed.
-         *                "uploadHandler" is an upload function with "core" and "info" bound. (plugin.upload.bind(core, info))
+         *                "uploadHandler" is an upload function with "core" and "info" bound.
          *                [upload files] : uploadHandler(files or [new File(...),])
          *                [error]        : uploadHandler("Error message")
          *                [Just finish]  : uploadHandler()
-         * @example Also you can call directly audio register not execute "uploadHandler"
-                This work is not execute default upload handler
-                const response = { // Same format as "audioUploadUrl" response
-                    "errorMessage": "insert error message",
-                    "result": [ { "url": "...", "name": "...", "size": "999" }, ]
-                };
-                core.plugins.audio.register.call(core, info, response);
+         *                [directly register] : uploadHandler(response) // Same format as "audioUploadUrl" response
+         *                                   ex) {
+         *                                      // "errorMessage": "insert error message",
+         *                                      "result": [ { "url": "...", "name": "...", "size": "999" }, ]
+         *                                   }
          * @returns {Boolean|Array|undefined}
          */
         onAudioUploadBefore: null,
@@ -21263,6 +22053,7 @@ const _Context = function (element, cons, options) {
             pluginCallButtons = newToolbar.pluginCallButtons;
             let plugin, button, oldButton;
             for (let key in pluginCallButtons) {
+                if (!util.hasOwn(pluginCallButtons, key)) continue;
                 plugin = plugins[key];
                 button = pluginCallButtons[key];
                 if (plugin.active && button) {
@@ -21298,6 +22089,7 @@ const _Context = function (element, cons, options) {
             core.plugins = _options.plugins || core.plugins;
             const mergeOptions = [options, _options].reduce(function (init, option) {
                 for (let key in option) {
+                    if (!util.hasOwn(option, key)) continue;
                     if (key === 'plugins' && option[key] && init[key]) {
                         let i = init[key], o = option[key];
                         i = i.length ? i : _w.Object.keys(i).map(function(name) { return i[name]; });
@@ -21414,6 +22206,14 @@ const _Context = function (element, cons, options) {
         },
 
         /**
+         * @description Gets only the text of the suneditor contents
+         * @returns {String}
+         */
+        getText: function () {
+            return context.element.wysiwyg.textContent;
+        },
+
+        /**
          * @description Get the editor's number of characters or binary data size.
          * You can use the "charCounterType" option format.
          * @param {String|null} charCounterType options - charCounterType ('char', 'byte', 'byte-html')
@@ -21475,8 +22275,9 @@ const _Context = function (element, cons, options) {
          * @param {Element|String} html HTML Element or HTML string or plain string
          * @param {Boolean} notCleaningData If true, inserts the HTML string without refining it with core.cleanHTML.
          * @param {Boolean} checkCharCount If true, if "options.maxCharCount" is exceeded when "element" is added, null is returned without addition.
+         * @param {Boolean} rangeSelection If true, range select the inserted node.
          */
-        insertHTML: function (html, notCleaningData, checkCharCount) {
+        insertHTML: function (html, notCleaningData, checkCharCount, rangeSelection) {
             if (typeof html === 'string') {
                 if (!notCleaningData) html = core.cleanHTML(html, null);
                 try {
@@ -21492,19 +22293,22 @@ const _Context = function (element, cons, options) {
                         if (!core.checkCharCount(checkHTML, null)) return;
                     }
 
-                    let c, a, t;
+                    let c, a, t, firstCon;
                     while ((c = domTree[0])) {
                         t = core.insertNode(c, a, false);
-                        a = c;
+                        a = t.container || t;
+                        if (!firstCon) firstCon = t;
                     }
+
                     const offset = a.nodeType === 3 ? (t.endOffset || a.textContent.length): a.childNodes.length;
-                    core.setRange(a, offset, a, offset);
+                    if (rangeSelection) core.setRange(firstCon.container || firstCon, firstCon.startOffset || 0, a, offset);
+                    else core.setRange(a, offset, a, offset);
                 } catch (error) {
                     core.execCommand('insertHTML', false, html);
                 }
             } else {
                 if (util.isComponent(html)) {
-                    core.insertComponent(html, false, checkCharCount);
+                    core.insertComponent(html, false, checkCharCount, false);
                 } else {
                     let afterNode = null;
                     if (util.isFormatElement(html) || util.isMedia(html)) {
@@ -21620,13 +22424,13 @@ const _Context = function (element, cons, options) {
             util.removeItem(context.element.topArea);
 
             /** remove object reference */
-            for (var k in core) { delete core[k]; }
-            for (var k in event) { delete event[k]; }
-            for (var k in context) { delete context[k]; }
-            for (var k in pluginCallButtons) { delete pluginCallButtons[k]; }
+            for (let k in core) { if (util.hasOwn(core, k)) delete core[k]; }
+            for (let k in event) { if (util.hasOwn(event, k)) delete event[k]; }
+            for (let k in context) { if (util.hasOwn(context, k)) delete context[k]; }
+            for (let k in pluginCallButtons) { if (util.hasOwn(pluginCallButtons, k)) delete pluginCallButtons[k]; }
             
             /** remove user object */
-            for (var k in this) { delete this[k]; }
+            for (let k in this) { if (util.hasOwn(this, k)) delete this[k]; }
         },
 
         /**
@@ -21688,7 +22492,8 @@ const _Context = function (element, cons, options) {
     if (options.iframe) {
         contextEl.wysiwygFrame.addEventListener('load', function () {
             util._setIframeDocument(this, options);
-            core._editorInit(false, null);
+            core._editorInit(false, options.value);
+            options.value = null;
         });
     }
 
@@ -21704,7 +22509,8 @@ const _Context = function (element, cons, options) {
 
     // init
     if (!options.iframe) {
-        core._editorInit(false, null);
+        core._editorInit(false, options.value);
+        options.value = null;
     }
 
     return functions;
@@ -21717,6 +22523,7 @@ const _Context = function (element, cons, options) {
  * Copyright 2017 JiHong Lee.
  * MIT license.
  */
+
 
 
 
@@ -21745,10 +22552,13 @@ const _Context = function (element, cons, options) {
      * @returns {Object}
      */
     create: function (idOrElement, options, _init_options) {
+        lib_util._propertiesInit();
+
         if (typeof options !== 'object') options = {};
         if (_init_options) {
             options =  [_init_options, options].reduce(function (init, option) {
                             for (let key in option) {
+                                if (!lib_util.hasOwn(option, key)) continue;
                                 if (key === 'plugins' && option[key] && init[key]) {
                                     let i = init[key], o = option[key];
                                     i = i.length ? i : Object.keys(i).map(function(name) { return i[name]; });
@@ -21778,18 +22588,22 @@ const _Context = function (element, cons, options) {
             throw Error('[SUNEDITOR.create.fail] The ID of the suneditor you are trying to create already exists (ID:"' + cons.constructed._top.id + '")');
         }
 
-        return lib_core(lib_context(element, cons.constructed, cons.options), cons.pluginCallButtons, cons.plugins, cons.options.lang, options, cons._icons, cons._responsiveButtons);
+        return lib_core(lib_context(element, cons.constructed, cons.options), cons.pluginCallButtons, cons.plugins, cons.options.lang, options, cons._responsiveButtons);
     }
 });
 
 // CONCATENATED MODULE: ./misc/getPlugins.js
-function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
+function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread(); }
 
-function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance"); }
+function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
 
-function _iterableToArray(iter) { if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter); }
+function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
 
-function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } }
+function _iterableToArray(iter) { if (typeof Symbol !== "undefined" && Symbol.iterator in Object(iter)) return Array.from(iter); }
+
+function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) return _arrayLikeToArray(arr); }
+
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 
 var getPlugins = function getPlugins(_ref) {
   var buttonList = _ref.buttonList;
@@ -21841,10 +22655,8 @@ var isArray = function isArray(obj) {
 
 /* harmony default export */ var misc_getPlugins = (getPlugins);
 // CONCATENATED MODULE: ./misc/getLanguage.js
-function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
-
 var getLanguage = function getLanguage(lang) {
-  switch (_typeof(lang)) {
+  switch (typeof lang) {
     case 'object':
       return lang;
 
@@ -21889,6 +22701,12 @@ var getLanguage = function getLanguage(lang) {
         case 'pl':
           return __webpack_require__(40);
 
+        case 'ckb':
+          return __webpack_require__(41);
+
+        case 'lv':
+          return __webpack_require__(42);
+
         default:
           return __webpack_require__(4);
       }
@@ -21904,8 +22722,6 @@ var prop_types = __webpack_require__(0);
 var prop_types_default = /*#__PURE__*/__webpack_require__.n(prop_types);
 
 // CONCATENATED MODULE: ./SunEditor.js
-function SunEditor_typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { SunEditor_typeof = function _typeof(obj) { return typeof obj; }; } else { SunEditor_typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return SunEditor_typeof(obj); }
-
 function _extends() { _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; }; return _extends.apply(this, arguments); }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -21914,15 +22730,19 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
-function _possibleConstructorReturn(self, call) { if (call && (SunEditor_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
-
-function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
-
-function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
-
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
 
 function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+
+function _createSuper(Derived) { var hasNativeReflectConstruct = _isNativeReflectConstruct(); return function _createSuperInternal() { var Super = _getPrototypeOf(Derived), result; if (hasNativeReflectConstruct) { var NewTarget = _getPrototypeOf(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return _possibleConstructorReturn(this, result); }; }
+
+function _possibleConstructorReturn(self, call) { if (call && (typeof call === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
+
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
+
+function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
+
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
 
 
 
@@ -21933,13 +22753,15 @@ function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || func
 var SunEditor_SunEditor = /*#__PURE__*/function (_Component) {
   _inherits(SunEditor, _Component);
 
-  function SunEditor(props) {
+  var _super = _createSuper(SunEditor);
+
+  function SunEditor() {
     var _this;
 
     _classCallCheck(this, SunEditor);
 
-    _this = _possibleConstructorReturn(this, _getPrototypeOf(SunEditor).call(this, props));
-    _this.txtArea = Object(external_react_["createRef"])();
+    _this = _super.call(this);
+    _this.txtArea = /*#__PURE__*/Object(external_react_["createRef"])();
     return _this;
   }
 
@@ -22184,7 +23006,7 @@ var SunEditor_SunEditor = /*#__PURE__*/function (_Component) {
     value: function render() {
       var dynamicName = {};
       if (this.props.name) dynamicName.name = this.props.name;
-      return external_react_default.a.createElement("textarea", _extends({
+      return /*#__PURE__*/external_react_default.a.createElement("textarea", _extends({
         ref: this.txtArea
       }, dynamicName));
     }
