@@ -22966,6 +22966,7 @@ var SunEditor_SunEditor = /*#__PURE__*/function (_Component) {
 
       if (prevProps.appendContents !== this.props.appendContents) {
         this.editor.appendContents(this.props.appendContents);
+        this.editor.core.focusEdge();
       }
 
       if (prevProps.insertHTML !== this.props.insertHTML) {
