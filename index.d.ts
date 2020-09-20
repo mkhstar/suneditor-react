@@ -1,4 +1,5 @@
 import * as React from 'react';
+import Lang from './types/lang'
 import SetOptions from './types/SetOptions';
 
 export interface SunEditorReactProps {
@@ -62,7 +63,7 @@ export interface SunEditorReactProps {
   show?: boolean;
   autoFocus?: boolean;
   placeholder?: string;
-  lang?: string | object;
+  lang?: Lang;
   width?: number | string;
   height?: number | string;
 }

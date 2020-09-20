@@ -1,6 +1,6 @@
 {
   "name": "suneditor-react",
-  "version": "2.13.3",
+  "version": "2.14.0",
   "description": "A React Component for Suneditor",
   "repository": {
     "type": "git",
@@ -40,11 +40,11 @@
   },
   "dependencies": {
     "prop-types": "^15.7.2",
-    "suneditor": "^2.32.1"
+    "suneditor": "^2.33.3"
   },
   "browserslist": [
-    "last 1 version",
-    "> 1%",
-    "IE 10"
+    ">0.2%",
+    "not ie <= 11",
+    "not op_mini all"
   ]
 }

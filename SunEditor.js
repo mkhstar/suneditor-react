@@ -5,8 +5,8 @@ import getLanguage from "./misc/getLanguage";
 import PropTypes from "prop-types";
 
 class SunEditor extends Component {
-  constructor(props) {
-    super(props);
+  constructor() {
+    super();
     this.txtArea = createRef();
   }
   componentDidMount() {
