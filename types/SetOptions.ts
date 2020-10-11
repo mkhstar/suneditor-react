@@ -64,7 +64,9 @@ export default interface SetOptions {
   width?: string | number;
   defaultStyle?: string;
   maxCharCount?: number;
-  charCounter?: number;
+  charCounter?: boolean;
+  charCounterType?: string;
+  charCounterLabel?: string;
   showPathLabel?: boolean;
   resizingBar?: boolean;
   popupDisplay?: string;
