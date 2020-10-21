@@ -4638,7 +4638,7 @@ __webpack_require__.r(__webpack_exports__);
         tableResize.innerHTML = '' +
             '<div>' +
                 '<div class="se-btn-group">' +
-                    '<button type="button" data-command="resize" class="se-btn se-tooltip _se_table_resize">' +
+                    '<button type="button" data-command="resize" style="display: none;" class="se-btn se-tooltip _se_table_resize">' +
                         icons.expansion +
                         '<span class="se-tooltip-inner"><span class="se-tooltip-text">' + lang.controller.maxSize + '</span></span>' +
                     '</button>' +
@@ -5629,7 +5629,7 @@ __webpack_require__.r(__webpack_exports__);
             } else {
                 sizeIcon = contextTable.icons.reduction;
                 text = contextTable.minText;
-                contextTable.columnFixedButton.style.display = 'block';
+                contextTable.columnFixedButton.style.display = 'none';
                 this.util.removeClass(tableElement, 'se-table-size-auto');
                 this.util.addClass(tableElement, 'se-table-size-100');
             }
