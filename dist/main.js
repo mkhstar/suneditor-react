@@ -14494,6 +14494,10 @@ const util_util = {
         const responsiveButtons = [];
         const plugins = {};
         if (_plugins) {
+            if (options.customPlugins) {
+                // Adds the missing customPlugins to the _plugins array to fix custom plugin error
+                _plugins.push(...options.customPlugins);
+            }
             const pluginsValues = _plugins.length ? _plugins : Object.keys(_plugins).map(function(name) { return _plugins[name]; });
             for (let i = 0, len = pluginsValues.length, p; i < len; i++) {
                 p = pluginsValues[i].default || pluginsValues[i];

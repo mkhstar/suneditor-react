@@ -100,4 +100,5 @@ export default interface SetOptions {
   audioAccept?: string;
   videoAccept?: string;
   historyStackDelayTime?: number;
+  customPlugins: Array<Plugin> | Record<string, Plugin>;
 }

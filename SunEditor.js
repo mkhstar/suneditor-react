@@ -13,7 +13,7 @@ class SunEditor extends Component {
     const { lang, setOptions = {}, width = "100%", height } = this.props;
 
     setOptions.lang = setOptions.lang || getLanguage(lang);
-    setOptions.plugins = setOptions.plugins || getPlugins(setOptions);
+    setOptions.plugins = getPlugins(setOptions);
     setOptions.width = setOptions.width || width;
     if (height) setOptions.height = height;
 
