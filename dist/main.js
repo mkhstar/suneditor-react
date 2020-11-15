@@ -779,7 +779,8 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
             lineHeight: 'Line height',
             paragraphStyle: 'Paragraph style',
             textStyle: 'Text style',
-            imageGallery: 'Image gallery'
+            imageGallery: 'Image gallery',
+            mention: 'Mention'
         },
         dialogBox: {
             linkBox: {
@@ -1579,19 +1580,16 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
 
             if (this.currentControllerName !== plugin) {
                 this.util.setDisabledButtons(true, this.resizingDisabledButtons);
-                this.controllersOn(contextResizing.resizeContainer, contextResizing.resizeButton, this.util.setDisabledButtons.bind(this, false, this.resizingDisabledButtons), targetElement, plugin);
-            }
-    
-            // button group
-            const overLeft = this.context.element.wysiwygFrame.offsetWidth - l - contextResizing.resizeButton.offsetWidth;
-    
-            contextResizing.resizeButton.style.top = (h + t + 60) + 'px';
-            contextResizing.resizeButton.style.left = (l + (overLeft < 0 ? overLeft : 0)) + 'px';
-    
-            if (overLeft < 0) {
-                contextResizing.resizeButton.firstElementChild.style.left = (20 - overLeft) + 'px';
-            } else {
-                contextResizing.resizeButton.firstElementChild.style.left = '20px';
+                resizeContainer.style.display = 'block';
+
+                const addOffset = {left: 0, top: 50};
+                if (this.context.options.iframe) {
+                    addOffset.left -= this.context.element.wysiwygFrame.parentElement.offsetLeft;
+                    addOffset.top -= this.context.element.wysiwygFrame.parentElement.offsetTop;
+                }
+
+                this.setControllerPosition(contextResizing.resizeButton, resizeContainer, 'bottom', addOffset);
+                this.controllersOn(resizeContainer, contextResizing.resizeButton, this.util.setDisabledButtons.bind(this, false, this.resizingDisabledButtons), targetElement, plugin);
             }
     
             contextResizing._resize_w = w;
@@ -1615,7 +1613,10 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
          * @description Open align submenu of module
          */
         openAlignMenu: function () {
-            this.util.addClass(this.context.resizing.alignButton, 'on');
+            const alignButton = this.context.resizing.alignButton;
+            this.util.addClass(alignButton, 'on');
+            this.context.resizing.alignMenu.style.top = (alignButton.offsetTop + alignButton.offsetHeight) + 'px';
+            this.context.resizing.alignMenu.style.left = (alignButton.offsetLeft - alignButton.offsetWidth / 2) + 'px';
             this.context.resizing.alignMenu.style.display = 'block';
     
             this.plugins.resizing._closeAlignMenu = function () {
@@ -2399,6 +2400,7 @@ __webpack_require__.r(__webpack_exports__);
             targetButton: targetElement,
             _alignList: null,
             currentAlign: '',
+            defaultDir: context.options.rtl ? 'right' : 'left', 
             icons: {
                 justify: icons.align_justify,
                 left: icons.align_left,
@@ -2426,26 +2428,31 @@ __webpack_require__.r(__webpack_exports__);
         const lang = this.lang;
         const icons = this.icons;
         const listDiv = this.util.createElement('DIV');
+        const leftDir = this.context.align.defaultDir === 'left';
+
+        const leftMenu = '<li>' +
+            '<button type="button" class="se-btn-list se-btn-align" data-command="justifyleft" data-value="left" title="' + lang.toolbar.alignLeft + '">' +
+                '<span class="se-list-icon">' + icons.align_left + '</span>' + lang.toolbar.alignLeft +
+            '</button>' +
+        '</li>';
+
+        const rightMenu = '<li>' +
+            '<button type="button" class="se-btn-list se-btn-align" data-command="justifyright" data-value="right" title="' + lang.toolbar.alignRight + '">' +
+                '<span class="se-list-icon">' + icons.align_right +'</span>' + lang.toolbar.alignRight +
+            '</button>' +
+        '</li>';
 
         listDiv.className = 'se-submenu se-list-layer se-list-align';
         listDiv.innerHTML = '' +
             '<div class="se-list-inner">' +
                 '<ul class="se-list-basic">' +
-                    '<li>' +
-                        '<button type="button" class="se-btn-list se-btn-align" data-command="justifyleft" data-value="left" title="' + lang.toolbar.alignLeft + '">' +
-                            '<span class="se-list-icon">' + icons.align_left + '</span>' + lang.toolbar.alignLeft +
-                        '</button>' +
-                    '</li>' +
+                    (leftDir ? leftMenu : rightMenu) +
                     '<li>' +
                         '<button type="button" class="se-btn-list se-btn-align" data-command="justifycenter" data-value="center" title="' + lang.toolbar.alignCenter + '">' +
                             '<span class="se-list-icon">' + icons.align_center + '</span>' + lang.toolbar.alignCenter +
                         '</button>' +
                     '</li>' +
-                    '<li>' +
-                        '<button type="button" class="se-btn-list se-btn-align" data-command="justifyright" data-value="right" title="' + lang.toolbar.alignRight + '">' +
-                            '<span class="se-list-icon">' + icons.align_right +'</span>' + lang.toolbar.alignRight +
-                        '</button>' +
-                    '</li>' +
+                    (leftDir? rightMenu : leftMenu) +
                     '<li>' +
                         '<button type="button" class="se-btn-list se-btn-align" data-command="justifyfull" data-value="justify" title="' + lang.toolbar.alignJustify + '">' +
                             '<span class="se-list-icon">' + icons.align_justify + '</span>' + lang.toolbar.alignJustify +
@@ -2461,16 +2468,17 @@ __webpack_require__.r(__webpack_exports__);
      * @Override core
      */
     active: function (element) {
-        const targetButton = this.context.align.targetButton;
+        const alignContext = this.context.align;
+        const targetButton = alignContext.targetButton;
         const target = targetButton.firstElementChild;
 
         if (!element) {
-            this.util.changeElement(target, this.context.align.icons.left);
+            this.util.changeElement(target, alignContext.icons[alignContext.defaultDir]);
             targetButton.removeAttribute('data-focus');
         } else if (this.util.isFormatElement(element)) {
             const textAlign = element.style.textAlign;
             if (textAlign) {
-                this.util.changeElement(target, this.context.align.icons[textAlign]);
+                this.util.changeElement(target, alignContext.icons[textAlign]);
                 targetButton.setAttribute('data-focus', textAlign);
                 return true;
             }
@@ -2485,7 +2493,7 @@ __webpack_require__.r(__webpack_exports__);
     on: function () {
         const alignContext = this.context.align;
         const alignList = alignContext._alignList;
-        const currentAlign = alignContext.targetButton.getAttribute('data-focus') || 'left';
+        const currentAlign = alignContext.targetButton.getAttribute('data-focus') || alignContext.defaultDir;
 
         if (currentAlign !== alignContext.currentAlign) {
             for (let i = 0, len = alignList.length; i < len; i++) {
@@ -2514,9 +2522,10 @@ __webpack_require__.r(__webpack_exports__);
 
         if (!value) return;
 
+        const defaultDir = this.context.align.defaultDir;
         const selectedFormsts = this.getSelectedElements();
         for (let i = 0, len = selectedFormsts.length; i < len; i++) {
-            this.util.setStyle(selectedFormsts[i], 'textAlign', (value === 'left' ? '' : value));
+            this.util.setStyle(selectedFormsts[i], 'textAlign', (value === defaultDir ? '' : value));
         }
 
         this.effectNode = null;
@@ -2780,20 +2789,7 @@ __webpack_require__.r(__webpack_exports__);
         this.context.math._mathExp = mathTag;
         const mathBtn = this.context.math.mathController;
 
-        const offset = this.util.getOffset(mathTag, this.context.element.wysiwygFrame);
-        mathBtn.style.top = (offset.top + mathTag.offsetHeight + 10) + 'px';
-        mathBtn.style.left = (offset.left - this.context.element.wysiwygFrame.scrollLeft) + 'px';
-
-        mathBtn.style.display = 'block';
-
-        const overLeft = this.context.element.wysiwygFrame.offsetWidth - (mathBtn.offsetLeft + mathBtn.offsetWidth);
-        if (overLeft < 0) {
-            mathBtn.style.left = (mathBtn.offsetLeft + overLeft) + 'px';
-            mathBtn.firstElementChild.style.left = (20 - overLeft) + 'px';
-        } else {
-            mathBtn.firstElementChild.style.left = '20px';
-        }
-
+        this.setControllerPosition(mathBtn, mathTag, 'bottom', {left: 0, top: 0});
         this.controllersOn(mathBtn, mathTag, 'math');
     },
 
@@ -3497,7 +3493,7 @@ __webpack_require__.r(__webpack_exports__);
             let selectedFormsts = this.getSelectedElementsAndComponents(false);
 
             if (selectedFormsts.length === 0) {
-                range = this.getRange_addLine(range);
+                range = this.getRange_addLine(range, null);
                 selectedFormsts = this.getSelectedElementsAndComponents(false);
                 if (selectedFormsts.length === 0) return;
             }
@@ -4043,7 +4039,7 @@ __webpack_require__.r(__webpack_exports__);
 
         if (selectedFormats.length === 0) {
             if (selectedCells) return;
-            range = this.getRange_addLine(range);
+            range = this.getRange_addLine(range, null);
             selectedFormats = this.getSelectedElementsAndComponents(false);
             if (selectedFormats.length === 0) return;
         }
@@ -4502,7 +4498,7 @@ __webpack_require__.r(__webpack_exports__);
 
         let selectedFormsts = this.getSelectedElements();
         if (selectedFormsts.length === 0) {
-            this.getRange_addLine(this.getRange());
+            this.getRange_addLine(this.getRange(), null);
             selectedFormsts = this.getSelectedElements();
             if (selectedFormsts.length === 0) return;
         }
@@ -4541,7 +4537,7 @@ __webpack_require__.r(__webpack_exports__);
     display: 'submenu',
     add: function (core, targetElement) {
         const context = core.context;
-        context.table = {
+        let contextTable = context.table = {
             _element: null,
             _tdElement: null,
             _trElement: null,
@@ -4549,6 +4545,7 @@ __webpack_require__.r(__webpack_exports__);
             _tableXY: [],
             _maxWidth: true,
             _fixedColumn: false,
+            _rtl: context.options.rtl,
             cellControllerTop: context.options.tableCellControllerPosition === 'top',
             resizeText: null,
             headerButton: null,
@@ -4575,31 +4572,32 @@ __webpack_require__.r(__webpack_exports__);
         let listDiv = this.setSubmenu.call(core);
         let tablePicker = listDiv.querySelector('.se-controller-table-picker');
 
-        context.table.tableHighlight = listDiv.querySelector('.se-table-size-highlighted');
-        context.table.tableUnHighlight = listDiv.querySelector('.se-table-size-unhighlighted');
-        context.table.tableDisplay = listDiv.querySelector('.se-table-size-display');
+        contextTable.tableHighlight = listDiv.querySelector('.se-table-size-highlighted');
+        contextTable.tableUnHighlight = listDiv.querySelector('.se-table-size-unhighlighted');
+        contextTable.tableDisplay = listDiv.querySelector('.se-table-size-display');
+        if (context.options.rtl) contextTable.tableHighlight.style.left = (10 * 18 - 13) + 'px';
 
         /** set table controller */
         let tableController = this.setController_table.call(core);
-        context.table.tableController = tableController;
-        context.table.resizeButton = tableController.querySelector('._se_table_resize');
-        context.table.resizeText = tableController.querySelector('._se_table_resize > span > span');
-        context.table.columnFixedButton = tableController.querySelector('._se_table_fixed_column');
-        context.table.headerButton = tableController.querySelector('._se_table_header');
+        contextTable.tableController = tableController;
+        contextTable.resizeButton = tableController.querySelector('._se_table_resize');
+        contextTable.resizeText = tableController.querySelector('._se_table_resize > span > span');
+        contextTable.columnFixedButton = tableController.querySelector('._se_table_fixed_column');
+        contextTable.headerButton = tableController.querySelector('._se_table_header');
         tableController.addEventListener('mousedown', core.eventStop);
 
         /** set resizing */
-        let resizeDiv = this.setController_tableEditor.call(core, context.table.cellControllerTop);
-        context.table.resizeDiv = resizeDiv;
-        context.table.splitMenu = resizeDiv.querySelector('.se-btn-group-sub');
-        context.table.mergeButton = resizeDiv.querySelector('._se_table_merge_button');
-        context.table.splitButton = resizeDiv.querySelector('._se_table_split_button');
-        context.table.insertRowAboveButton = resizeDiv.querySelector('._se_table_insert_row_a');
-        context.table.insertRowBelowButton = resizeDiv.querySelector('._se_table_insert_row_b');
+        let resizeDiv = this.setController_tableEditor.call(core, contextTable.cellControllerTop);
+        contextTable.resizeDiv = resizeDiv;
+        contextTable.splitMenu = resizeDiv.querySelector('.se-btn-group-sub');
+        contextTable.mergeButton = resizeDiv.querySelector('._se_table_merge_button');
+        contextTable.splitButton = resizeDiv.querySelector('._se_table_split_button');
+        contextTable.insertRowAboveButton = resizeDiv.querySelector('._se_table_insert_row_a');
+        contextTable.insertRowBelowButton = resizeDiv.querySelector('._se_table_insert_row_b');
         resizeDiv.addEventListener('mousedown', core.eventStop);
         
         /** add event listeners */
-        tablePicker.addEventListener('mousemove', this.onMouseMove_tablePicker.bind(core));
+        tablePicker.addEventListener('mousemove', this.onMouseMove_tablePicker.bind(core, contextTable));
         tablePicker.addEventListener('click', this.appendTable.bind(core));
         resizeDiv.addEventListener('click', this.onClick_tableController.bind(core));
         tableController.addEventListener('click', this.onClick_tableController.bind(core));
@@ -4612,7 +4610,7 @@ __webpack_require__.r(__webpack_exports__);
         context.element.relative.appendChild(tableController);
 
         /** empty memory */
-        listDiv = null, tablePicker = null, resizeDiv = null, tableController = null;
+        listDiv = null, tablePicker = null, resizeDiv = null, tableController = null, contextTable = null;
     },
 
     setSubmenu: function () {
@@ -4757,23 +4755,29 @@ __webpack_require__.r(__webpack_exports__);
         }
     },
 
-    onMouseMove_tablePicker: function (e) {
+    onMouseMove_tablePicker: function (contextTable, e) {
         e.stopPropagation();
 
         let x = this._w.Math.ceil(e.offsetX / 18);
         let y = this._w.Math.ceil(e.offsetY / 18);
         x = x < 1 ? 1 : x;
         y = y < 1 ? 1 : y;
-        this.context.table.tableHighlight.style.width = x + 'em';
-        this.context.table.tableHighlight.style.height = y + 'em';
+        
+        if (contextTable._rtl) {
+            contextTable.tableHighlight.style.left = (x * 18 - 13) + 'px';
+            x = 11 - x;
+        }
+        
+        contextTable.tableHighlight.style.width = x + 'em';
+        contextTable.tableHighlight.style.height = y + 'em';
 
-        let x_u = 10; // x < 5 ? 5 : (x > 9 ? 10 : x + 1);
-        let y_u = 10; //y < 5 ? 5 : (y > 9 ? 10 : y + 1);
-        this.context.table.tableUnHighlight.style.width = x_u + 'em';
-        this.context.table.tableUnHighlight.style.height = y_u + 'em';
+        // let x_u = x < 5 ? 5 : (x > 9 ? 10 : x + 1);
+        // let y_u = y < 5 ? 5 : (y > 9 ? 10 : y + 1);
+        // contextTable.tableUnHighlight.style.width = x_u + 'em';
+        // contextTable.tableUnHighlight.style.height = y_u + 'em';
 
-        this.util.changeTxt(this.context.table.tableDisplay, x + ' x ' + y);
-        this.context.table._tableXY = [x, y];
+        this.util.changeTxt(contextTable.tableDisplay, x + ' x ' + y);
+        contextTable._tableXY = [x, y];
     },
 
     reset_table_picker: function () {
@@ -4844,22 +4848,18 @@ __webpack_require__.r(__webpack_exports__);
         }
 
         const tableElement = contextTable._element || this.plugins.table._selectedTable || this.util.getParentElement(tdElement, 'TABLE');
-        tablePlugin.setPositionControllerTop.call(this, tableElement);
         contextTable._maxWidth = this.util.hasClass(tableElement, 'se-table-size-100') || tableElement.style.width === '100%' || (!tableElement.style.width && !this.util.hasClass(tableElement, 'se-table-size-auto'));
         contextTable._fixedColumn = this.util.hasClass(tableElement, 'se-table-layout-fixed') || tableElement.style.tableLayout === 'fixed';
         tablePlugin.setTableStyle.call(this, contextTable._maxWidth ? 'width|column' : 'width');
-
+        
+        tablePlugin.setPositionControllerTop.call(this, tableElement);
         tablePlugin.setPositionControllerDiv.call(this, tdElement, tablePlugin._shift);
         
         if (!tablePlugin._shift) this.controllersOn(contextTable.resizeDiv, contextTable.tableController, tablePlugin.init.bind(this), tdElement, 'table');
     },
 
     setPositionControllerTop: function (tableElement) {
-        const tableController = this.context.table.tableController;
-        const offset = this.util.getOffset(tableElement, this.context.element.wysiwygFrame);
-        tableController.style.left = offset.left + 'px';
-        tableController.style.display = 'block';
-        tableController.style.top = (offset.top - tableController.offsetHeight - 2) + 'px';
+        this.setControllerPosition(this.context.table.tableController, tableElement, 'top', {left: 0, top: 0});
     },
 
     setPositionControllerDiv: function (tdElement, reset) {
@@ -4868,28 +4868,11 @@ __webpack_require__.r(__webpack_exports__);
         
         this.plugins.table.setCellInfo.call(this, tdElement, reset);
         
-        resizeDiv.style.visibility = 'hidden';
-        resizeDiv.style.display = 'block';
-
         if (contextTable.cellControllerTop) {
-            const offset = this.util.getOffset(contextTable._element, this.context.element.wysiwygFrame);
-            resizeDiv.style.top = (offset.top - resizeDiv.offsetHeight - 2) + 'px';
-            resizeDiv.style.left = (offset.left + contextTable.tableController.offsetWidth) + 'px';
+            this.setControllerPosition(resizeDiv, contextTable._element, 'top', {left: contextTable.tableController.offsetWidth, top: 0});
         } else {
-            const offset = this.util.getOffset(tdElement, this.context.element.wysiwygFrame);
-            resizeDiv.style.left = (offset.left - this.context.element.wysiwygFrame.scrollLeft) + 'px';
-            resizeDiv.style.top = (offset.top + tdElement.offsetHeight + 12) + 'px';
-    
-            const overLeft = this.context.element.wysiwygFrame.offsetWidth - (resizeDiv.offsetLeft + resizeDiv.offsetWidth);
-            if (overLeft < 0) {
-                resizeDiv.style.left = (resizeDiv.offsetLeft + overLeft) + 'px';
-                resizeDiv.firstElementChild.style.left = (20 - overLeft) + 'px';
-            } else {
-                resizeDiv.firstElementChild.style.left = '20px';
-            }
+            this.setControllerPosition(resizeDiv, tdElement, 'bottom', {left: 0, top: 0});
         }
-
-        resizeDiv.style.visibility = '';
     },
 
     setCellInfo: function (tdElement, reset) {
@@ -6273,6 +6256,7 @@ __webpack_require__.r(__webpack_exports__);
             _v_link: {_linkValue: ''},
             _v_src: {_linkValue: ''},
             svgDefaultSize: '30%',
+            base64RenderIndex: 0,
             // @require @Override component
             _element: null,
             _cover: null,
@@ -6306,7 +6290,7 @@ __webpack_require__.r(__webpack_exports__);
         let image_dialog = this.setDialog.call(core);
         contextImage.modal = image_dialog;
         contextImage.imgInputFile = image_dialog.querySelector('._se_image_file');
-        contextImage.imgUrlFile = image_dialog.querySelector('.se-input-url');
+        contextImage.imgUrlFile = image_dialog.querySelector('._se_image_url');
         contextImage.focusElement = contextImage.imgInputFile || contextImage.imgUrlFile;
         contextImage.altText = image_dialog.querySelector('._se_image_alt');
         contextImage.imgLink = image_dialog.querySelector('._se_image_link');
@@ -6394,7 +6378,7 @@ __webpack_require__.r(__webpack_exports__);
                             '<div class="se-dialog-form">' +
                                 '<label>' + lang.dialogBox.imageBox.url + '</label>' +
                                 '<div class="se-dialog-form-files">' +
-                                    '<input class="se-input-form se-input-url" type="text" />' +
+                                    '<input class="se-input-form se-input-url _se_image_url" type="text" />' +
                                     ((option.imageGalleryUrl && this.plugins.imageGallery) ? '<button type="button" class="se-btn se-dialog-files-edge-button __se__gallery" title="' + lang.toolbar.imageGallery + '">' + this.icons.image_gallery + '</button>' : '') +
                                 '</div>' +
                                 '<pre class="se-link-preview"></pre>' +
@@ -6442,7 +6426,7 @@ __webpack_require__.r(__webpack_exports__);
                 '<div class="_se_tab_content _se_tab_content_url" style="display: none">' +
                     '<div class="se-dialog-body">' +
                         '<div class="se-dialog-form">' +
-                            '<label>' + lang.dialogBox.linkBox.url + '</label><input class="se-input-form _se_image_link" type="text" />' +
+                            '<label>' + lang.dialogBox.linkBox.url + '</label><input class="se-input-form se-input-url _se_image_link" type="text" />' +
                             '<pre class="se-link-preview"></pre>' +
                         '</div>' +
                         '<label><input type="checkbox" class="_se_image_link_check"/>&nbsp;' + lang.dialogBox.linkBox.newWindowCheck + '</label>' +
@@ -6724,7 +6708,7 @@ __webpack_require__.r(__webpack_exports__);
             }
             this.plugins.fileManager.upload.call(this, imageUploadUrl, this.context.option.imageUploadHeader, formData, this.plugins.image.callBack_imgUpload.bind(this, info), this.functions.onImageUploadError);
         } else { // base64
-            this.plugins.image.setup_reader.call(this, files, info.linkValue, info.linkNewWindow, info.inputWidth, info.inputHeight, info.align, filesLen - 1, info.isUpdate);
+            this.plugins.image.setup_reader.call(this, files, info.linkValue, info.linkNewWindow, info.inputWidth, info.inputHeight, info.align, filesLen, info.isUpdate);
         }
     },
 
@@ -6759,31 +6743,45 @@ __webpack_require__.r(__webpack_exports__);
 
     setup_reader: function (files, imgLinkValue, newWindowCheck, width, height, align, filesLen, isUpdate) {
         try {
+            this.context.image.base64RenderIndex = filesLen;
             const wFileReader = this._w.FileReader;
+            const filesStack = [filesLen];
+            this.context.image.inputX.value = width;
+            this.context.image.inputY.value = height;
     
-            for (let i = 0, reader, file; i <= filesLen; i++) {
+            for (let i = 0, reader, file; i < filesLen; i++) {
                 reader = new wFileReader();
                 file = files[i];
     
-                if (isUpdate) {
-                    this.context.image._element.setAttribute('data-file-name', file.name);
-                    this.context.image._element.setAttribute('data-file-size', file.size);
-                }
-        
-                reader.onload = function (update, updateElement, file, close) {
-                    this.context.image.inputX.value = width;
-                    this.context.image.inputY.value = height;
-                    if (update) this.plugins.image.update_src.call(this, reader.result, updateElement, file);
-                    else this.plugins.image.create_image.call(this, reader.result, imgLinkValue, newWindowCheck, width, height, align, file);
-    
-                    if (close) this.closeLoading();
-                }.bind(this, isUpdate, this.context.image._element, file, i === filesLen);
-        
+                reader.onload = function (reader, update, updateElement, file, index) {
+                    filesStack[index] = { result: reader.result, file: file };
+
+                    if (--this.context.image.base64RenderIndex === 0) {
+                        this.plugins.image.onRender_imgBase64.call(this, update, filesStack, updateElement, imgLinkValue, newWindowCheck, width, height, align);
+                        this.closeLoading();
+                    }
+                }.bind(this, reader, isUpdate, this.context.image._element, file, i);
+
                 reader.readAsDataURL(file);
             }
         } catch (e) {
             this.closeLoading();
             throw Error('[SUNEDITOR.image.setup_reader.fail] cause : "' + e.message + '"');
+        }
+    },
+
+    onRender_imgBase64: function (update, filesStack, updateElement, imgLinkValue, newWindowCheck, width, height, align) {
+        const updateMethod = this.plugins.image.update_src;
+        const createMethod = this.plugins.image.create_image;
+        
+        for (let i = 0, len = filesStack.length; i < len; i++) {
+            if (update) {
+                this.context.image._element.setAttribute('data-file-name', filesStack[i].file.name);
+                this.context.image._element.setAttribute('data-file-size', filesStack[i].file.size);
+                updateMethod.call(this, filesStack[i].result, updateElement, filesStack[i].file);
+            } else {
+                createMethod.call(this, filesStack[i].result, imgLinkValue, newWindowCheck, width, height, align, filesStack[i].file);
+            }
         }
     },
 
@@ -6988,7 +6986,13 @@ __webpack_require__.r(__webpack_exports__);
                 contextImage._element : 
                 /^A$/i.test(contextImage._element.parentNode.nodeName) ? contextImage._element.parentNode : this.util.getFormatElement(contextImage._element) || contextImage._element;
                 
-            existElement.parentNode.replaceChild(container, existElement);
+            if (this.util.isFormatElement(existElement) && existElement.textContent.length > 0) {
+                existElement.parentNode.insertBefore(container, existElement.nextElementSibling);
+                this.util.removeItem(contextImage._element);
+            } else {
+                existElement.parentNode.replaceChild(container, existElement);
+            }
+
             imageEl = container.querySelector('img');
 
             contextImage._element = imageEl;
@@ -7387,7 +7391,7 @@ __webpack_require__.r(__webpack_exports__);
                 '<div class="se-dialog-body">' +
                     '<div class="se-dialog-form">' +
                         '<label>' + lang.dialogBox.linkBox.url + '</label>' +
-                        '<input class="se-input-form _se_link_url" type="text" />' +
+                        '<input class="se-input-form se-input-url _se_link_url" type="text" />' +
                         '<pre class="se-link-preview"></pre>' +
                     '</div>' +
                     '<div class="se-dialog-form">' +
@@ -7544,20 +7548,7 @@ __webpack_require__.r(__webpack_exports__);
         link.title = selectionATag.textContent;
         link.textContent = selectionATag.textContent;
 
-        const offset = this.util.getOffset(selectionATag, this.context.element.wysiwygFrame);
-        linkBtn.style.top = (offset.top + selectionATag.offsetHeight + 10) + 'px';
-        linkBtn.style.left = (offset.left - this.context.element.wysiwygFrame.scrollLeft) + 'px';
-
-        linkBtn.style.display = 'block';
-
-        const overLeft = this.context.element.wysiwygFrame.offsetWidth - (linkBtn.offsetLeft + linkBtn.offsetWidth);
-        if (overLeft < 0) {
-            linkBtn.style.left = (linkBtn.offsetLeft + overLeft) + 'px';
-            linkBtn.firstElementChild.style.left = (20 - overLeft) + 'px';
-        } else {
-            linkBtn.firstElementChild.style.left = '20px';
-        }
-        
+        this.setControllerPosition(linkBtn, selectionATag, 'bottom', {left: 0, top: 0});
         this.controllersOn(linkBtn, selectionATag, 'link');
     },
 
@@ -8269,7 +8260,7 @@ __webpack_require__.r(__webpack_exports__);
                 return this.isWysiwygDiv(current.parentNode);
             }.bind(this.util));
 
-        contextVideo._element = oFrame = oFrame.cloneNode(true);
+        oFrame = oFrame.cloneNode(true);
         const cover = contextVideo._cover = this.plugins.component.set_cover.call(this, oFrame);
         const container = contextVideo._container = this.plugins.component.set_container.call(this, cover, 'se-video-container');
 
@@ -8284,7 +8275,14 @@ __webpack_require__.r(__webpack_exports__);
         const size = (oFrame.getAttribute('data-size') || oFrame.getAttribute('data-origin') || '').split(',');
         this.plugins.video.applySize.call(this, size[0], size[1]);
 
-        existElement.parentNode.replaceChild(container, existElement);
+        if (this.util.isFormatElement(existElement) && existElement.textContent.length > 0) {
+            existElement.parentNode.insertBefore(container, existElement.nextElementSibling);
+            this.util.removeItem(contextVideo._element);
+            contextVideo._element = oFrame;
+        } else {
+            existElement.parentNode.replaceChild(container, existElement);
+        }
+
         if (!!caption) existElement.parentNode.insertBefore(caption, container.nextElementSibling);
         this.plugins.fileManager.setInfo.call(this, 'video', oFrame, this.functions.onVideoUpload, null, true);
     },
@@ -9062,23 +9060,9 @@ __webpack_require__.r(__webpack_exports__);
      */
     onModifyMode: function (selectionTag) {
         const contextAudio = this.context.audio;
-
-        const controller = contextAudio.controller;
-        const offset = this.util.getOffset(selectionTag, this.context.element.wysiwygFrame);
-        controller.style.top = (offset.top + selectionTag.offsetHeight + 10) + 'px';
-        controller.style.left = (offset.left - this.context.element.wysiwygFrame.scrollLeft) + 'px';
-
-        controller.style.display = 'block';
-
-        const overLeft = this.context.element.wysiwygFrame.offsetWidth - (controller.offsetLeft + controller.offsetWidth);
-        if (overLeft < 0) {
-            controller.style.left = (controller.offsetLeft + overLeft) + 'px';
-            controller.firstElementChild.style.left = (20 - overLeft) + 'px';
-        } else {
-            controller.firstElementChild.style.left = '20px';
-        }
         
-        this.controllersOn(controller, selectionTag, this.plugins.audio.onControllerOff.bind(this, selectionTag), 'audio');
+        this.setControllerPosition(contextAudio.controller, selectionTag, 'bottom', {left: 0, top: 0});
+        this.controllersOn(contextAudio.controller, selectionTag, this.plugins.audio.onControllerOff.bind(this, selectionTag), 'audio');
 
         this.util.addClass(selectionTag, 'active');
         contextAudio._element = selectionTag;
@@ -9222,7 +9206,8 @@ __webpack_require__.r(__webpack_exports__);
             lineHeight: 'Linjehøjde',
             paragraphStyle: 'Afsnitstil',
             textStyle: 'Tekststil',
-            imageGallery: 'Billedgalleri'
+            imageGallery: 'Billedgalleri',
+            mention: 'Nævne'
         },
         dialogBox: {
             linkBox: {
@@ -9412,7 +9397,8 @@ __webpack_require__.r(__webpack_exports__);
             lineHeight: 'Zeilenhöhe',
             paragraphStyle: 'Absatzstil',
             textStyle: 'Textstil',
-            imageGallery: 'Bildergalerie'
+            imageGallery: 'Bildergalerie',
+            mention: 'Erwähnen'
         },
         dialogBox: {
             linkBox: {
@@ -9601,7 +9587,8 @@ __webpack_require__.r(__webpack_exports__);
 			lineHeight: 'Altura de la línea',
 			paragraphStyle: 'Estilo del parrafo',
 			textStyle: 'Estilo del texto',
-            imageGallery: 'Galería de imágenes'
+			imageGallery: 'Galería de imágenes',
+			mention: 'Mencionar'
 		},
 		dialogBox: {
 			linkBox: {
@@ -9790,7 +9777,8 @@ __webpack_require__.r(__webpack_exports__);
             lineHeight: 'Hauteur de la ligne',
             paragraphStyle: 'Style de paragraphe',
             textStyle: 'Style de texte',
-            imageGallery: 'Galerie d\'images'
+            imageGallery: 'Galerie d\'images',
+            mention: 'Mention'
         },
         dialogBox: {
             linkBox: {
@@ -9980,7 +9968,8 @@ __webpack_require__.r(__webpack_exports__);
             lineHeight: '行の高さ',
             paragraphStyle: '段落スタイル',
             textStyle: 'テキストスタイル',
-            imageGallery: 'イメージギャラリー'
+            imageGallery: 'イメージギャラリー',
+            mention: '言及する'
         },
         dialogBox: {
             linkBox: {
@@ -10169,7 +10158,8 @@ __webpack_require__.r(__webpack_exports__);
             lineHeight: '줄 높이',
             paragraphStyle: '문단 스타일',
             textStyle: '글자 스타일',
-            imageGallery: '이미지 갤러리'
+            imageGallery: '이미지 갤러리',
+            mention: '멘션'
         },
         dialogBox: {
             linkBox: {
@@ -10359,7 +10349,8 @@ __webpack_require__.r(__webpack_exports__);
             lineHeight: 'Altura da linha',
             paragraphStyle: 'Estilo do parágrafo',
             textStyle: 'Estilo do texto',
-            imageGallery: 'Galeria de imagens'
+            imageGallery: 'Galeria de imagens',
+            mention: 'Menção'
         },
         dialogBox: {
             linkBox: {
@@ -10548,7 +10539,8 @@ __webpack_require__.r(__webpack_exports__);
             lineHeight: 'Высота линии',
             paragraphStyle: 'Стиль абзаца',
             textStyle: 'Стиль текста',
-            imageGallery: 'Галерея'
+            imageGallery: 'Галерея',
+            mention: 'Упоминание'
         },
         dialogBox: {
             linkBox: {
@@ -10737,7 +10729,8 @@ __webpack_require__.r(__webpack_exports__);
             lineHeight: 'Altezza linea',
             paragraphStyle: 'Stile Paragrafo',
             textStyle: 'Stile Testo',
-            imageGallery: 'Galleria di immagini'
+            imageGallery: 'Galleria di immagini',
+            mention: 'Citare'
         },
         dialogBox: {
             linkBox: {
@@ -10927,7 +10920,8 @@ __webpack_require__.r(__webpack_exports__);
             lineHeight: '行高',
             paragraphStyle: '段落样式',
             textStyle: '文字样式',
-            imageGallery: '图片库'
+            imageGallery: '图片库',
+            mention: '提到'
         },
         dialogBox: {
             linkBox: {
@@ -11116,7 +11110,8 @@ __webpack_require__.r(__webpack_exports__);
             lineHeight: 'Înălțime linie',
             paragraphStyle: 'Stil paragraf',
             textStyle: 'Stil text',
-            imageGallery: 'Galerie de imagini'
+            imageGallery: 'Galerie de imagini',
+            mention: 'Mentiune'
         },
         dialogBox: {
             linkBox: {
@@ -11305,7 +11300,8 @@ __webpack_require__.r(__webpack_exports__);
             lineHeight: 'Odstęp między wierszami',
             paragraphStyle: 'Styl akapitu',
             textStyle: 'Styl tekstu',
-            imageGallery: 'Galeria obrazów'
+            imageGallery: 'Galeria obrazów',
+            mention: 'Wzmianka'
         },
         dialogBox: {
             linkBox: {
@@ -11494,7 +11490,8 @@ __webpack_require__.r(__webpack_exports__);
             lineHeight: 'بڵندی دێر',
             paragraphStyle: 'ستایلی په‌ره‌گراف',
             textStyle: 'ستایلی نوسین',
-            imageGallery: 'گاله‌ری وێنه‌كان'
+            imageGallery: 'گاله‌ری وێنه‌كان',
+            mention: 'تنويه ب'
         },
         dialogBox: {
             linkBox: {
@@ -11683,7 +11680,8 @@ __webpack_require__.r(__webpack_exports__);
             lineHeight: 'Līnijas augstums',
             paragraphStyle: 'Paragrāfa stils',
             textStyle: 'Teksta stils',
-            imageGallery: 'Attēlu galerija'
+            imageGallery: 'Attēlu galerija',
+            mention: 'Pieminēt'
         },
         dialogBox: {
             linkBox: {
@@ -11924,6 +11922,17 @@ var external_react_default = /*#__PURE__*/__webpack_require__.n(external_react_)
 
 
 /* harmony default export */ var defaultIcons = ({
+   // rtl icon
+   rtl: {
+      italic: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10.5 15.8" xml:space="preserve"><g><path d="M0.3,0.1c0.3,0,0.5,0,0.7,0c1,0.1,1.7,0.1,2.2,0.1H4L7.2,0l0.2,1.1H7c-0.5,0-1,0.1-1.5,0.3v0.4l0.3,1.9L6,4.4L6.3,6 l0.1,0.4l0.1,0.5c0.1,0.2,0.1,0.4,0.2,0.7s0.1,0.6,0.2,0.9L7,9.1l0.6,2.8l0.3,1.4c0.1,0.4,0.2,0.7,0.4,1c0.4,0.2,0.8,0.3,1.2,0.4 l0.8,0.2l0.2,0.9l-1.1,0c-0.9-0.1-1.5-0.1-1.8-0.1h-2c-0.9,0.1-1.4,0.2-1.5,0.2c-0.1,0-0.2,0-0.3,0H3.4c-0.1,0-0.2,0-0.2,0 l-0.1-0.4c0-0.2-0.1-0.4-0.1-0.6l0.7-0.1c0.4,0,0.8-0.1,1.2-0.2c0-0.1,0-0.2,0-0.3l-0.1-0.5l-0.4-2.4L4,9.6L3.4,6.4 C3.2,5.7,3,4.7,2.7,3.3c0-0.3-0.1-0.5-0.1-0.8C2.5,2.1,2.4,1.9,2.3,1.6C2,1.4,1.6,1.3,1.3,1.2C0.9,1.2,0.5,1.1,0.2,0.9L0,0.4L0,0 L0.3,0.1L0.3,0.1z"/></g></svg>',
+      indent: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.7 12.4" xml:space="preserve"><g><g><path d="M15.5,10.1L15.5,10.1c0.1,0,0.3,0.1,0.3,0.3v1.7c0,0.1,0,0.1-0.1,0.2c-0.1,0.1-0.1,0.1-0.2,0.1l-15.2,0 c-0.1,0-0.1,0-0.2-0.1C0,12.2,0,12.2,0,12.1l0-1.7c0-0.1,0-0.1,0.1-0.2c0.1-0.1,0.1-0.1,0.2-0.1C0.3,10.1,15.5,10.1,15.5,10.1z M9.8,6.7c0.1,0,0.1,0,0.2,0.1C10.1,6.9,10.1,7,10.1,7v1.7c0,0.1,0,0.2-0.1,0.2C10,9,9.9,9,9.8,9L0.3,9C0.2,9,0.1,9,0.1,8.9 C0,8.9,0,8.8,0,8.7V7C0,7,0,6.9,0.1,6.8c0.1-0.1,0.1-0.1,0.2-0.1C0.3,6.7,9.8,6.7,9.8,6.7z M0.3,3.4h9.6h0c0.1,0,0.3,0.1,0.3,0.3 v1.7v0c0,0.1-0.1,0.3-0.3,0.3H0.3c-0.1,0-0.1,0-0.2-0.1C0,5.5,0,5.4,0,5.3V3.6c0-0.1,0-0.1,0.1-0.2C0.1,3.4,0.2,3.4,0.3,3.4 L0.3,3.4z M0.3,0l15.2,0c0.1,0,0.1,0,0.2,0.1c0.1,0.1,0.1,0.1,0.1,0.2V2c0,0.1,0,0.2-0.1,0.2c-0.1,0.1-0.1,0.1-0.2,0.1H0.3 c-0.1,0-0.1,0-0.2-0.1C0,2.1,0,2,0,2l0-1.7c0-0.1,0-0.1,0.1-0.2C0.1,0,0.2,0,0.3,0z"/></g><path d="M13.1,3.5L15.7,6c0.1,0.1,0.1,0.3,0,0.4l-2.5,2.5C13.1,9,13,9,12.9,9c-0.1,0-0.1,0-0.2-0.1c-0.1-0.1-0.1-0.1-0.1-0.2V3.7 c0-0.1,0-0.2,0.1-0.2c0.1-0.1,0.1-0.1,0.2-0.1C13,3.4,13.1,3.4,13.1,3.5z"/></g></svg>',
+      outdent: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.7 12.4" xml:space="preserve"><g><g><path d="M15.5,10.1L15.5,10.1c0.1,0,0.3,0.1,0.3,0.3v1.7c0,0.1,0,0.1-0.1,0.2c-0.1,0.1-0.1,0.1-0.2,0.1l-15.2,0 c-0.1,0-0.1,0-0.2-0.1C0,12.2,0,12.2,0,12.1l0-1.7c0-0.1,0-0.1,0.1-0.2c0.1-0.1,0.1-0.1,0.2-0.1C0.3,10.1,15.5,10.1,15.5,10.1z M9.8,6.7c0.1,0,0.1,0,0.2,0.1C10.1,6.9,10.1,7,10.1,7v1.7c0,0.1,0,0.2-0.1,0.2C10,9,9.9,9,9.8,9L0.3,9C0.2,9,0.1,9,0.1,8.9 C0,8.9,0,8.8,0,8.7V7C0,7,0,6.9,0.1,6.8c0.1-0.1,0.1-0.1,0.2-0.1C0.3,6.7,9.8,6.7,9.8,6.7z M0.3,3.4h9.6h0c0.1,0,0.3,0.1,0.3,0.3 v1.7v0c0,0.1-0.1,0.3-0.3,0.3H0.3c-0.1,0-0.1,0-0.2-0.1C0,5.5,0,5.4,0,5.3V3.6c0-0.1,0-0.1,0.1-0.2C0.1,3.4,0.2,3.4,0.3,3.4 L0.3,3.4z M0.3,0l15.2,0c0.1,0,0.1,0,0.2,0.1c0.1,0.1,0.1,0.1,0.1,0.2V2c0,0.1,0,0.2-0.1,0.2c-0.1,0.1-0.1,0.1-0.2,0.1H0.3 c-0.1,0-0.1,0-0.2-0.1C0,2.1,0,2,0,2l0-1.7c0-0.1,0-0.1,0.1-0.2C0.1,0,0.2,0,0.3,0z"/></g><path d="M15.5,3.4c0.1,0,0.1,0,0.2,0.1c0.1,0.1,0.1,0.1,0.1,0.2v5.1c0,0.1,0,0.1-0.1,0.2C15.6,9,15.5,9,15.5,9 c-0.1,0-0.1,0-0.2-0.1l-2.5-2.5c-0.1-0.1-0.1-0.3,0-0.4l2.5-2.5C15.3,3.4,15.4,3.4,15.5,3.4z"/></g></svg>',
+      list_bullets: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.7 12.4" xml:space="preserve"><g><path d="M12.4,10.7c0,0.9,0.8,1.7,1.7,1.7c0.9,0,1.7-0.8,1.7-1.7C15.7,9.8,15,9,14.1,9c-0.4,0-0.9,0.2-1.2,0.5 C12.5,9.8,12.4,10.2,12.4,10.7C12.4,10.7,12.4,10.7,12.4,10.7z M12.4,6.2c0,0.9,0.8,1.7,1.7,1.7c0.4,0,0.9-0.2,1.2-0.5 c0.3-0.3,0.4-0.7,0.4-1.1c0-0.9-0.7-1.7-1.6-1.7C13.1,4.6,12.4,5.3,12.4,6.2C12.4,6.2,12.4,6.2,12.4,6.2z M0,9.8v1.7 c0,0.1,0,0.1,0.1,0.2c0.1,0.1,0.1,0.1,0.2,0.1l10.7,0c0,0,0,0,0,0c0.1,0,0.3-0.1,0.3-0.3V9.8c0-0.1,0-0.1-0.1-0.2 C11.1,9.6,11,9.6,11,9.6l-10.7,0c-0.1,0-0.1,0-0.2,0.1C0,9.7,0,9.8,0,9.8L0,9.8z M12.9,2.9c0.3,0.3,0.7,0.5,1.2,0.5 c0.4,0,0.9-0.2,1.2-0.5c0.7-0.7,0.7-1.7,0-2.4C14.9,0.2,14.5,0,14.1,0c-0.4,0-0.9,0.2-1.2,0.5c-0.3,0.3-0.5,0.7-0.5,1.2 C12.4,2.1,12.5,2.6,12.9,2.9z M0,5.3V7c0,0.1,0,0.1,0.1,0.2c0.1,0.1,0.1,0.1,0.2,0.1H11c0.1,0,0.1,0,0.2-0.1 c0.1-0.1,0.1-0.1,0.1-0.2V5.3c0,0,0,0,0,0c0-0.1-0.1-0.3-0.3-0.3H0.3c-0.1,0-0.1,0-0.2,0.1C0,5.2,0,5.3,0,5.3L0,5.3z M0,0.8v1.7 c0,0.1,0,0.1,0.1,0.2c0.1,0.1,0.1,0.1,0.2,0.1h10.7c0.1,0,0.1,0,0.2-0.1c0,0,0.1-0.1,0.1-0.2V0.8c0-0.1,0-0.1-0.1-0.2 c0-0.1-0.1-0.1-0.2-0.1H0.3c-0.1,0-0.1,0-0.2,0.1C0,0.7,0,0.8,0,0.8L0,0.8z"/></g></svg>',
+      list_number: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.7 15.7" xml:space="preserve"><g><path d="M0,11.5l0,1.7c0,0.1,0,0.1,0.1,0.2c0.1,0.1,0.1,0.1,0.2,0.1H11c0.1,0,0.2,0,0.2-0.1c0.1-0.1,0.1-0.1,0.1-0.2v-1.7 c0-0.1,0-0.1-0.1-0.2c-0.1-0.1-0.1-0.1-0.2-0.1H0.3c-0.1,0-0.2,0-0.2,0.1C0,11.4,0,11.4,0,11.5L0,11.5z M0,8.7c0,0.1,0,0.1,0.1,0.2 C0.1,8.9,0.2,9,0.3,9H11c0.1,0,0.2,0,0.2-0.1c0.1-0.1,0.1-0.1,0.1-0.2V7c0-0.1,0-0.1-0.1-0.2c-0.1-0.1-0.1-0.1-0.2-0.1l-10.7,0 c-0.1,0-0.2,0-0.2,0.1C0,6.8,0,6.9,0,7C0,7,0,8.7,0,8.7z M0,2.5v1.7c0,0.1,0,0.1,0.1,0.2c0,0,0.1,0.1,0.2,0.1l10.7,0 c0.1,0,0.2,0,0.2-0.1c0.1-0.1,0.1-0.1,0.1-0.2V2.4c0-0.1,0-0.1-0.1-0.2c-0.1,0-0.1,0-0.2,0H0.3c-0.1,0-0.1,0-0.2,0 C0,2.3,0,2.4,0,2.5L0,2.5z"/></g><path d="M15.6,14.2c0-0.3-0.1-0.6-0.3-0.8c-0.2-0.2-0.4-0.4-0.7-0.4l0.9-1v-0.8h-2.9v1.3h0.9v-0.5h0.9l0,0c-0.1,0.1-0.2,0.2-0.3,0.3 s-0.2,0.3-0.4,0.5l-0.3,0.3l0.2,0.5c0.6,0,0.9,0.1,0.9,0.5c0,0.1-0.1,0.3-0.2,0.4c-0.1,0.1-0.3,0.1-0.4,0.1c-0.3,0-0.7-0.1-0.9-0.3 l-0.5,0.8c0.4,0.4,0.9,0.6,1.5,0.6c0.4,0,0.9-0.1,1.2-0.4C15.5,15.1,15.6,14.7,15.6,14.2z"/><path d="M15.6,8.7h-0.9v0.5h-1.1c0-0.2,0.2-0.4,0.4-0.5c0.2-0.2,0.4-0.3,0.7-0.4c0.3-0.2,0.5-0.3,0.7-0.6c0.2-0.2,0.3-0.5,0.3-0.8 c0-0.4-0.2-0.8-0.5-1c-0.6-0.4-1.4-0.5-2-0.1c-0.3,0.2-0.5,0.4-0.6,0.7L13.3,7c0.1-0.3,0.4-0.5,0.7-0.5c0.1,0,0.3,0,0.3,0.1 c0.1,0.1,0.1,0.2,0.1,0.3c0,0.2-0.1,0.3-0.2,0.4c-0.2,0.1-0.3,0.3-0.5,0.4c-0.2,0.1-0.4,0.3-0.6,0.4c-0.2,0.2-0.4,0.4-0.5,0.6 c-0.1,0.2-0.2,0.5-0.2,0.8c0,0.2,0,0.3,0,0.5h3.2L15.6,8.7L15.6,8.7z"/><path d="M15.6,3.6h-1V0h-0.9l-1.2,1.1l0.6,0.7c0.2-0.1,0.3-0.3,0.4-0.5l0,0v2.2h-0.9v0.9h3L15.6,3.6L15.6,3.6z"/></svg>',
+      link: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.7 15.7" xml:space="preserve"><g><path d="M7.4,9.9l3.1,3.1c0.3,0.3,0.8,0.5,1.3,0.5c0.5,0,0.9-0.2,1.3-0.5c0,0,0,0,0,0c0.7-0.7,0.7-1.9,0-2.6L9.9,7.3 c0-0.1,0-0.2,0-0.3C9.9,7,10,7,10.1,7l2.2-0.2c0.1,0,0.1,0,0.2,0.1l2.1,2.1c0.4,0.4,0.7,0.8,0.9,1.3c0.2,0.5,0.3,1,0.3,1.5 c0,0.5-0.1,1-0.3,1.5c-0.8,2-3.2,3-5.2,2.2c-0.5-0.2-0.9-0.5-1.3-0.9l-2.1-2.1c-0.1,0-0.1-0.1-0.1-0.2L7,10.1C7,10,7,9.9,7.1,9.9 C7.2,9.8,7.3,9.9,7.4,9.9z M1.2,1.1C1.6,0.7,2,0.4,2.5,0.3c1-0.4,2.1-0.4,3.1,0C6,0.4,6.5,0.7,6.8,1.1L9,3.2C9,3.3,9.1,3.3,9,3.4 L8.8,5.6c0,0.1-0.1,0.2-0.2,0.2c-0.1,0.1-0.2,0.1-0.3,0L5.3,2.7C5,2.3,4.5,2.1,4,2.1c-0.5,0-0.9,0.2-1.3,0.5c0,0,0,0,0,0 C2,3.4,2,4.5,2.7,5.2l3.1,3.2c0.1,0.1,0.1,0.2,0,0.3c0,0.1-0.1,0.1-0.2,0.1L3.5,9C3.4,9,3.4,9,3.3,8.9L1.2,6.8c0,0,0,0,0,0 C-0.4,5.2-0.4,2.7,1.2,1.1L1.2,1.1z M14.3,6h-2.6c0,0,0,0,0,0c-0.1,0-0.2-0.1-0.2-0.2c0-0.1,0-0.2,0.1-0.3l2.5-0.7 c0.1,0,0.1,0,0.2,0c0.1,0,0.1,0.1,0.1,0.2l0.1,0.8c0,0.1,0,0.1-0.1,0.2C14.5,6,14.4,6,14.3,6L14.3,6z M10.2,4.1 c0,0.1-0.1,0.2-0.2,0.2l0,0c0,0,0,0,0,0C9.8,4.2,9.7,4.1,9.8,4L9.7,1.4c0-0.1,0-0.1,0.1-0.2c0.1,0,0.1,0,0.2,0h0.8 c0.1,0,0.1,0,0.2,0.1c0,0.1,0,0.1,0,0.2L10.2,4.1L10.2,4.1z M1.5,9.7h1.3h1.3c0.1,0,0.2,0.1,0.2,0.2c0,0.1,0,0.2-0.1,0.3l-2.5,0.6 H1.6c0,0-0.1,0-0.1,0c-0.1,0-0.1-0.1-0.1-0.2L1.2,9.9c0-0.1,0-0.1,0.1-0.2c0-0.1,0.1-0.1,0.2-0.1L1.5,9.7z M5.6,11.6 C5.6,11.6,5.6,11.6,5.6,11.6c0-0.1,0.1-0.2,0.3-0.1c0,0,0,0,0,0c0.1,0,0.2,0.1,0.2,0.2v2.6c0,0.1,0,0.1-0.1,0.2 c0,0-0.1,0.1-0.2,0.1L5,14.5c-0.1,0-0.1,0-0.2-0.1c0-0.1,0-0.1,0-0.2L5.6,11.6L5.6,11.6z"/></g></svg>',
+      unlink: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.7 15.7" xml:space="preserve"><g><path d="M14.6,14.6c1.6-1.6,1.6-4.1,0-5.7l0,0l-3.1-3.1l-1.2,1.6l2.9,2.9c0.4,0.4,0.6,0.9,0.6,1.5c0,1.1-0.9,2.1-2.1,2.1l0,0 c-0.6,0-1.1-0.2-1.5-0.6l-0.4-0.4l-1.7,1l0.8,0.8C10.4,16.2,13,16.2,14.6,14.6L14.6,14.6L14.6,14.6z M3.6,6C3,5.9,2.6,5.5,2.3,5 S1.9,4,2.1,3.4C2.3,2.9,2.6,2.5,3,2.2C3.5,2,4.1,1.9,4.6,2l3.3,1.4l0.5-2L5.1,0.1C4-0.1,2.9,0,2,0.5C1.1,1.1,0.4,1.9,0.2,3 C-0.1,4,0,5.1,0.6,6C1.1,6.9,1.9,7.6,3,7.8l5.4,2l0.5-2L6.2,6.9L3.6,6z"/></g></svg>'
+   },
+   // common, ltr icon
    redo: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.59 14.18"><g><path d="M11.58,18.48a6.84,6.84,0,1,1,6.85-6.85s0,.26,0,.67a8,8,0,0,1-.22,1.44l.91-.55a.51.51,0,0,1,.36,0,.45.45,0,0,1,.29.22.47.47,0,0,1,.06.36.45.45,0,0,1-.22.29L17.42,15.3l-.12,0h-.25l-.12-.06-.09-.09-.06-.07,0-.06-.87-2.12a.43.43,0,0,1,0-.37.49.49,0,0,1,.27-.26.41.41,0,0,1,.36,0,.53.53,0,0,1,.27.26l.44,1.09a6.51,6.51,0,0,0,.24-1.36,4.58,4.58,0,0,0,0-.64,5.83,5.83,0,0,0-1.73-4.17,5.88,5.88,0,0,0-8.34,0,5.9,5.9,0,0,0,4.17,10.06.51.51,0,0,1,.33.15.48.48,0,0,1,0,.68.53.53,0,0,1-.33.12Z" transform="translate(-4.48 -4.54)"/></g></svg>',
    undo: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.59 14.18"><g><path d="M5,14a.43.43,0,0,1-.22-.29.46.46,0,0,1,.06-.36.43.43,0,0,1,.29-.22.56.56,0,0,1,.36,0l.91.55a8.27,8.27,0,0,1-.22-1.45,5.07,5.07,0,0,1,0-.67A6.85,6.85,0,1,1,13,18.47a.44.44,0,0,1-.33-.13.48.48,0,0,1,0-.68.51.51,0,0,1,.33-.15A5.89,5.89,0,0,0,17.15,7.45a5.88,5.88,0,0,0-8.33,0,5.84,5.84,0,0,0-1.73,4.17s0,.25,0,.65a6.49,6.49,0,0,0,.24,1.37l.44-1.09a.57.57,0,0,1,.27-.26.41.41,0,0,1,.36,0,.53.53,0,0,1,.27.26.43.43,0,0,1,0,.37L7.82,15l0,.09-.09.09-.1.07-.06,0H7.28l-.13,0-1.09-.63c-.65-.36-1-.57-1.1-.63Z" transform="translate(-4.49 -4.53)"/></g></svg>',
    bold: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 11.76 15.75"><g><path d="M6.4,3.76V19.5h6.76a5.55,5.55,0,0,0,2-.32,4.93,4.93,0,0,0,1.52-1,4.27,4.27,0,0,0,1.48-3.34,3.87,3.87,0,0,0-.69-2.37,5.74,5.74,0,0,0-.71-.83,3.44,3.44,0,0,0-1.1-.65,3.6,3.6,0,0,0,1.58-1.36,3.66,3.66,0,0,0,.53-1.93,3.7,3.7,0,0,0-1.21-2.87,4.65,4.65,0,0,0-3.25-1.1H6.4Zm2.46,6.65V5.57h3.52a4.91,4.91,0,0,1,1.36.15,2.3,2.3,0,0,1,.85.45,2.06,2.06,0,0,1,.74,1.71,2.3,2.3,0,0,1-.78,1.92,2.54,2.54,0,0,1-.86.46,4.7,4.7,0,0,1-1.32.15H8.86Zm0,7.27V12.15H12.7a4.56,4.56,0,0,1,1.38.17,3.43,3.43,0,0,1,.95.49,2.29,2.29,0,0,1,.92,2,2.73,2.73,0,0,1-.83,2.1,2.66,2.66,0,0,1-.83.58,3.25,3.25,0,0,1-1.26.2H8.86Z" transform="translate(-6.4 -3.75)"/></g></svg>',
@@ -12000,6 +12009,7 @@ var external_react_default = /*#__PURE__*/__webpack_require__.n(external_react_)
    magic_stick: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15.73 15.75"><g><path d="M19.86,19.21a1,1,0,0,0,.28-.68,1,1,0,0,0-.28-.7L13,10.93a1,1,0,0,0-.7-.28,1,1,0,0,0-.68,1.65l6.9,6.9a1,1,0,0,0,.69.29.93.93,0,0,0,.69-.28ZM9.19,8.55a3,3,0,0,0,1.68,0,14.12,14.12,0,0,0,1.41-.32A11.26,11.26,0,0,0,10.8,7.06c-.56-.36-.86-.56-.91-.58S10,5.91,10,5.11s0-1.26-.15-1.37a4.35,4.35,0,0,0-1.19.71c-.53.4-.81.62-.87.68a9,9,0,0,0-2-.6,6.84,6.84,0,0,0-.76-.09s0,.27.08.77a8.6,8.6,0,0,0,.61,2q-.09.09-.69.87a3.59,3.59,0,0,0-.68,1.17c.12.17.57.23,1.36.15S7,9.26,7.15,9.23s.21.36.57.91a10.49,10.49,0,0,0,1.14,1.48c0-.1.14-.57.31-1.4a3,3,0,0,0,0-1.67Z" transform="translate(-4.41 -3.74)"/></g></svg>',
    empty_file: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12.78 15.75"><g><path d="M14.73,3.76,18.67,7.7v9.84a2,2,0,0,1-2,2H7.84a1.89,1.89,0,0,1-1.38-.58,2,2,0,0,1-.57-1.39V5.73a1.93,1.93,0,0,1,.57-1.38,2,2,0,0,1,1.38-.58h6.62l.26,0v0Zm2.95,4.92h-2a1.93,1.93,0,0,1-1.38-.57,2,2,0,0,1-.58-1.4V6.17c0-.36,0-.84,0-1.43H7.85a1,1,0,0,0-.7.29,1,1,0,0,0-.29.7V17.54a1,1,0,0,0,.29.69,1,1,0,0,0,.69.29h8.85a1,1,0,0,0,.71-.29.92.92,0,0,0,.28-.69Zm0-1L14.73,4.74v2A1,1,0,0,0,15,7.4a1,1,0,0,0,.69.29Z" transform="translate(-5.89 -3.76)"/></g></svg>'
 });
+
 // EXTERNAL MODULE: ./node_modules/suneditor/src/lang/en.js
 var en = __webpack_require__(4);
 var en_default = /*#__PURE__*/__webpack_require__.n(en);
@@ -13643,21 +13653,12 @@ const util_util = {
 
     /**
      * @description Create whitelist RegExp object.
-     * Return RegExp format: new RegExp("<\\/?(" + (?!\\b list[i] \\b) + ")[^>^<])+>", "g")
+     * Return RegExp format: new RegExp("<\\/?\\b(?!" + list + ")\\b[^>^<]*+>", "gi")
      * @param {String} list Tags list ("br|p|div|pre...")
      * @returns {RegExp}
      */
     createTagsWhitelist: function (list) {
-        const exclusionTags = list.split('|');
-        let regStr = '<\\/?(';
-
-        for (let i = 0, len = exclusionTags.length; i < len; i++) {
-            regStr += '(?!\\b' + exclusionTags[i] + '\\b)';
-        }
-
-        regStr += ')[^>]>';
-
-        return new RegExp(regStr, 'g');
+        return new RegExp('<\\/?\\b(?!\\b' + list.replace(/\|/g, '\\b|\\b') + '\\b)[^>]*>', 'gi');
     },
 
     /**
@@ -13800,9 +13801,8 @@ const util_util = {
         frame.contentDocument.head.innerHTML = '' +
             '<meta charset="utf-8" />' +
             '<meta name="viewport" content="width=device-width, initial-scale=1">' +
-            '<title></title>' + 
             this._setIframeCssTags(options);
-        frame.contentDocument.body.className = 'sun-editor-editable';
+        frame.contentDocument.body.className = options._editableClass;
         frame.contentDocument.body.setAttribute('contenteditable', true);
     },
 
@@ -13867,7 +13867,7 @@ const util_util = {
     
         // suneditor div
         const top_div = doc.createElement('DIV');
-        top_div.className = 'sun-editor';
+        top_div.className = 'sun-editor' + (options.rtl ? ' se-rtl' : '');
         if (element.id) top_div.id = 'suneditor_' + element.id;
     
         // relative div
@@ -14091,6 +14091,9 @@ const util_util = {
         el.code = code;
         el.placeholder = placeholder_span;
 
+        if (mergeOptions.rtl) lib_util.addClass(el.topArea, 'se-rtl');
+        else lib_util.removeClass(el.topArea, 'se-rtl');
+
         return {
             callButtons: isNewToolbar ? tool_bar.pluginCallButtons : null,
             plugins: isNewToolbar || isNewPlugins ? tool_bar.plugins : null,
@@ -14129,7 +14132,7 @@ const util_util = {
         if (!options.iframe) {
             wysiwygDiv.setAttribute('contenteditable', true);
             wysiwygDiv.setAttribute('scrolling', 'auto');
-            wysiwygDiv.className += ' sun-editor-editable';
+            wysiwygDiv.className += ' ' + options._editableClass;
             wysiwygDiv.style.cssText = options._editorStyles.frame + options._editorStyles.editor;
         } else {
             wysiwygDiv.allowFullscreen = true;
@@ -14214,6 +14217,7 @@ const util_util = {
     _initOptions: function (element, options) {
         /** Values */
         options.lang = options.lang || en_default.a;
+        options.defaultTag = typeof options.defaultTag === 'string' ? options.defaultTag : 'p';
         options.value = typeof options.value === 'string' ? options.value : null;
         options.historyStackDelayTime = typeof options.historyStackDelayTime === 'number' ? options.historyStackDelayTime : 400;
         /** Whitelist */
@@ -14223,13 +14227,19 @@ const util_util = {
         options.attributesWhitelist = (!options.attributesWhitelist || typeof options.attributesWhitelist !== 'object') ? null : options.attributesWhitelist;
         /** Layout */
         options.mode = options.mode || 'classic'; // classic, inline, balloon, balloon-always
+        options.rtl = !!options.rtl;
+        options._editableClass = 'sun-editor-editable' + (options.rtl ? ' se-rtl' : '');
         options.toolbarWidth = options.toolbarWidth ? (lib_util.isNumber(options.toolbarWidth) ? options.toolbarWidth + 'px' : options.toolbarWidth) : 'auto';
-        options.toolbarContainer = /balloon/i.test(options.mode) ? null : (typeof options.toolbarContainer === 'string' ? document.querySelector(options.toolbarContainer) : options.toolbarContainer);
+        options.toolbarContainer = typeof options.toolbarContainer === 'string' ? document.querySelector(options.toolbarContainer) : options.toolbarContainer;
         options.stickyToolbar = (/balloon/i.test(options.mode) || !!options.toolbarContainer) ? -1 : options.stickyToolbar === undefined ? 0 : (/^\d+/.test(options.stickyToolbar) ? lib_util.getNumber(options.stickyToolbar, 0) : -1);
-        options.fullPage = !!options.fullPage;
         options.iframe = options.fullPage || options.iframe;
+        options.fullPage = !!options.fullPage;
         options.iframeCSSFileName = options.iframe ? typeof options.iframeCSSFileName === 'string' ? [options.iframeCSSFileName] : (options.iframeCSSFileName || ['suneditor']) : null;
+        options.previewTemplate = typeof options.previewTemplate === 'string' ? options.previewTemplate : null;
+        /** CodeMirror object */
         options.codeMirror = options.codeMirror ? options.codeMirror.src ? options.codeMirror : {src: options.codeMirror} : null;
+        /** katex object (Math plugin) */
+        options.katex = options.katex ? options.katex.src ? options.katex : {src: options.katex} : null;
         /** Display */
         options.position = typeof options.position === 'string' ? options.position : null;
         options.display = options.display || (element.style.display === 'none' || !element.style.display ? 'block' : element.style.display);
@@ -14323,10 +14333,8 @@ const util_util = {
         /** ETC */
         options.placeholder = typeof options.placeholder === 'string' ? options.placeholder : null;
         options.linkProtocol = typeof options.linkProtocol === 'string' ? options.linkProtocol : null;
-        /** Math (katex) */
-        options.katex = options.katex ? options.katex.src ? options.katex : {src: options.katex} : null;
         /** Buttons */
-        options.buttonList = options.buttonList || [
+        options.buttonList = !!options.buttonList ? JSON.parse(JSON.stringify(options.buttonList)) : [
             ['undo', 'redo'],
             ['bold', 'underline', 'italic', 'strike', 'subscript', 'superscript'],
             ['removeFormat'],
@@ -14335,8 +14343,21 @@ const util_util = {
             ['preview', 'print']
         ];
 
+        /** RTL - buttons */
+        if (options.rtl) {
+            options.buttonList = options.buttonList.reverse();
+        }
+
         /** --- Define icons --- */
+        // custom icons
         options.icons = (!options.icons || typeof options.icons !== 'object') ? defaultIcons : [defaultIcons, options.icons].reduce(function (_default, _new) {
+            for (let key in _new) {
+                if (lib_util.hasOwn(_new, key)) _default[key] = _new[key];
+            }
+            return _default;
+        }, {});
+        // rtl icons
+        options.icons = !options.rtl ? options.icons : [options.icons, options.icons.rtl].reduce(function (_default, _new) {
             for (let key in _new) {
                 if (lib_util.hasOwn(_new, key)) _default[key] = _new[key];
             }
@@ -14356,24 +14377,26 @@ const util_util = {
         const icons = options.icons;
         const lang = options.lang;
         const cmd = lib_util.isOSX_IOS ? '⌘' : 'CTRL';
+        const addShift = lib_util.isOSX_IOS ? '⇧' : '+SHIFT';
         const shortcutsDisable = !options.shortcutsHint ? ['bold', 'strike', 'underline', 'italic', 'undo', 'indent'] : options.shortcutsDisable;
+        const indentKey = options.rtl ? ['[',']'] : [']','['];
 
         return {
             /** default command */
-            bold: ['_se_command_bold', lang.toolbar.bold + (shortcutsDisable.indexOf('bold') > -1 ? '' : ' (' + cmd + '+B)'), 'STRONG', '', icons.bold],
-            underline: ['_se_command_underline', lang.toolbar.underline + (shortcutsDisable.indexOf('underline') > -1 ? '' : ' (' + cmd + '+U)'), 'U', '', icons.underline],
-            italic: ['_se_command_italic', lang.toolbar.italic + (shortcutsDisable.indexOf('italic') > -1 ? '' : ' (' + cmd + '+I)'), 'EM', '', icons.italic],
-            strike: ['_se_command_strike', lang.toolbar.strike + (shortcutsDisable.indexOf('strike') > -1 ? '' : ' (' + cmd + '+SHIFT+S)'), 'DEL', '', icons.strike],
+            bold: ['_se_command_bold', lang.toolbar.bold + '<span class="se-shortcut">' + (shortcutsDisable.indexOf('bold') > -1 ? '' : cmd + '+<span class="se-shortcut-key">B</span>') + '</span>', 'STRONG', '', icons.bold],
+            underline: ['_se_command_underline', lang.toolbar.underline + '<span class="se-shortcut">' + (shortcutsDisable.indexOf('underline') > -1 ? '' : cmd + '+<span class="se-shortcut-key">U</span>') + '</span>', 'U', '', icons.underline],
+            italic: ['_se_command_italic', lang.toolbar.italic + '<span class="se-shortcut">' + (shortcutsDisable.indexOf('italic') > -1 ? '' : cmd + '+<span class="se-shortcut-key">I</span>') + '</span>', 'EM', '', icons.italic],
+            strike: ['_se_command_strike', lang.toolbar.strike + '<span class="se-shortcut">' + (shortcutsDisable.indexOf('strike') > -1 ? '' : cmd + addShift + '+<span class="se-shortcut-key">S</span>') + '</span>', 'DEL', '', icons.strike],
             subscript: ['_se_command_subscript', lang.toolbar.subscript, 'SUB', '', icons.subscript],
             superscript: ['_se_command_superscript', lang.toolbar.superscript, 'SUP', '', icons.superscript],
             removeFormat: ['', lang.toolbar.removeFormat, 'removeFormat', '', icons.erase],
-            indent: ['_se_command_indent', lang.toolbar.indent + (shortcutsDisable.indexOf('indent') > -1 ? '' : ' (' + cmd + '+])'), 'indent', '', icons.outdent],
-            outdent: ['_se_command_outdent', lang.toolbar.outdent + (shortcutsDisable.indexOf('indent') > -1 ? '' : ' (' + cmd + '+[)'), 'outdent', '', icons.indent],
+            indent: ['_se_command_indent', lang.toolbar.indent + '<span class="se-shortcut">' + (shortcutsDisable.indexOf('indent') > -1 ? '' : cmd + '+<span class="se-shortcut-key">' + indentKey[0] + '</span>') + '</span>', 'indent', '', icons.outdent],
+            outdent: ['_se_command_outdent', lang.toolbar.outdent + '<span class="se-shortcut">' + (shortcutsDisable.indexOf('indent') > -1 ? '' : cmd + '+<span class="se-shortcut-key">' + indentKey[1] + '</span>') + '</span>', 'outdent', '', icons.indent],
             fullScreen: ['se-code-view-enabled se-resizing-enabled _se_command_fullScreen', lang.toolbar.fullScreen, 'fullScreen', '', icons.expansion],
             showBlocks: ['_se_command_showBlocks', lang.toolbar.showBlocks, 'showBlocks', '', icons.show_blocks],
             codeView: ['se-code-view-enabled se-resizing-enabled _se_command_codeView', lang.toolbar.codeView, 'codeView', '', icons.code_view],
-            undo: ['_se_command_undo se-resizing-enabled', lang.toolbar.undo + (shortcutsDisable.indexOf('undo') > -1 ? '' : ' (' + cmd + '+Z)'), 'undo', '', icons.undo],
-            redo: ['_se_command_redo se-resizing-enabled', lang.toolbar.redo + (shortcutsDisable.indexOf('undo') > -1 ? '' : ' (' + cmd + '+Y / ' + cmd + '+SHIFT+Z)'), 'redo', '', icons.redo],
+            undo: ['_se_command_undo se-resizing-enabled', lang.toolbar.undo + '<span class="se-shortcut">' + (shortcutsDisable.indexOf('undo') > -1 ? '' : cmd + '+<span class="se-shortcut-key">Z</span>') + '</span>', 'undo', '', icons.undo],
+            redo: ['_se_command_redo se-resizing-enabled', lang.toolbar.redo + '<span class="se-shortcut">' + (shortcutsDisable.indexOf('undo') > -1 ? '' : cmd + '+<span class="se-shortcut-key">Y</span> / ' + cmd + addShift + '+<span class="se-shortcut-key">Z</span>') + '</span>', 'redo', '', icons.redo],
             preview: ['se-resizing-enabled', lang.toolbar.preview, 'preview', '', icons.preview],
             print: ['se-resizing-enabled', lang.toolbar.print, 'print', '', icons.print],
             save: ['_se_command_save se-resizing-enabled', lang.toolbar.save, 'save', '', icons.save],
@@ -14385,7 +14408,7 @@ const util_util = {
             fontSize: ['se-btn-select se-btn-tool-size', lang.toolbar.fontSize, 'fontSize', 'submenu', '<span class="txt">' + lang.toolbar.fontSize + '</span>' + icons.arrow_down],
             fontColor: ['', lang.toolbar.fontColor, 'fontColor', 'submenu', icons.font_color],
             hiliteColor: ['', lang.toolbar.hiliteColor, 'hiliteColor', 'submenu', icons.highlight_color],
-            align: ['se-btn-align', lang.toolbar.align, 'align', 'submenu', icons.align_left],
+            align: ['se-btn-align', lang.toolbar.align, 'align', 'submenu', (options.rtl ? icons.align_right : icons.align_left)],
             list: ['', lang.toolbar.list, 'list', 'submenu', icons.list_number],
             horizontalRule: ['btn_line', lang.toolbar.horizontalRule, 'horizontalRule', 'submenu', icons.horizontal_rule],
             table: ['', lang.toolbar.table, 'table', 'submenu', icons.table],
@@ -14606,6 +14629,13 @@ const util_util = {
             }
         }
 
+        const lastFloat = _buttonTray.lastElementChild.style.float;
+        if (!!lastFloat) {
+            const sv =  separator_vertical.cloneNode(false);
+            sv.style.float = lastFloat;
+            _buttonTray.appendChild(sv);
+        }
+
         if (_buttonTray.children.length === 1) lib_util.removeClass(_buttonTray.firstElementChild, 'se-btn-module-border');
         if (responsiveButtons.length > 0) responsiveButtons.unshift(buttonList);
         if (moreLayer.children.length > 0) _buttonTray.appendChild(moreLayer);
@@ -14749,7 +14779,7 @@ const _Context = function (element, cons, options) {
     function pushStack () {
         core._checkComponents();
         const current = core.getContents(true);
-        if (!!stack[stackIndex] && current === stack[stackIndex].contents) return;
+        if (!current || (!!stack[stackIndex] && current === stack[stackIndex].contents)) return;
 
         stackIndex++;
         const range = core._variable._range;
@@ -15574,7 +15604,6 @@ const _Context = function (element, cons, options) {
          * @private
          */
         _setMenuPosition: function (element, menu) {
-            menu.style.top = '-10000px';
             menu.style.visibility = 'hidden';
             menu.style.display = 'block';
             menu.style.height = '';
@@ -15582,11 +15611,24 @@ const _Context = function (element, cons, options) {
 
             const toolbar = this.context.element.toolbar;
             const toolbarW = toolbar.offsetWidth;
+            const toolbarOffset = event._getEditorOffsets(context.element.toolbar);
             const menuW = menu.offsetWidth;
             const l = element.parentElement.offsetLeft + 3;
-            const overLeft = toolbarW <= menuW ? 0 : toolbarW - (l + menuW);
-            if (overLeft < 0) menu.style.left = (l + overLeft) + 'px';
-            else menu.style.left = l + 'px';
+
+            // rtl
+            if (options.rtl) {
+                const elementW = element.offsetWidth;
+                const rtlW = menuW > elementW ? menuW - elementW : 0;
+                const rtlL = rtlW > 0 ? 0 : elementW - menuW;
+                menu.style.left = (l - rtlW + rtlL) + 'px';
+                if (toolbarOffset.left > event._getEditorOffsets(menu).left) {
+                    menu.style.left = '0px';
+                }
+            } else {
+                const overLeft = toolbarW <= menuW ? 0 : toolbarW - (l + menuW);
+                if (overLeft < 0) menu.style.left = (l + overLeft) + 'px';
+                else menu.style.left = l + 'px';
+            }
 
             // get element top
             let t = 0;
@@ -15604,7 +15646,7 @@ const _Context = function (element, cons, options) {
             }
 
             // set menu position
-            const toolbarTop = event._getEditorOffsets(context.element.toolbar).top;
+            const toolbarTop = toolbarOffset.top;
             let menuHeight = menu.offsetHeight;
             let el = context.element.topArea;
             let scrollTop = 0;
@@ -15705,6 +15747,63 @@ const _Context = function (element, cons, options) {
         },
 
         /**
+         * @description Specify the position of the controller.
+         * @param {Element} controller Controller element.
+         * @param {Element} referEl Element that is the basis of the controller's position.
+         * @param {String} position Type of position ("top" | "bottom")
+         * When using the "top" position, there should not be an arrow on the controller.
+         * When using the "bottom" position there should be an arrow on the controller.
+         * @param {Object} addOffset These are the left and top values that need to be added specially. 
+         * This argument is required. - {left: 0, top: 0}
+         * Please enter the value based on ltr mode.
+         * Calculated automatically in rtl mode.
+         */
+        setControllerPosition: function (controller, referEl, position, addOffset) {
+            if (options.rtl) addOffset.left *= -1;
+
+            const offset = util.getOffset(referEl, context.element.wysiwygFrame);
+            controller.style.visibility = 'hidden';
+            controller.style.display = 'block';
+
+            // Height value of the arrow element is 11px
+            const topMargin = position === 'top' ? -(controller.offsetHeight + 2) : (referEl.offsetHeight + 12);
+            controller.style.top = (offset.top + topMargin + addOffset.top) + 'px';
+
+            const l = offset.left - context.element.wysiwygFrame.scrollLeft + addOffset.left;
+            const controllerW = controller.offsetWidth;
+            const referElW = referEl.offsetWidth;
+
+            // rtl (Width value of the arrow element is 22px)
+            if (options.rtl) {
+                const rtlW = (controllerW > referElW) ? controllerW - referElW : 0;
+                const rtlL = rtlW > 0 ? 0 : referElW - controllerW;
+                controller.style.left = (l - rtlW + rtlL) + 'px';
+                
+                if (rtlW > 0) {
+                    controller.firstElementChild.style.left = ((controllerW - 14 < 10 + rtlW) ? (controllerW - 14) : (10 + rtlW)) + 'px';
+                }
+                
+                const overSize = context.element.wysiwygFrame.offsetLeft - controller.offsetLeft;
+                if (overSize > 0) {
+                    controller.style.left = '0px';
+                    controller.firstElementChild.style.left = overSize + 'px';
+                }
+            } else {
+                controller.style.left = l + 'px';
+
+                const overSize = context.element.wysiwygFrame.offsetWidth - (controller.offsetLeft + controllerW);
+                if (overSize < 0) {
+                    controller.style.left = (controller.offsetLeft + overSize) + 'px';
+                    controller.firstElementChild.style.left = (20 - overSize) + 'px';
+                } else {
+                    controller.firstElementChild.style.left = '20px';
+                }
+            }
+
+            controller.style.visibility = '';
+        },
+
+        /**
          * @description Run event.stopPropagation and event.preventDefault.
          * @param {Object} e Event Object
          */
@@ -15716,8 +15815,8 @@ const _Context = function (element, cons, options) {
         /**
          * @description javascript execCommand
          * @param {String} command javascript execCommand function property
-         * @param {Boolean} showDefaultUI javascript execCommand function property
-         * @param {String} value javascript execCommand function property
+         * @param {Boolean|undefined} showDefaultUI javascript execCommand function property
+         * @param {String|undefined} value javascript execCommand function property
          */
         execCommand: function (command, showDefaultUI, value) {
             this._wd.execCommand(command, showDefaultUI, (command === 'formatBlock' ? '<' + value + '>' : value));
@@ -15752,7 +15851,7 @@ const _Context = function (element, cons, options) {
                     const range = this.getRange();
 
                     if (range.startContainer === range.endContainer && util.isWysiwygDiv(range.startContainer)) {
-                        const format = util.createElement('P');
+                        const format = util.createElement(options.defaultTag);
                         const br = util.createElement('BR');
                         format.appendChild(br);
                         context.element.wysiwyg.appendChild(format);
@@ -15879,14 +15978,15 @@ const _Context = function (element, cons, options) {
          * @description If the "range" object is a non-editable area, add a line at the top of the editor and update the "range" object.
          * Returns a new "range" or argument "range".
          * @param {Object} range core.getRange()
+         * @param {Element|null} container If there is "container" argument, it creates a line in front of the container.
          * @returns {Object} range
          */
-        getRange_addLine: function (range) {
+        getRange_addLine: function (range, container) {
             if (this._selectionVoid(range)) {
                 const wysiwyg = context.element.wysiwyg;
-                const op = util.createElement('P');
+                const op = util.createElement(options.defaultTag);
                 op.innerHTML = '<br>';
-                wysiwyg.insertBefore(op, wysiwyg.firstElementChild);
+                wysiwyg.insertBefore(op, container && container !== wysiwyg ? container.nextElementSibling : wysiwyg.firstElementChild);
                 this.setRange(op.firstElementChild, 0, op.firstElementChild, 1);
                 range = this._variable._range;
             }
@@ -15958,7 +16058,7 @@ const _Context = function (element, cons, options) {
 
             let focusEl = wysiwyg.firstElementChild;
             if (!focusEl) {
-                focusEl = util.createElement('P');
+                focusEl = util.createElement(options.defaultTag);
                 focusEl.innerHTML = '<br>';
                 wysiwyg.appendChild(focusEl);
             }
@@ -16018,7 +16118,7 @@ const _Context = function (element, cons, options) {
     
                     let format = util.getFormatElement(tempCon, null);
                     if (format === util.getRangeFormatElement(format, null)) {
-                        format = util.createElement(util.getParentElement(tempCon, util.isCell) ? 'DIV' : 'P');
+                        format = util.createElement(util.getParentElement(tempCon, util.isCell) ? 'DIV' : options.defaultTag);
                         tempCon.parentNode.insertBefore(format, tempCon);
                         format.appendChild(tempCon);
                     }
@@ -16057,7 +16157,7 @@ const _Context = function (element, cons, options) {
     
                     let format = util.getFormatElement(tempCon, null);
                     if (format === util.getRangeFormatElement(format, null)) {
-                        format = util.createElement(util.isCell(format) ? 'DIV' : 'P');
+                        format = util.createElement(util.isCell(format) ? 'DIV' : options.defaultTag);
                         tempCon.parentNode.insertBefore(format, tempCon);
                         format.appendChild(tempCon);
                     }
@@ -16212,7 +16312,7 @@ const _Context = function (element, cons, options) {
          */
         appendFormatTag: function (element, formatNode) {
             const currentFormatEl = util.getFormatElement(this.getSelectionNode(), null);
-            const oFormatName = formatNode ? (typeof formatNode === 'string' ? formatNode : formatNode.nodeName) : (util.isFormatElement(currentFormatEl) && !util.isFreeFormatElement(currentFormatEl)) ? currentFormatEl.nodeName : 'P';
+            const oFormatName = formatNode ? (typeof formatNode === 'string' ? formatNode : formatNode.nodeName) : (util.isFormatElement(currentFormatEl) && !util.isFreeFormatElement(currentFormatEl)) ? currentFormatEl.nodeName : options.defaultTag;
             const oFormat = util.createElement(oFormatName);
             oFormat.innerHTML = '<br>';
 
@@ -16241,7 +16341,7 @@ const _Context = function (element, cons, options) {
             }
 
             const r = this.removeNode();
-            this.getRange_addLine(this.getRange());
+            this.getRange_addLine(this.getRange(), r.container);
             let oNode = null;
             let selectionNode = this.getSelectionNode();
             let formatEl = util.getFormatElement(selectionNode, null);
@@ -16258,6 +16358,8 @@ const _Context = function (element, cons, options) {
                 this.insertNode(element, formatEl, false);
                 if (formatEl && util.onlyZeroWidthSpace(formatEl)) util.removeItem(formatEl);
             }
+
+            this.setRange(element, 0, element, 0);
 
             if (!notSelect) {
                 const fileComponentInfo = this.getFileComponent(element);
@@ -16384,15 +16486,18 @@ const _Context = function (element, cons, options) {
             const isFormats = (!freeFormat && (util.isFormatElement(oNode) || util.isRangeFormatElement(oNode))) || util.isComponent(oNode);
 
             if (!afterNode && isFormats) {
-                const r = this.removeNode();
-                if (r.container.nodeType === 3 || util.isBreak(r.container)) {
-                    const depthFormat = util.getParentElement(r.container, function (current) { return this.isRangeFormatElement(current) || this.isListCell(current); }.bind(util));
-                    afterNode = util.splitElement(r.container, r.offset, !depthFormat ? 0 : util.getElementDepth(depthFormat) + 1);
-                    if (afterNode) afterNode = afterNode.previousSibling;
+                const range = this.getRange();
+                if (range.startOffset !== range.endOffset || range.startContainer !== range.endContainer) {
+                    const r = this.removeNode();
+                    if (r.container.nodeType === 3 || util.isBreak(r.container)) {
+                        const depthFormat = util.getParentElement(r.container, function (current) { return this.isRangeFormatElement(current) || this.isListCell(current); }.bind(util));
+                        afterNode = util.splitElement(r.container, r.offset, !depthFormat ? 0 : util.getElementDepth(depthFormat) + 1);
+                        if (afterNode) afterNode = afterNode.previousSibling;
+                    }
                 }
             }
 
-            const range = (!afterNode && !isFormats) ? this.getRange_addLine(this.getRange()) : this.getRange();
+            const range = (!afterNode && !isFormats) ? this.getRange_addLine(this.getRange(), null) : this.getRange();
             const commonCon = range.commonAncestorContainer;
             const startOff = range.startOffset;
             const endOff = range.endOffset;
@@ -16454,7 +16559,7 @@ const _Context = function (element, cons, options) {
                             if (util.isFormatElement(container)) {
                                 container.innerHTML = '<br>';
                             } else if (util.isRangeFormatElement(container)) {
-                                container.innerHTML = '<p><br></p>';
+                                container.innerHTML = '<' + options.defaultTag + '><br></' + options.defaultTag + '>';
                             }
                         }
 
@@ -16547,14 +16652,14 @@ const _Context = function (element, cons, options) {
                         return newRange;
                     } else if (!util.isBreak(oNode) && util.isFormatElement(parentNode)) {
                         let zeroWidth = null;
-                        if (!oNode.previousSibling) {
+                        if (!oNode.previousSibling || util.isBreak(oNode.previousSibling)) {
                             zeroWidth = util.createTextNode(util.zeroWidthSpace);
                             oNode.parentNode.insertBefore(zeroWidth, oNode);
                         }
                         
-                        if (!oNode.nextSibling) {
+                        if (!oNode.nextSibling || util.isBreak(oNode.nextSibling)) {
                             zeroWidth = util.createTextNode(util.zeroWidthSpace);
-                            oNode.parentNode.appendChild(zeroWidth);
+                            oNode.parentNode.insertBefore(zeroWidth, oNode.nextSibling);
                         }
     
                         if (util._isIgnoreNodeChange(oNode)) {
@@ -16607,7 +16712,7 @@ const _Context = function (element, cons, options) {
          * @returns {Object}
          */
         removeNode: function () {
-            if (!this._resetRangeToTextNode()) console.warn('[SUNEDITOR.core.removeNode.exception] An exception occurred while resetting the "Range" object.');
+            this._resetRangeToTextNode();
 
             const range = this.getRange();
             let container, offset = 0;
@@ -16615,7 +16720,7 @@ const _Context = function (element, cons, options) {
             let endCon = range.endContainer;
             const startOff = range.startOffset;
             const endOff = range.endOffset;
-            const commonCon = range.commonAncestorContainer;
+            const commonCon = (range.commonAncestorContainer.nodeType === 3 && range.commonAncestorContainer.parentNode === startCon.parentNode) ? startCon.parentNode : range.commonAncestorContainer;
 
             let beforeNode = null;
             let afterNode = null;
@@ -16646,6 +16751,11 @@ const _Context = function (element, cons, options) {
                             container: commonCon,
                             offset: 0
                         };
+                    } else if (commonCon.nodeType === 3) {
+                        return {
+                            container: commonCon,
+                            offset: endOff
+                        };
                     }
                     childNodes.push(commonCon);
                     startCon = endCon = commonCon;
@@ -16653,7 +16763,7 @@ const _Context = function (element, cons, options) {
                     startCon = endCon = childNodes[0];
                     if (util.isBreak(startCon) || util.onlyZeroWidthSpace(startCon)) {
                         return {
-                            container: startCon,
+                            container: util.isMedia(commonCon) ? commonCon : startCon,
                             offset: 0
                         };
                     }
@@ -16757,7 +16867,7 @@ const _Context = function (element, cons, options) {
          * @param {Element} rangeElement Element of wrap the arguments (BLOCKQUOTE...)
          */
         applyRangeFormatElement: function (rangeElement) {
-            this.getRange_addLine(this.getRange());
+            this.getRange_addLine(this.getRange(), null);
             const rangeLines = this.getSelectedElementsAndComponents(false);
             if (!rangeLines || rangeLines.length === 0) return;
 
@@ -17046,7 +17156,7 @@ const _Context = function (element, cons, options) {
                             }
                         } else {
                             const inner = insNode;
-                            insNode = util.createElement(remove ? inner.nodeName : (util.isList(rangeElement.parentNode) || util.isListCell(rangeElement.parentNode)) ? 'LI' : util.isCell(rangeElement.parentNode) ? 'DIV' : 'P');
+                            insNode = util.createElement(remove ? inner.nodeName : (util.isList(rangeElement.parentNode) || util.isListCell(rangeElement.parentNode)) ? 'LI' : util.isCell(rangeElement.parentNode) ? 'DIV' : options.defaultTag);
                             const isCell = util.isListCell(insNode);
                             const innerChildren = inner.childNodes;
                             while (innerChildren[0]) {
@@ -17231,7 +17341,7 @@ const _Context = function (element, cons, options) {
          */
         nodeChange: function (appendNode, styleArray, removeNodeArray, strictRemove) {
             this._resetRangeToTextNode();
-            let range = this.getRange_addLine(this.getRange());
+            let range = this.getRange_addLine(this.getRange(), null);
             styleArray = styleArray && styleArray.length > 0 ? styleArray : false;
             removeNodeArray = removeNodeArray && removeNodeArray.length > 0 ? removeNodeArray : false;
             
@@ -18283,6 +18393,7 @@ const _Context = function (element, cons, options) {
                     if (i === 0) container = textNode;
                 }
             } else if (isRemoveNode) {
+                newInnerNode = newInnerNode.firstChild;
                 for (let i = 0; i < nNodeArray.length; i++) {
                     this._stripRemoveNode(nNodeArray[i]);
                 }
@@ -18439,6 +18550,7 @@ const _Context = function (element, cons, options) {
                     util.removeItem(removeNode);
                 }
             } else if (isRemoveNode) {
+                newInnerNode = newInnerNode.firstChild;
                 for (let i = 0; i < nNodeArray.length; i++) {
                     this._stripRemoveNode(nNodeArray[i]);
                 }
@@ -18704,6 +18816,7 @@ const _Context = function (element, cons, options) {
                     }
                 }
             } else if (isRemoveNode) {
+                newInnerNode = newInnerNode.firstChild;
                 for (let i = 0; i < nNodeArray.length; i++) {
                     this._stripRemoveNode(nNodeArray[i]);
                 }
@@ -18820,8 +18933,8 @@ const _Context = function (element, cons, options) {
 
         /**
          * @description Execute command of command button(All Buttons except submenu and dialog)
-         * (undo, redo, bold, underline, italic, strikethrough, subscript, superscript, removeFormat, indent, outdent, fullscreen, showBlocks, codeview, preview, print)
-         * @param {Element} target The element of command button
+         * (selectAll, codeView, fullScreen, indent, outdent, undo, redo, removeFormat, print, preview, showBlocks, save, bold, underline, italic, strike, subscript, superscript)
+         * @param {Element|null} target The element of command button
          * @param {String} command Property of command button (data-value)
          */
         commandHandler: function (target, command) {
@@ -18909,6 +19022,7 @@ const _Context = function (element, cons, options) {
             const rangeLines = this.getSelectedElements(null);
             const cells = [];
             const shift = 'indent' !== command;
+            const marginDir = options.rtl ? 'marginRight' : 'marginLeft';
             let sc = range.startContainer;
             let ec = range.endContainer;
             let so = range.startOffset;
@@ -18918,13 +19032,13 @@ const _Context = function (element, cons, options) {
                 f = rangeLines[i];
 
                 if (!util.isListCell(f) || !this.plugins.list) {
-                    margin = /\d+/.test(f.style.marginLeft) ? util.getNumber(f.style.marginLeft, 0) : 0;
+                    margin = /\d+/.test(f.style[marginDir]) ? util.getNumber(f.style[marginDir], 0) : 0;
                     if (shift) {
                         margin -= 25;
                     } else {
                         margin += 25;
                     }
-                    util.setStyle(f, 'marginLeft', (margin <= 0 ? '' : margin + 'px'));
+                    util.setStyle(f, marginDir, (margin <= 0 ? '' : margin + 'px'));
                 } else {
                     if (shift || f.previousElementSibling) {
                         cells.push(f);
@@ -19037,7 +19151,7 @@ const _Context = function (element, cons, options) {
                 const headChildren = parseDocument.head.children;
 
                 for (let i = 0, len = headChildren.length; i < len; i++) {
-                    if (/script/i.test(headChildren[i].tagName)) {
+                    if (/^script$/i.test(headChildren[i].tagName)) {
                         parseDocument.head.removeChild(headChildren[i]);
                         i--, len--;
                     }
@@ -19051,9 +19165,14 @@ const _Context = function (element, cons, options) {
                     if (attrs[i].name === 'contenteditable') continue;
                     this._wd.body.setAttribute(attrs[i].name, attrs[i].value);
                 }
-                if (!util.hasClass(this._wd.body, 'sun-editor-editable')) util.addClass(this._wd.body, 'sun-editor-editable');
+                if (!util.hasClass(this._wd.body, 'sun-editor-editable')) {
+                    const editableClasses = options._editableClass.split(' ');
+                    for (let i = 0; i < editableClasses.length; i++) {
+                        util.addClass(this._wd.body, options._editableClass[i]);
+                    }
+                }
             } else {
-                context.element.wysiwyg.innerHTML = code_html.length > 0 ? this.convertContentsForEditor(code_html) : '<p><br></p>';
+                context.element.wysiwyg.innerHTML = code_html.length > 0 ? this.convertContentsForEditor(code_html) : '<' + options.defaultTag + '><br></' + options.defaultTag + '>';
             }
         },
 
@@ -19192,7 +19311,7 @@ const _Context = function (element, cons, options) {
             const wDoc = this._wd;
 
             if (options.iframe) {
-                const arrts = options.fullPage ? util.getAttributesToString(wDoc.body, ['contenteditable']) : 'class="sun-editor-editable"';
+                const arrts = options.fullPage ? util.getAttributesToString(wDoc.body, ['contenteditable']) : 'class="' + options._editableClass + '"';
 
                 printDocument.write('' +
                     '<!DOCTYPE html><html>' +
@@ -19218,7 +19337,7 @@ const _Context = function (element, cons, options) {
                     '<head>' +
                     linkHTML +
                     '</head>' +
-                    '<body class="sun-editor-editable">' + contentsHTML + '</body>' +
+                    '<body class="' + options._editableClass + '">' + contentsHTML + '</body>' +
                     '</html>'
                 );
             }
@@ -19255,14 +19374,14 @@ const _Context = function (element, cons, options) {
             core.containerOff();
             core.controllersOff();
             
-            const contentsHTML = this.getContents(true);
+            const contentsHTML = options.previewTemplate ? options.previewTemplate.replace(/\{\{\s*contents\s*\}\}/i, this.getContents(true)) : this.getContents(true);
             const windowObject = _w.open('', '_blank');
             windowObject.mimeType = 'text/html';
             const w = context.element.wysiwygFrame.offsetWidth + 'px !important';
             const wDoc = this._wd;
 
             if (options.iframe) {
-                const arrts = options.fullPage ? util.getAttributesToString(wDoc.body, ['contenteditable']) : 'class="sun-editor-editable"';
+                const arrts = options.fullPage ? util.getAttributesToString(wDoc.body, ['contenteditable']) : 'class="' + options._editableClass + '"';
 
                 windowObject.document.write('' +
                     '<!DOCTYPE html><html>' +
@@ -19292,7 +19411,7 @@ const _Context = function (element, cons, options) {
                     '<title>' + lang.toolbar.preview + '</title>' +
                     linkHTML +
                     '</head>' +
-                    '<body class="sun-editor-editable" style="width:' + w + '; border:1px solid #ccc; margin:10px auto !important; height:auto !important;">' + contentsHTML + '</body>' +
+                    '<body class="' + options._editableClass + '" style="width:' + w + '; border:1px solid #ccc; margin:10px auto !important; height:auto !important;">' + contentsHTML + '</body>' +
                     '</html>'
                 );
             }
@@ -19300,10 +19419,12 @@ const _Context = function (element, cons, options) {
 
         /**
          * @description Sets the HTML string
-         * @param {String} html HTML string
+         * @param {String|undefined} html HTML string
          */
         setContents: function (html) {
-            const convertValue = this.convertContentsForEditor(html);
+            this.removeRange();
+            
+            const convertValue = (html === null || html === undefined) ? '' : this.convertContentsForEditor(html);
             this._resetComponents();
 
             if (!this._variable.isCodeView) {
@@ -19314,6 +19435,16 @@ const _Context = function (element, cons, options) {
                 const value = this.convertHTMLForCodeView(convertValue);
                 this._setCodeView(value);
             }
+        },
+
+        /**
+         * @description Sets the contents of the iframe's head tag and body tag when using the "iframe" or "fullPage" option.
+         * @param {Object} ctx { head: HTML string, body: HTML string}
+         */
+        setIframeContents: function (ctx) {
+            if (!options.iframe) return false;
+            if (ctx.head) this._wd.head.innerHTML = ctx.head.replace(/<script\s*.*>.*<\/script>/g, '');
+            if (ctx.body) this._wd.body.innerHTML = this.convertContentsForEditor(ctx.body);
         },
 
         /**
@@ -19344,19 +19475,20 @@ const _Context = function (element, cons, options) {
 
         /**
          * @description Returns HTML string according to tag type and configuration.
-         * Use only "cleanHTML", "convertContentsForEditor"
+         * Use only "cleanHTML"
          * @param {Node} node Node
          * @param {Boolean} requireFormat If true, text nodes that do not have a format node is wrapped with the format tag.
          * @private
          */
         _makeLine: function (node, requireFormat) {
+            const defaultTag = options.defaultTag;
             // element
             if (node.nodeType === 1) {
                 if (util._disallowedTags(node)) return '';
                 if (!requireFormat || (util.isFormatElement(node) || util.isRangeFormatElement(node) || util.isComponent(node) || util.isMedia(node) || (util.isAnchor(node) && util.isMedia(node.firstElementChild)))) {
                     return node.outerHTML;
                 } else {
-                    return '<p>' + node.outerHTML + '</p>';
+                    return '<' + defaultTag + '>' + node.outerHTML + '</' + defaultTag + '>';
                 }
             }
             // text
@@ -19366,7 +19498,7 @@ const _Context = function (element, cons, options) {
                 let html = '';
                 for (let i = 0, tLen = textArray.length, text; i < tLen; i++) {
                     text = textArray[i].trim();
-                    if (text.length > 0) html += '<p>' + text + '</p>';
+                    if (text.length > 0) html += '<' + defaultTag + '>' + text + '</' + defaultTag + '>';
                 }
                 return html;
             }
@@ -19410,7 +19542,7 @@ const _Context = function (element, cons, options) {
         /**
          * @description Gets the clean HTML code for editor
          * @param {String} html HTML string
-         * @param {String|RegExp} whitelist Regular expression of allowed tags.
+         * @param {String|RegExp|null} whitelist Regular expression of allowed tags.
          * RegExp object is create by util.createTagsWhitelist method. (core.pasteTagsWhitelistRegExp)
          * @returns {String}
          */
@@ -19489,6 +19621,32 @@ const _Context = function (element, cons, options) {
          * @returns {String}
          */
         convertContentsForEditor: function (contents) {
+            contents = this._deleteDisallowedTags(contents)
+                .replace(/(<[a-zA-Z0-9]+)[^>]*(?=>)/g, function (m, t) {
+                    if (/^<[a-z0-9]+\:[a-z0-9]+/i.test(m)) return m;
+
+                    let v = null;
+                    const tAttr = this._attributesTagsWhitelist[t.match(/(?!<)[a-zA-Z0-9]+/)[0].toLowerCase()];
+                    if (tAttr) v = m.match(tAttr);
+                    else v = m.match(this._attributesWhitelistRegExp);
+
+                    if (/<span/i.test(t) && (!v || !/style=/i.test(v.toString()))) {
+                        const sv = m.match(/style\s*=\s*"[^"]*"/);
+                        if (sv) {
+                            if (!v) v = [];
+                            v.push(sv[0]);
+                        }
+                    }
+
+                    if (v) {
+                        for (let i = 0, len = v.length; i < len; i++) {
+                            t += ' ' + v[i];
+                        }
+                    }
+
+                    return t;
+                }.bind(this));
+
             const dom = _d.createRange().createContextualFragment(this._deleteDisallowedTags(contents));
 
             try {
@@ -19503,7 +19661,7 @@ const _Context = function (element, cons, options) {
                 cleanHTML += this._makeLine(domTree[i], true);
             }
 
-            if (cleanHTML.length === 0) return '<p><br></p>';
+            if (cleanHTML.length === 0) return '<' + options.defaultTag + '><br></' + options.defaultTag + '>';
 
             cleanHTML = util.htmlRemoveWhiteSpace(cleanHTML);
             return this._tagConvertor(cleanHTML);
@@ -19963,7 +20121,7 @@ const _Context = function (element, cons, options) {
             if((util.isRangeFormatElement(startCon) || util.isWysiwygDiv(startCon)) && util.isComponent(startCon.childNodes[range.startOffset])) return;
 
             if (rangeEl) {
-                format = util.createElement(formatName || 'P');
+                format = util.createElement(formatName || options.defaultTag);
                 format.innerHTML = rangeEl.innerHTML;
                 if (format.childNodes.length === 0) format.innerHTML = util.zeroWidthSpace;
 
@@ -19994,7 +20152,7 @@ const _Context = function (element, cons, options) {
                 return;
             }
 
-            this.execCommand('formatBlock', false, (formatName || 'P'));
+            this.execCommand('formatBlock', false, (formatName || options.defaultTag));
             focusNode = util.getEdgeChildNodes(commonCon, commonCon);
             focusNode = focusNode ? focusNode.ec : commonCon;
 
@@ -20159,12 +20317,12 @@ const _Context = function (element, cons, options) {
                     break;
                 case '[':
                     if (options.shortcutsDisable.indexOf('indent') === -1) {
-                        command = 'outdent';
+                        command = options.rtl ? 'indent' : 'outdent';
                     }
                     break;
                 case ']':
                     if (options.shortcutsDisable.indexOf('indent') === -1) {
-                        command = 'indent';
+                        command = options.rtl ? 'outdent' : 'indent';
                     }
                     break;
             }
@@ -20180,6 +20338,7 @@ const _Context = function (element, cons, options) {
             if (selectionNode === core.effectNode) return;
             core.effectNode = selectionNode;
 
+            const marginDir = options.rtl ? 'marginRight' : 'marginLeft';
             const commandMap = core.commandMap;
             const classOnCheck = this._onButtonsCheck;
             const commandMapNodes = [];
@@ -20210,7 +20369,7 @@ const _Context = function (element, cons, options) {
                 if (util.isFormatElement(element)) {
                     /* Outdent */
                     if (commandMapNodes.indexOf('OUTDENT') === -1 && commandMap.OUTDENT) {
-                        if (util.isListCell(element) || (element.style.marginLeft && util.getNumber(element.style.marginLeft, 0) > 0)) {
+                        if (util.isListCell(element) || (element.style[marginDir] && util.getNumber(element.style[marginDir], 0) > 0)) {
                             commandMapNodes.push('OUTDENT');
                             commandMap.OUTDENT.removeAttribute('disabled');
                         }
@@ -20374,7 +20533,7 @@ const _Context = function (element, cons, options) {
                         oLi.appendChild(selectionNode);
                         rangeEl.insertBefore(oLi, prevLi);
                     } else if (!util.isWysiwygDiv(selectionNode) && !util.isComponent(selectionNode) && (!util.isTable(selectionNode) || util.isCell(selectionNode))) {
-                        core._setDefaultFormat(util.isRangeFormatElement(rangeEl) ? 'DIV' : 'P');
+                        core._setDefaultFormat(util.isRangeFormatElement(rangeEl) ? 'DIV' : options.defaultTag);
                     }
                     
                     e.preventDefault();
@@ -20413,6 +20572,7 @@ const _Context = function (element, cons, options) {
 
             const range = rangeObj || core.getRange();
             const toolbar = context.element.toolbar;
+            const topArea = context.element.topArea;
             const selection = core.getSelection();
 
             let isDirTop;
@@ -20430,14 +20590,14 @@ const _Context = function (element, cons, options) {
 
             let scrollLeft = 0;
             let scrollTop = 0;
-            let el = context.element.topArea;
+            let el = topArea;
             while (!!el) {
                 scrollLeft += el.scrollLeft;
                 scrollTop += el.scrollTop;
                 el = el.parentElement;
             }
 
-            const editorWidth = context.element.topArea.offsetWidth;
+            const editorWidth = topArea.offsetWidth;
             const offsets = event._getEditorOffsets(null);
             const stickyTop = offsets.top;
             const editorLeft = offsets.left;
@@ -20489,6 +20649,23 @@ const _Context = function (element, cons, options) {
             event._setToolbarOffset(isDirTop, rects, toolbar, editorLeft, editorWidth, scrollLeft, scrollTop, stickyTop, arrowMargin);
             if (toolbarWidth !== toolbar.offsetWidth || toolbarHeight !== toolbar.offsetHeight) {
                 event._setToolbarOffset(isDirTop, rects, toolbar, editorLeft, editorWidth, scrollLeft, scrollTop, stickyTop, arrowMargin);
+            }
+
+            if (options.toolbarContainer) {
+                const editorParent = topArea.parentElement;
+
+                let container = options.toolbarContainer;
+                let left = container.offsetLeft;
+                let top = container.offsetTop;
+
+                while(!container.parentElement.contains(editorParent) || !/^(BODY|HTML)$/i.test(container.parentElement.nodeName)) {
+                    container = container.offsetParent;
+                    left += container.offsetLeft;
+                    top += container.offsetTop;
+                }
+
+                toolbar.style.left = (toolbar.offsetLeft - left + topArea.offsetLeft) + 'px';
+                toolbar.style.top = (toolbar.offsetTop - top + topArea.offsetTop) + 'px';
             }
 
             toolbar.style.visibility = '';
@@ -20627,7 +20804,7 @@ const _Context = function (element, cons, options) {
                     if (!util.isFormatElement(formatEl) && !context.element.wysiwyg.firstElementChild && !util.isComponent(selectionNode)) {
                         e.preventDefault();
                         e.stopPropagation();
-                        core._setDefaultFormat('P');
+                        core._setDefaultFormat(options.defaultTag);
                         return false;
                     }
 
@@ -21099,7 +21276,7 @@ const _Context = function (element, cons, options) {
                                     newEl = newListCell;
                                 }
                             } else {
-                                const newFormat = util.isCell(rangeEl.parentNode) ? 'DIV' : util.isList(rangeEl.parentNode) ? 'LI' : util.isFormatElement(rangeEl.nextElementSibling) ? rangeEl.nextElementSibling.nodeName : util.isFormatElement(rangeEl.previousElementSibling) ? rangeEl.previousElementSibling.nodeName : 'P';
+                                const newFormat = util.isCell(rangeEl.parentNode) ? 'DIV' : util.isList(rangeEl.parentNode) ? 'LI' : util.isFormatElement(rangeEl.nextElementSibling) ? rangeEl.nextElementSibling.nodeName : util.isFormatElement(rangeEl.previousElementSibling) ? rangeEl.previousElementSibling.nodeName : options.defaultTag;
                                 newEl = util.createElement(newFormat);
                                 const edge = core.detachRangeFormatElement(rangeEl, [formatEl], null, true, true);
                                 edge.cc.insertBefore(newEl, edge.ec);
@@ -21130,7 +21307,7 @@ const _Context = function (element, cons, options) {
                         if (util.isListCell(container.parentNode)) {
                             newEl = util.createElement('BR');
                         } else {
-                            newEl = util.createElement(util.isFormatElement(sibling) ? sibling.nodeName : 'P');
+                            newEl = util.createElement(util.isFormatElement(sibling) ? sibling.nodeName : options.defaultTag);
                             newEl.innerHTML = '<br>';
                         }
 
@@ -21152,7 +21329,7 @@ const _Context = function (element, cons, options) {
                     break;
             }
 
-            if (shift && /16/.test(keyCode)) {
+            if (shift && keyCode === 16) {
                 e.preventDefault();
                 e.stopPropagation();
                 const tablePlugin = core.plugins.table;
@@ -21201,7 +21378,7 @@ const _Context = function (element, cons, options) {
 
                 selectionNode.innerHTML = '';
 
-                const oFormatTag = util.createElement(util.isFormatElement(core._variable.currentNodes[0]) ? core._variable.currentNodes[0] : 'P');
+                const oFormatTag = util.createElement(util.isFormatElement(core._variable.currentNodes[0]) ? core._variable.currentNodes[0] : options.defaultTag);
                 oFormatTag.innerHTML = '<br>';
 
                 selectionNode.appendChild(oFormatTag);
@@ -21215,7 +21392,7 @@ const _Context = function (element, cons, options) {
             const formatEl = util.getFormatElement(selectionNode, null);
             const rangeEl = util.getRangeFormatElement(selectionNode, null);
             if (((!formatEl && range.collapsed) || formatEl === rangeEl) && !util.isComponent(selectionNode) && !util.isList(selectionNode)) {
-                core._setDefaultFormat(util.isRangeFormatElement(rangeEl) ? 'DIV' : 'P');
+                core._setDefaultFormat(util.isRangeFormatElement(rangeEl) ? 'DIV' : options.defaultTag);
                 selectionNode = core.getSelectionNode();
             }
 
@@ -21256,7 +21433,7 @@ const _Context = function (element, cons, options) {
         },
 
         onBlur_wysiwyg: function (e) {
-            if (core._antiBlur) return;
+            if (core._antiBlur || core._variable.isCodeView) return;
             core.hasFocus = false;
             core.controllersOff();
             if (core._isInline || core._isBalloon) event._hideToolbar();
@@ -21315,6 +21492,7 @@ const _Context = function (element, cons, options) {
                 for (let i = 1, len = responsiveSize.length; i < len; i++) {
                     if (windowWidth < responsiveSize[i]) {
                         responsiveWidth = responsiveSize[i] + '';
+                        break;
                     }
                 }
 
@@ -21565,7 +21743,7 @@ const _Context = function (element, cons, options) {
                 return true;
             } else {
                 plainText = data.getData('text/plain');
-                cleanData = data.getData('text/html');
+                cleanData = data.getData('text/html') || plainText;
                 if (event._setClipboardData(type, e, plainText, cleanData, data) === false) {
                     e.preventDefault();
                     e.stopPropagation();
@@ -21587,12 +21765,16 @@ const _Context = function (element, cons, options) {
             const maxCharCount = core._charCount(core._charTypeHTML ? cleanData : plainText);
 
             // paste event
-            if (type === 'paste' && typeof functions.onPaste === 'function' && !functions.onPaste(e, cleanData, maxCharCount, core)) {
-                return false;
+            if (type === 'paste' && typeof functions.onPaste === 'function') {
+                const value = functions.onPaste(e, cleanData, maxCharCount, core);
+                if (!value) return false;
+                if (typeof value === 'string') cleanData = value;
             }
             // drop event
-            if (type === 'drop' && typeof functions.onDrop === 'function' && !functions.onDrop(e, data, core)) {
-                return false;
+            if (type === 'drop' && typeof functions.onDrop === 'function') {
+                const value = functions.onDrop(e, cleanData, maxCharCount, core);
+                if (!value) return false;
+                if (typeof value === 'string') cleanData = value;
             }
 
             // files
@@ -21668,7 +21850,7 @@ const _Context = function (element, cons, options) {
             const dir = !this ? core._variable._lineBreakDir : this;
             const isList = util.isListCell(component.parentNode);
 
-            const format = util.createElement(isList ? 'BR' : util.isCell(component.parentNode) ? 'DIV' : 'P');
+            const format = util.createElement(isList ? 'BR' : util.isCell(component.parentNode) ? 'DIV' : options.defaultTag);
             if (!isList) format.innerHTML = '<br>';
 
             if (core._charTypeHTML && !core.checkCharCount(format.outerHTML, 'byte-html')) return;
@@ -21792,7 +21974,7 @@ const _Context = function (element, cons, options) {
                 return;
             }
 
-            const sizeArray = event._responsiveButtonSize = ['default'];
+            const sizeArray = event._responsiveButtonSize = [];
             const buttonsObj = event._responsiveButtons = {default: _responsiveButtons[0]};
             for (let i = 1, len = _responsiveButtons.length, size, buttonGroup; i < len; i++) {
                 buttonGroup = _responsiveButtons[i];
@@ -21800,6 +21982,8 @@ const _Context = function (element, cons, options) {
                 sizeArray.push(size);
                 buttonsObj[size] = buttonGroup[1];
             }
+
+            sizeArray.sort(function (a, b) { return a - b; }).unshift('default');
         }
     };
 
@@ -21823,13 +22007,24 @@ const _Context = function (element, cons, options) {
         onInput: null,
         onKeyDown: null,
         onKeyUp: null,
-        onDrop: null,
         onChange: null,
         onCopy: null,
         onCut: null,
-        onPaste: null,
         onFocus: null,
         onBlur: null,
+
+        /**
+         * @description Event functions (drop, paste)
+         * When false is returned, the default behavior is stopped.
+         * If the string is returned, the cleanData value is modified to the return value.
+         * @param {Object} e Event object.
+         * @param {String} cleanData HTML string modified for editor format.
+         * @param {Boolean} maxChartCount option (true if max character is exceeded)
+         * @param {Object} core Core object
+         * @returns {Boolean|String}
+         */
+        onDrop: null,
+        onPaste: null,
 
         /**
          * @description Called just before the inline toolbar is positioned and displayed on the screen.
@@ -21902,8 +22097,10 @@ const _Context = function (element, cons, options) {
 
         /**
          * @description Called before the image is uploaded
+         * If true is returned, the internal upload process runs normally.
          * If false is returned, no image upload is performed.
          * If new fileList are returned,  replaced the previous fileList
+         * If undefined is returned, it waits until "uploadHandler" is executed.
          * @param {Array} files Files array
          * @param {Object} info info: {
          * - linkValue: Link url value
@@ -21930,8 +22127,10 @@ const _Context = function (element, cons, options) {
         onImageUploadBefore: null,
         /**
          * @description Called before the video is uploaded
+         * If true is returned, the internal upload process runs normally.
          * If false is returned, no video(iframe, video) upload is performed.
          * If new fileList are returned,  replaced the previous fileList
+         * If undefined is returned, it waits until "uploadHandler" is executed.
          * @param {Array} files Files array
          * @param {Object} info info: {
          * - inputWidth: Value of width input
@@ -21956,8 +22155,10 @@ const _Context = function (element, cons, options) {
         onVideoUploadBefore: null,
         /**
          * @description Called before the audio is uploaded
+         * If true is returned, the internal upload process runs normally.
          * If false is returned, no audio upload is performed.
          * If new fileList are returned,  replaced the previous fileList
+         * If undefined is returned, it waits until "uploadHandler" is executed.
          * @param {Array} files Files array
          * @param {Object} info info: {
          * - isUpdate: Update audio if true, create audio if false
@@ -22327,7 +22528,7 @@ const _Context = function (element, cons, options) {
 
         /**
          * @description Change the contents of the suneditor
-         * @param {String} contents Contents to Input
+         * @param {String|undefined} contents Contents to Input
          */
         setContents: function (contents) {
             core.setContents(contents);
@@ -22870,8 +23071,8 @@ var SunEditor_SunEditor = /*#__PURE__*/function (_Component) {
       if (onAudioUploadBefore) this.editor.onAudioUploadBefore = function (files, info, _, uploadHandler) {
         return onAudioUploadBefore(files, info, uploadHandler);
       };
-      if (onDrop) this.editor.onDrop = function (e) {
-        return onDrop(e);
+      if (onDrop) this.editor.onDrop = function (e, cleanData, maxCharCount) {
+        return onDrop(e, cleanData, maxCharCount);
       };
       if (onPaste) this.editor.onPaste = function (e, cleanData, maxCharCount) {
         return onPaste(e, cleanData, maxCharCount);

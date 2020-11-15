@@ -88,7 +88,7 @@ class SunEditor extends Component {
     if (onAudioUploadBefore)
       this.editor.onAudioUploadBefore = (files, info, _, uploadHandler) =>
         onAudioUploadBefore(files, info, uploadHandler);
-    if (onDrop) this.editor.onDrop = (e) => onDrop(e);
+    if (onDrop) this.editor.onDrop = (e, cleanData, maxCharCount) => onDrop(e, cleanData, maxCharCount);
     if (onPaste)
       this.editor.onPaste = (e, cleanData, maxCharCount) =>
         onPaste(e, cleanData, maxCharCount);

@@ -101,4 +101,6 @@ export default interface SetOptions {
   videoAccept?: string;
   historyStackDelayTime?: number;
   customPlugins?: Array<Plugin> | Record<string, Plugin>;
+  previewTemplate?: string;
+  defaultTag?: string;
 }
