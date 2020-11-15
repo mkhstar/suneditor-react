@@ -34,6 +34,34 @@ export default MyComponent;
 
 # Props
 
+## About Core
+
+**Note:** `suneditor-react` doesn't expose the core object in the callback functions such as `onScroll` etc. This is because it can be easily retrieved by attaching a ref to the Suneditor component.
+
+```javascript
+
+import React, { useRef, useEffect } from "react";
+import SunEditor from 'suneditor-react';
+import 'suneditor/dist/css/suneditor.min.css'; // Import Sun Editor's CSS File
+
+const MyComponent = props => {
+    const editorRef = useRef();
+    useEffect(() => {
+        // Get underlining core object here
+        // Notice that useEffect is been used because you have to make sure the editor is rendered.
+        console.log(editorRef.current.editor.core);
+    }, []);
+    return (
+        <div>
+            <p> My Other Contents </p>
+            <SunEditor ref={editorRef}/>
+        </div>
+    );
+};
+export default MyComponent;
+
+```
+
 ## Basic Settings
 
 **lang**
