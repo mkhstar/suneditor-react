@@ -1,5 +1,5 @@
 import * as React from 'react';
-import Lang from './types/lang'
+import Lang from './types/Lang'
 import SetOptions from './types/SetOptions';
 
 export interface SunEditorReactProps {
