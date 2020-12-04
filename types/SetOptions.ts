@@ -81,6 +81,7 @@ export default interface SetOptions {
   toolbarWidth?: number | string;
   mode?: string;
   lang?: object;
+  rtl?: boolean;
   linkProtocol?: string;
   icons?: object;
   attributesWhitelist?: object;
