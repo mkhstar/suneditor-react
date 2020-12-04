@@ -73,7 +73,7 @@ export default MyComponent;
 render() {
 	return <SunEditor lang="en" />
 	// Default is en
-	// lang prop can be one of the strings provided in this array ["en", "da", "de", "es", "fr", "ja", "ko", "pt_br", "ru", "zh_cn"]
+	// lang prop can be one of the strings provided in this array ["en", "da", "de", "es", "fr", "ja", "ko", "pt_br", "ru", "zh_cn", "ro", "pl", "ckb", "lv"]
 	// Alternatively, an object of your language can be passed to this prop. To learn how to do it refer to the bottom of the page
 }
 ```
@@ -687,6 +687,7 @@ render() {
 ## Editor Language Object
 
 You can translate the object below to any other language and pass it to the lang prop to set your locale language if it is not part of the strings of array above.
+Note: You will be aided by your editors intellisense
 
 ```javascript
 

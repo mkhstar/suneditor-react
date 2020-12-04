@@ -23146,6 +23146,12 @@ var SunEditor_SunEditor = /*#__PURE__*/function (_Component) {
         });
       }
 
+      if (prevProps.placeholder !== this.props.placeholder) {
+        this.editor.setOptions({
+          placeholder: this.props.placeholder
+        });
+      }
+
       if (prevProps.height !== this.props.height) {
         this.editor.setOptions({
           height: this.props.height

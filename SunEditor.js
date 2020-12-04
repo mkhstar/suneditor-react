@@ -187,6 +187,9 @@ class SunEditor extends Component {
     if (prevProps.lang !== this.props.lang) {
       this.editor.setOptions({ lang: getLanguage(this.props.lang) });
     }
+    if (prevProps.placeholder !== this.props.placeholder) {
+      this.editor.setOptions({ placeholder: this.props.placeholder });
+    }
     if (prevProps.height !== this.props.height) {
       this.editor.setOptions({ height: this.props.height });
     }
