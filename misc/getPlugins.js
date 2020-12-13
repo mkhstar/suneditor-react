@@ -1,4 +1,4 @@
-const getPlugins = ({ buttonList, customPlugins }) => {
+const getPlugins = ({ buttonList, plugins, customPlugins }) => {
   if (!buttonList) return undefined;
 
   if (!isArray(buttonList))
@@ -51,7 +51,7 @@ const getPlugins = ({ buttonList, customPlugins }) => {
     if (buttonList.indexOf("audio") >= 0)
       pluginList.push(require("suneditor/src/plugins/dialog/audio").default);
 
-      return [...pluginList, ...(customPlugins || [])];
+      return [...pluginList, ...(plugins || customPlugins || [])];
   }
 };
 

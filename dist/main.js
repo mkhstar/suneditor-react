@@ -22808,6 +22808,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 
 var getPlugins = function getPlugins(_ref) {
   var buttonList = _ref.buttonList,
+      plugins = _ref.plugins,
       customPlugins = _ref.customPlugins;
   if (!buttonList) return undefined;
   if (!isArray(buttonList)) throw new Error("Button List must be of type array");else {
@@ -22833,7 +22834,7 @@ var getPlugins = function getPlugins(_ref) {
     if (buttonList.indexOf("link") >= 0) pluginList.push(__webpack_require__(26).default);
     if (buttonList.indexOf("video") >= 0) pluginList.push(__webpack_require__(27).default);
     if (buttonList.indexOf("audio") >= 0) pluginList.push(__webpack_require__(28).default);
-    return [].concat(pluginList, _toConsumableArray(customPlugins || []));
+    return [].concat(pluginList, _toConsumableArray(plugins || customPlugins || []));
   }
 };
 
