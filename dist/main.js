@@ -22979,14 +22979,18 @@ var SunEditor_SunEditor = /*#__PURE__*/function (_Component) {
           setOptions = _this$props$setOption === void 0 ? {} : _this$props$setOption,
           _this$props$width = _this$props.width,
           width = _this$props$width === void 0 ? "100%" : _this$props$width,
-          height = _this$props.height;
+          height = _this$props.height,
+          defaultValue = _this$props.defaultValue,
+          name = _this$props.name;
       setOptions.lang = setOptions.lang || misc_getLanguage(lang);
       setOptions.plugins = misc_getPlugins(setOptions);
       setOptions.width = setOptions.width || width;
       if (height) setOptions.height = height;
-      this.editor = suneditor.create(this.txtArea.current);
+      if (name && defaultValue) this.txtArea.current.value = defaultValue;
+      this.editor = suneditor.create(this.txtArea.current, {
+        value: defaultValue
+      });
       var _this$props2 = this.props,
-          name = _this$props2.name,
           insertHTML = _this$props2.insertHTML,
           setContents = _this$props2.setContents,
           setDefaultStyle = _this$props2.setDefaultStyle,
@@ -23255,6 +23259,7 @@ SunEditor_SunEditor.propTypes = {
   onVideoUploadError: prop_types_default.a.func,
   onAudioUploadError: prop_types_default.a.func,
   setOptions: prop_types_default.a.object,
+  name: prop_types_default.a.string,
   setContents: prop_types_default.a.string,
   name: prop_types_default.a.string,
   appendContents: prop_types_default.a.string,

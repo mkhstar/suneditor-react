@@ -10,16 +10,18 @@ class SunEditor extends Component {
     this.txtArea = createRef();
   }
   componentDidMount() {
-    const { lang, setOptions = {}, width = "100%", height } = this.props;
+    const { lang, setOptions = {}, width = "100%", height, defaultValue, name } = this.props;
 
     setOptions.lang = setOptions.lang || getLanguage(lang);
     setOptions.plugins = getPlugins(setOptions);
     setOptions.width = setOptions.width || width;
     if (height) setOptions.height = height;
+    if (name && defaultValue) this.txtArea.current.value = defaultValue;
 
-    this.editor = suneditor.create(this.txtArea.current);
+    this.editor = suneditor.create(this.txtArea.current, {
+      value: defaultValue
+    });
     const {
-      name,
       insertHTML,
       setContents,
       setDefaultStyle,
@@ -277,6 +279,7 @@ SunEditor.propTypes = {
   onVideoUploadError: PropTypes.func,
   onAudioUploadError: PropTypes.func,
   setOptions: PropTypes.object,
+  name: PropTypes.string,
   setContents: PropTypes.string,
   name: PropTypes.string,
   appendContents: PropTypes.string,

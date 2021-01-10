@@ -93,6 +93,20 @@ render() {
 }
 ```
 
+**defaultValue**
+
+**_Set Editor's default value_**
+
+```javascript
+//...
+// Sets the default value of the editor.
+// This is useful if you don't want the onChange method to be called on render.
+// If you want the onChange method to be called on render please use the setContents prop
+render() {
+	return <SunEditor defaultValue="<p>The editor's default value</p>" />
+}
+```
+
 **width**
 
 **_Set Editor's width_**
@@ -110,7 +124,7 @@ render() {
 
 **height**
 
-**_Set Editor's height**
+**_Set Editor's height_**
 
 ```javascript
 //...
@@ -174,9 +188,11 @@ render() {
 
 **setContents**
 
-**_Set Editor's Initial Content_**
+**_Set Editor's Content_**
 
-**Note** ``setContents`` is used to set the initial contents of the editor. If you are setting the contents with a state variable, make sure that you are not using the same variable to handle the ``onChange`` event.
+**Note:** To set the initial contents of the editor without calling the ``onChange`` event please use the ``defaultValue`` prop.
+``setContents`` is good in setting the contents of the editor programmatically.
+
 
 ```javascript
 //...

@@ -51,6 +51,7 @@ export interface SunEditorReactProps {
   imageUploadHandler?: (xmlHttpRequest: XMLHttpRequest, info: {isUpdate: boolean, linkValue: any, element: Element, align: any, linkNewWindow: any, [key: string]: any}, core: any) => void;
 
   setOptions?: SetOptions;
+  defaultValue?: string;
   setContents?: string;
   name?: string;
   appendContents?: string;
