@@ -104,4 +104,26 @@ export default interface SetOptions {
   customPlugins?: Array<Plugin> | Record<string, Plugin>;
   previewTemplate?: string;
   defaultTag?: string;
+  textTags?: {
+    bold: string;
+    underline: string;
+    italic: string;
+    strike: string;
+  };
+  linkRel?: Array<
+    | "alternate"
+    | "author"
+    | "bookmark"
+    | "external"
+    | "help"
+    | "license"
+    | "next"
+    | "nofollow"
+    | "noreferrer"
+    | "noopener"
+    | "prev"
+    | "search"
+    | "tag"
+  >;
+  fullScreenOffset?: number | string;
 }

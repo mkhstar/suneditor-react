@@ -82,7 +82,7 @@ module.exports =
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 45);
+/******/ 	return __webpack_require__(__webpack_require__.s = 47);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -99,7 +99,7 @@ module.exports =
 if (false) { var throwOnDirectAccess, ReactIs; } else {
   // By explicitly using `prop-types` you are opting into new production behavior.
   // http://fb.me/prop-types-in-prod
-  module.exports = __webpack_require__(43)();
+  module.exports = __webpack_require__(45)();
 }
 
 
@@ -221,7 +221,7 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
 
             this.context.dialog.updateModal = update;
 
-            if (this.context.option.popupDisplay === 'full') {
+            if (this.options.popupDisplay === 'full') {
                 this.context.dialog.modalArea.style.position = 'fixed';
             } else {
                 this.context.dialog.modalArea.style.position = 'absolute';
@@ -235,6 +235,7 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
 
             this.context.dialog.modalArea.style.display = 'block';
             this.context.dialog.back.style.display = 'block';
+            // this.context.dialog.modal.style.display = 'flex'; @v3
             this.context.dialog.modal.style.display = 'block';
             this.modalForm.style.display = 'block';
 
@@ -414,7 +415,7 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
          * @param {FormData} formData FormData in body
          * @param {Function|null} callBack Success call back function
          * @param {Function|null} errorCallBack Error call back function
-         * @example this.plugins.fileManager.upload.call(this, imageUploadUrl, this.context.option.imageUploadHeader, formData, this.plugins.image.callBack_imgUpload.bind(this, info), this.functions.onImageUploadError);
+         * @example this.plugins.fileManager.upload.call(this, imageUploadUrl, this.options.imageUploadHeader, formData, this.plugins.image.callBack_imgUpload.bind(this, info), this.functions.onImageUploadError);
          */
         upload: function (uploadUrl, uploadHeader, formData, callBack, errorCallBack) {
             this.showLoading();
@@ -787,7 +788,8 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
                 title: 'Insert Link',
                 url: 'URL to link',
                 text: 'Text to display',
-                newWindowCheck: 'Open in new window'
+                newWindowCheck: 'Open in new window',
+                bookmark: 'Bookmark'
             },
             mathBox: {
                 title: 'Math',
@@ -936,7 +938,7 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
      * @returns {String} HTML string
      */
     createColorList: function (core, makeColor) {
-        const option = core.context.option;
+        const option = core.options;
         const lang = core.lang;
         const colorList = !option.colorList || option.colorList.length === 0 ?
             [
@@ -967,7 +969,7 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
                 }
             }
             list += '' +
-            '<form class="se-submenu-form-group">' +
+            '<form class="se-form-group">' +
                 '<input type="text" maxlength="9" class="_se_color_picker_input se-color-input"/>' +
                 '<button type="submit" class="se-btn-primary _se_color_picker_submit" title="' + lang.dialogBox.submitButton + '">' +
                     core.icons.checked +
@@ -1145,14 +1147,14 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
             _element_t: 0,
             _defaultSizeX: 'auto',
             _defaultSizeY: 'auto',
-            _origin_w: context.option.imageWidth === 'auto' ? '' : context.option.imageWidth,
-            _origin_h: context.option.imageHeight === 'auto' ? '' : context.option.imageHeight,
+            _origin_w: core.options.imageWidth === 'auto' ? '' : core.options.imageWidth,
+            _origin_h: core.options.imageHeight === 'auto' ? '' : core.options.imageHeight,
             _proportionChecked: true,
             // -- select function --
-            _resizing: context.option.imageResizing,
-            _resizeDotHide: !context.option.imageHeightShow,
-            _rotation: context.option.imageRotation,
-            _onlyPercentage: context.option.imageSizeOnlyPercentage,
+            _resizing: core.options.imageResizing,
+            _resizeDotHide: !core.options.imageHeightShow,
+            _rotation: core.options.imageRotation,
+            _onlyPercentage: core.options.imageSizeOnlyPercentage,
             _ratio: false,
             _ratioX: 1,
             _ratioY: 1
@@ -1187,14 +1189,14 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
             };
     
             /** resize controller, button */
-            let resize_div_container = this.setController_resize.call(core);
+            let resize_div_container = this.setController_resize(core);
             context.resizing.resizeContainer = resize_div_container;
     
             context.resizing.resizeDiv = resize_div_container.querySelector('.se-modal-resize');
             context.resizing.resizeDot = resize_div_container.querySelector('.se-resize-dot');
             context.resizing.resizeDisplay = resize_div_container.querySelector('.se-resize-display');
     
-            let resize_button = this.setController_button.call(core);
+            let resize_button = this.setController_button(core);
             context.resizing.resizeButton = resize_button;
     
             let resize_handles = context.resizing.resizeHandles = context.resizing.resizeDot.querySelectorAll('span');
@@ -1211,7 +1213,6 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
     
             /** add event listeners */
             resize_div_container.addEventListener('mousedown', function (e) { e.preventDefault(); });
-            resize_button.addEventListener('mousedown', core.eventStop);
             resize_handles[0].addEventListener('mousedown', this.onMouseDown_resize_handle.bind(core));
             resize_handles[1].addEventListener('mousedown', this.onMouseDown_resize_handle.bind(core));
             resize_handles[2].addEventListener('mousedown', this.onMouseDown_resize_handle.bind(core));
@@ -1231,8 +1232,8 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
         },
     
         /** resize controller, button (image, iframe, video) */
-        setController_resize: function () {
-            const resize_container = this.util.createElement('DIV');
+        setController_resize: function (core) {
+            const resize_container = core.util.createElement('DIV');
             
             resize_container.className = 'se-controller se-resizing-container';
             resize_container.style.display = 'none';
@@ -1253,10 +1254,10 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
             return resize_container;
         },
     
-        setController_button: function () {
-            const lang = this.lang;
-            const icons = this.icons;
-            const resize_button = this.util.createElement("DIV");
+        setController_button: function (core) {
+            const lang = core.lang;
+            const icons = core.icons;
+            const resize_button = core.util.createElement("DIV");
     
             resize_button.className = "se-controller se-controller-resizing";
             resize_button.innerHTML = '' +
@@ -1578,19 +1579,17 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
                 }
             }
 
-            if (this.currentControllerName !== plugin) {
-                this.util.setDisabledButtons(true, this.resizingDisabledButtons);
-                resizeContainer.style.display = 'block';
+            this.util.setDisabledButtons(true, this.resizingDisabledButtons);
+            resizeContainer.style.display = 'block';
 
-                const addOffset = {left: 0, top: 50};
-                if (this.context.options.iframe) {
-                    addOffset.left -= this.context.element.wysiwygFrame.parentElement.offsetLeft;
-                    addOffset.top -= this.context.element.wysiwygFrame.parentElement.offsetTop;
-                }
-
-                this.setControllerPosition(contextResizing.resizeButton, resizeContainer, 'bottom', addOffset);
-                this.controllersOn(resizeContainer, contextResizing.resizeButton, this.util.setDisabledButtons.bind(this, false, this.resizingDisabledButtons), targetElement, plugin);
+            const addOffset = {left: 0, top: 50};
+            if (this.options.iframe) {
+                addOffset.left -= this.context.element.wysiwygFrame.parentElement.offsetLeft;
+                addOffset.top -= this.context.element.wysiwygFrame.parentElement.offsetTop;
             }
+
+            this.setControllerPosition(contextResizing.resizeButton, resizeContainer, 'bottom', addOffset);
+            this.controllersOn(resizeContainer, contextResizing.resizeButton, this.util.setDisabledButtons.bind(this, false, this.resizingDisabledButtons), targetElement, plugin);
     
             contextResizing._resize_w = w;
             contextResizing._resize_h = h;
@@ -1622,11 +1621,11 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
             this.plugins.resizing._closeAlignMenu = function () {
                 this.util.removeClass(this.context.resizing.alignButton, 'on');
                 this.context.resizing.alignMenu.style.display = 'none';
-                this.removeDocEvent('mousedown', this.plugins.resizing._closeAlignMenu);
+                this.removeDocEvent('click', this.plugins.resizing._closeAlignMenu);
                 this.plugins.resizing._closeAlignMenu = null;
             }.bind(this);
     
-            this.addDocEvent('mousedown', this.plugins.resizing._closeAlignMenu);
+            this.addDocEvent('click', this.plugins.resizing._closeAlignMenu);
         },
     
         /**
@@ -2165,7 +2164,7 @@ module.exports = require("react");
                 fileBrowserContext.list.className = 'se-file-browser-list ' + listClassName;
             }
 
-            if (this.context.option.popupDisplay === 'full') {
+            if (this.options.popupDisplay === 'full') {
                 fileBrowserContext.area.style.position = 'fixed';
             } else {
                 fileBrowserContext.area.style.position = 'absolute';
@@ -2400,7 +2399,7 @@ __webpack_require__.r(__webpack_exports__);
             targetButton: targetElement,
             _alignList: null,
             currentAlign: '',
-            defaultDir: context.options.rtl ? 'right' : 'left', 
+            defaultDir: core.options.rtl ? 'right' : 'left', 
             icons: {
                 justify: icons.align_justify,
                 left: icons.align_left,
@@ -2410,7 +2409,7 @@ __webpack_require__.r(__webpack_exports__);
         };
 
         /** set submenu */
-        let listDiv = this.setSubmenu.call(core);
+        let listDiv = this.setSubmenu(core);
         let listUl = listDiv.querySelector('ul');
 
         /** add event listeners */
@@ -2424,11 +2423,11 @@ __webpack_require__.r(__webpack_exports__);
         listDiv = null, listUl = null;
     },
 
-    setSubmenu: function () {
-        const lang = this.lang;
-        const icons = this.icons;
-        const listDiv = this.util.createElement('DIV');
-        const leftDir = this.context.align.defaultDir === 'left';
+    setSubmenu: function (core) {
+        const lang = core.lang;
+        const icons = core.icons;
+        const listDiv = core.util.createElement('DIV');
+        const leftDir = core.context.align.defaultDir === 'left';
 
         const leftMenu = '<li>' +
             '<button type="button" class="se-btn-list se-btn-align" data-command="justifyleft" data-value="left" title="' + lang.toolbar.alignLeft + '">' +
@@ -2478,7 +2477,7 @@ __webpack_require__.r(__webpack_exports__);
         } else if (this.util.isFormatElement(element)) {
             const textAlign = element.style.textAlign;
             if (textAlign) {
-                this.util.changeElement(target, alignContext.icons[textAlign]);
+                this.util.changeElement(target, alignContext.icons[textAlign] || alignContext.icons[alignContext.defaultDir]);
                 targetButton.setAttribute('data-focus', textAlign);
                 return true;
             }
@@ -2558,14 +2557,14 @@ __webpack_require__.r(__webpack_exports__);
 
         const context = core.context;
         context.math = {
-            focusElement: null,
+            focusElement: null, // @Override dialog // This element has focus when the dialog is opened.
             previewElement: null,
             fontSizeElement: null,
             _mathExp: null
         };
 
         /** math dialog */
-        let math_dialog = this.setDialog.call(core);
+        let math_dialog = this.setDialog(core);
         context.math.modal = math_dialog;
         context.math.focusElement = math_dialog.querySelector('.se-math-exp');
         context.math.previewElement = math_dialog.querySelector('.se-math-preview');
@@ -2575,13 +2574,12 @@ __webpack_require__.r(__webpack_exports__);
         context.math.fontSizeElement.addEventListener('change', function (e) { this.fontSize = e.target.value; }.bind(context.math.previewElement.style), false);
 
         /** math controller */
-        let math_controller = this.setController_MathButton.call(core);
+        let math_controller = this.setController_MathButton(core);
         context.math.mathController = math_controller;
         context.math._mathExp = null;
-        math_controller.addEventListener('mousedown', core.eventStop);
 
         /** add event listeners */
-        math_dialog.querySelector('.se-btn-primary').addEventListener('click', this.submit.bind(core), false);
+        math_dialog.querySelector('form').addEventListener('submit', this.submit.bind(core), false);
         math_controller.addEventListener('click', this.onClick_mathController.bind(core));
 
         /** append html */
@@ -2593,9 +2591,9 @@ __webpack_require__.r(__webpack_exports__);
     },
 
     /** dialog */
-    setDialog: function () {
-        const lang = this.lang;
-        const dialog = this.util.createElement('DIV');
+    setDialog: function (core) {
+        const lang = core.lang;
+        const dialog = core.util.createElement('DIV');
 
         dialog.className = 'se-dialog-content';
         dialog.style.display = 'none';
@@ -2603,7 +2601,7 @@ __webpack_require__.r(__webpack_exports__);
         '<form>' +
             '<div class="se-dialog-header">' +
                 '<button type="button" data-command="close" class="se-btn se-dialog-close" aria-label="Close" title="' + lang.dialogBox.close + '">' +
-                    this.icons.cancel +
+                    core.icons.cancel +
                 '</button>' +
                 '<span class="se-modal-title">' + lang.dialogBox.mathBox.title + '</span>' +
             '</div>' +
@@ -2635,9 +2633,9 @@ __webpack_require__.r(__webpack_exports__);
     },
 
     /** modify controller button */
-    setController_MathButton: function () {
-        const lang = this.lang;
-        const math_btn = this.util.createElement('DIV');
+    setController_MathButton: function (core) {
+        const lang = core.lang;
+        const math_btn = core.util.createElement('DIV');
 
         math_btn.className = 'se-controller se-controller-link';
         math_btn.innerHTML = '' +
@@ -2645,11 +2643,11 @@ __webpack_require__.r(__webpack_exports__);
         '<div class="link-content">' +
             '<div class="se-btn-group">' +
                 '<button type="button" data-command="update" tabindex="-1" class="se-btn se-tooltip">' +
-                    this.icons.edit +
+                    core.icons.edit +
                     '<span class="se-tooltip-inner"><span class="se-tooltip-text">' + lang.controller.edit + '</span></span>' +
                 '</button>' +
                 '<button type="button" data-command="delete" tabindex="-1" class="se-btn se-tooltip">' +
-                    this.icons.delete +
+                    core.icons.delete +
                     '<span class="se-tooltip-inner"><span class="se-tooltip-text">' + lang.controller.remove + '</span></span>' +
                 '</button>' +
             '</div>' +
@@ -2681,7 +2679,7 @@ __webpack_require__.r(__webpack_exports__);
     },
 
     _renderer: function (exp) {
-        const katex = this.context.option.katex;
+        const katex = this.options.katex;
         return katex.src.renderToString(exp, katex.options);
     },
 
@@ -2858,7 +2856,7 @@ __webpack_require__.r(__webpack_exports__);
         const context = core.context;
         context.imageGallery = {
             title: core.lang.toolbar.imageGallery, // @Required @Override fileBrowser - File browser window title.
-            url: context.options.imageGalleryUrl, // @Required @Override fileBrowser - File server url.
+            url: core.options.imageGalleryUrl, // @Required @Override fileBrowser - File server url.
             listClass: 'se-image-list', // @Required @Override fileBrowser - Class name of list div.
             itemTemplateHandler: this.drawItems, // @Required @Override fileBrowser - Function that defines the HTML of an file item.
             selectorHandler: this.setImage.bind(core), // @Required @Override fileBrowser - Function that action when item click.
@@ -2982,7 +2980,7 @@ __webpack_require__.r(__webpack_exports__);
         };
 
         /** set submenu */
-        let listDiv = this.setSubmenu.call(core);
+        let listDiv = this.setSubmenu(core);
 
         /** add event listeners */
         listDiv.querySelector('.se-list-inner').addEventListener('click', this.pickup.bind(core));
@@ -2996,10 +2994,10 @@ __webpack_require__.r(__webpack_exports__);
         listDiv = null;
     },
 
-    setSubmenu: function () {
-        const option = this.context.option;
-        const lang = this.lang;
-        const listDiv = this.util.createElement('DIV');
+    setSubmenu: function (core) {
+        const option = core.options;
+        const lang = core.lang;
+        const listDiv = core.util.createElement('DIV');
 
         listDiv.className = 'se-submenu se-list-layer se-list-font-family';
 
@@ -3125,7 +3123,7 @@ __webpack_require__.r(__webpack_exports__);
         };
 
         /** set submenu */
-        let listDiv = this.setSubmenu.call(core);
+        let listDiv = this.setSubmenu(core);
         context.fontColor.colorInput = listDiv.querySelector('._se_color_picker_input');
 
         /** add event listeners */
@@ -3142,9 +3140,9 @@ __webpack_require__.r(__webpack_exports__);
         listDiv = null;
     },
 
-    setSubmenu: function () {
-        const colorArea = this.context.colorPicker.colorListHTML;
-        const listDiv = this.util.createElement('DIV');
+    setSubmenu: function (core) {
+        const colorArea = core.context.colorPicker.colorListHTML;
+        const listDiv = core.util.createElement('DIV');
 
         listDiv.className = 'se-submenu se-list-layer';
         listDiv.innerHTML = colorArea;
@@ -3229,7 +3227,7 @@ __webpack_require__.r(__webpack_exports__);
         };
 
         /** set submenu */
-        let listDiv = this.setSubmenu.call(core);
+        let listDiv = this.setSubmenu(core);
         let listUl = listDiv.querySelector('ul');
 
         /** add event listeners */
@@ -3243,10 +3241,10 @@ __webpack_require__.r(__webpack_exports__);
         listDiv = null, listUl = null;
     },
 
-    setSubmenu: function () {
-        const option = this.context.option;
-        const lang = this.lang;
-        const listDiv = this.util.createElement('DIV');
+    setSubmenu: function (core) {
+        const option = core.options;
+        const lang = core.lang;
+        const listDiv = core.util.createElement('DIV');
 
         listDiv.className = 'se-submenu se-list-layer se-list-font-size';
 
@@ -3350,7 +3348,7 @@ __webpack_require__.r(__webpack_exports__);
         };
 
         /** set submenu */
-        let listDiv = this.setSubmenu.call(core);
+        let listDiv = this.setSubmenu(core);
 
         /** add event listeners */
         listDiv.querySelector('ul').addEventListener('click', this.pickUp.bind(core));
@@ -3363,10 +3361,10 @@ __webpack_require__.r(__webpack_exports__);
         listDiv = null;
     },
 
-    setSubmenu: function () {
-        const option = this.context.option;
-        const lang_toolbar = this.lang.toolbar;
-        const listDiv = this.util.createElement('DIV');
+    setSubmenu: function (core) {
+        const option = core.options;
+        const lang_toolbar = core.lang.toolbar;
+        const listDiv = core.util.createElement('DIV');
         listDiv.className = 'se-submenu se-list-layer se-list-format';
 
         const defaultFormats = ['p', 'div', 'blockquote', 'pre', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'];
@@ -3638,7 +3636,7 @@ __webpack_require__.r(__webpack_exports__);
         };
 
         /** set submenu */
-        let listDiv = this.setSubmenu.call(core);
+        let listDiv = this.setSubmenu(core);
         context.hiliteColor.colorInput = listDiv.querySelector('._se_color_picker_input');
 
         /** add event listeners */
@@ -3656,9 +3654,9 @@ __webpack_require__.r(__webpack_exports__);
         listDiv = null;
     },
 
-    setSubmenu: function () {
-        const colorArea = this.context.colorPicker.colorListHTML;
-        const listDiv = this.util.createElement('DIV');
+    setSubmenu: function (core) {
+        const colorArea = core.context.colorPicker.colorListHTML;
+        const listDiv = core.util.createElement('DIV');
 
         listDiv.className = 'se-submenu se-list-layer';
         listDiv.innerHTML = colorArea;
@@ -3736,7 +3734,7 @@ __webpack_require__.r(__webpack_exports__);
     display: 'submenu',
     add: function (core, targetElement) {
         /** set submenu */
-        let listDiv = this.setSubmenu.call(core);
+        let listDiv = this.setSubmenu(core);
 
         /** add event listeners */
         listDiv.querySelector('ul').addEventListener('click', this.horizontalRulePick.bind(core));
@@ -3748,9 +3746,9 @@ __webpack_require__.r(__webpack_exports__);
         listDiv = null;
     },
 
-    setSubmenu: function () {
-        const lang = this.lang;
-        const listDiv = this.util.createElement('DIV');
+    setSubmenu: function (core) {
+        const lang = core.lang;
+        const listDiv = core.util.createElement('DIV');
 
         listDiv.className = 'se-submenu se-list-layer se-list-line';
         listDiv.innerHTML = '' +
@@ -3833,7 +3831,7 @@ __webpack_require__.r(__webpack_exports__);
         };
 
         /** set submenu */
-        let listDiv = this.setSubmenu.call(core);
+        let listDiv = this.setSubmenu(core);
         let listUl = listDiv.querySelector('ul');
 
         /** add event listeners */
@@ -3848,10 +3846,10 @@ __webpack_require__.r(__webpack_exports__);
         listDiv = null, listUl = null;
     },
 
-    setSubmenu: function () {
-        const option = this.context.option;
-        const lang = this.lang;
-        const listDiv = this.util.createElement('DIV');
+    setSubmenu: function (core) {
+        const option = core.options;
+        const lang = core.lang;
+        const listDiv = core.util.createElement('DIV');
 
         listDiv.className = 'se-submenu se-list-layer';
 
@@ -3950,7 +3948,7 @@ __webpack_require__.r(__webpack_exports__);
         };
 
         /** set submenu */
-        let listDiv = this.setSubmenu.call(core);
+        let listDiv = this.setSubmenu(core);
         let listUl = listDiv.querySelector('ul');
 
         /** add event listeners */
@@ -3964,19 +3962,19 @@ __webpack_require__.r(__webpack_exports__);
         listDiv = null, listUl = null;
     },
 
-    setSubmenu: function () {
-        const lang = this.lang;
-        const listDiv = this.util.createElement('DIV');
+    setSubmenu: function (core) {
+        const lang = core.lang;
+        const listDiv = core.util.createElement('DIV');
 
         listDiv.className = 'se-submenu se-list-layer';
         listDiv.innerHTML = '' +
             '<div class="se-list-inner">' +
                 '<ul class="se-list-basic">' +
                     '<li><button type="button" class="se-btn-list se-tooltip" data-command="OL" title="' + lang.toolbar.orderList + '">' +
-                        this.icons.list_number +
+                        core.icons.list_number +
                     '</button></li>' +
                     '<li><button type="button" class="se-btn-list se-tooltip" data-command="UL" title="' + lang.toolbar.unorderList + '">' +
-                        this.icons.list_bullets +
+                        core.icons.list_bullets +
                     '</button></li>' +
                 '</ul>' +
             '</div>';
@@ -4399,7 +4397,7 @@ __webpack_require__.r(__webpack_exports__);
         };
 
         /** set submenu */
-        let listDiv = this.setSubmenu.call(core);
+        let listDiv = this.setSubmenu(core);
 
         /** add event listeners */
         listDiv.querySelector('ul').addEventListener('click', this.pickUp.bind(core));
@@ -4413,12 +4411,12 @@ __webpack_require__.r(__webpack_exports__);
         listDiv = null;
     },
 
-    setSubmenu: function () {
-        const option = this.context.option;
-        const listDiv = this.util.createElement('DIV');
+    setSubmenu: function (core) {
+        const option = core.options;
+        const listDiv = core.util.createElement('DIV');
         listDiv.className = 'se-submenu se-list-layer se-list-format';
 
-        const menuLang = this.lang.menu;
+        const menuLang = core.lang.menu;
         const defaultList = {
             spaced: {
                 name: menuLang.spaced,
@@ -4545,8 +4543,8 @@ __webpack_require__.r(__webpack_exports__);
             _tableXY: [],
             _maxWidth: true,
             _fixedColumn: false,
-            _rtl: context.options.rtl,
-            cellControllerTop: context.options.tableCellControllerPosition === 'top',
+            _rtl: core.options.rtl,
+            cellControllerTop: core.options.tableCellControllerPosition === 'top',
             resizeText: null,
             headerButton: null,
             mergeButton: null,
@@ -4569,32 +4567,30 @@ __webpack_require__.r(__webpack_exports__);
         };
 
         /** set submenu */
-        let listDiv = this.setSubmenu.call(core);
+        let listDiv = this.setSubmenu(core);
         let tablePicker = listDiv.querySelector('.se-controller-table-picker');
 
         contextTable.tableHighlight = listDiv.querySelector('.se-table-size-highlighted');
         contextTable.tableUnHighlight = listDiv.querySelector('.se-table-size-unhighlighted');
         contextTable.tableDisplay = listDiv.querySelector('.se-table-size-display');
-        if (context.options.rtl) contextTable.tableHighlight.style.left = (10 * 18 - 13) + 'px';
+        if (core.options.rtl) contextTable.tableHighlight.style.left = (10 * 18 - 13) + 'px';
 
         /** set table controller */
-        let tableController = this.setController_table.call(core);
+        let tableController = this.setController_table(core);
         contextTable.tableController = tableController;
         contextTable.resizeButton = tableController.querySelector('._se_table_resize');
         contextTable.resizeText = tableController.querySelector('._se_table_resize > span > span');
         contextTable.columnFixedButton = tableController.querySelector('._se_table_fixed_column');
         contextTable.headerButton = tableController.querySelector('._se_table_header');
-        tableController.addEventListener('mousedown', core.eventStop);
 
         /** set resizing */
-        let resizeDiv = this.setController_tableEditor.call(core, contextTable.cellControllerTop);
+        let resizeDiv = this.setController_tableEditor(core, contextTable.cellControllerTop);
         contextTable.resizeDiv = resizeDiv;
         contextTable.splitMenu = resizeDiv.querySelector('.se-btn-group-sub');
         contextTable.mergeButton = resizeDiv.querySelector('._se_table_merge_button');
         contextTable.splitButton = resizeDiv.querySelector('._se_table_split_button');
         contextTable.insertRowAboveButton = resizeDiv.querySelector('._se_table_insert_row_a');
         contextTable.insertRowBelowButton = resizeDiv.querySelector('._se_table_insert_row_b');
-        resizeDiv.addEventListener('mousedown', core.eventStop);
         
         /** add event listeners */
         tablePicker.addEventListener('mousemove', this.onMouseMove_tablePicker.bind(core, contextTable));
@@ -4613,8 +4609,8 @@ __webpack_require__.r(__webpack_exports__);
         listDiv = null, tablePicker = null, resizeDiv = null, tableController = null, contextTable = null;
     },
 
-    setSubmenu: function () {
-        const listDiv = this.util.createElement('DIV');
+    setSubmenu: function (core) {
+        const listDiv = core.util.createElement('DIV');
         listDiv.className = 'se-submenu se-selector-table';
         listDiv.innerHTML = '' +
             '<div class="se-table-size">' +
@@ -4627,10 +4623,10 @@ __webpack_require__.r(__webpack_exports__);
         return listDiv;
     },
 
-    setController_table: function () {
-        const lang = this.lang;
-        const icons = this.icons;
-        const tableResize = this.util.createElement('DIV');
+    setController_table: function (core) {
+        const lang = core.lang;
+        const icons = core.icons;
+        const tableResize = core.util.createElement('DIV');
 
         tableResize.className = 'se-controller se-controller-table';
         tableResize.innerHTML = '' +
@@ -4658,10 +4654,10 @@ __webpack_require__.r(__webpack_exports__);
         return tableResize;
     },
 
-    setController_tableEditor: function (cellControllerTop) {
-        const lang = this.lang;
-        const icons = this.icons;
-        const tableResize = this.util.createElement('DIV');
+    setController_tableEditor: function (core, cellControllerTop) {
+        const lang = core.lang;
+        const icons = core.icons;
+        const tableResize = core.util.createElement('DIV');
 
         tableResize.className = 'se-controller se-controller-table-cell';
         tableResize.innerHTML = (cellControllerTop ? '' : '<div class="se-arrow se-arrow-up"></div>') +
@@ -5981,7 +5977,7 @@ __webpack_require__.r(__webpack_exports__);
         context.template = {};
 
         /** set submenu */
-        let templateDiv = this.setSubmenu.call(core);
+        let templateDiv = this.setSubmenu(core);
 
         /** add event listeners */
         templateDiv.querySelector('ul').addEventListener('click', this.pickup.bind(core));
@@ -5993,13 +5989,13 @@ __webpack_require__.r(__webpack_exports__);
         templateDiv = null;
     },
 
-    setSubmenu: function () {
-        const templateList = this.context.option.templates;
+    setSubmenu: function (core) {
+        const templateList = core.options.templates;
         if (!templateList || templateList.length === 0) {
             throw Error('[SUNEDITOR.plugins.template.fail] To use the "template" plugin, please define the "templates" option.');
         }
 
-        const listDiv = this.util.createElement('DIV');
+        const listDiv = core.util.createElement('DIV');
         listDiv.className = 'se-list-layer';
 
         let list = '<div class="se-submenu se-list-inner">' +
@@ -6021,7 +6017,7 @@ __webpack_require__.r(__webpack_exports__);
         e.preventDefault();
         e.stopPropagation();
 
-        const temp = this.context.option.templates[e.target.getAttribute('data-value')];
+        const temp = this.options.templates[e.target.getAttribute('data-value')];
 
         if (temp.html) {
             this.setContents(temp.html);
@@ -6059,7 +6055,7 @@ __webpack_require__.r(__webpack_exports__);
         };
 
         /** set submenu */
-        let listDiv = this.setSubmenu.call(core);
+        let listDiv = this.setSubmenu(core);
         let listUl = listDiv.querySelector('ul');
 
         /** add event listeners */
@@ -6074,29 +6070,29 @@ __webpack_require__.r(__webpack_exports__);
         listDiv = null, listUl = null;
     },
 
-    setSubmenu: function () {
-        const option = this.context.option;
-        const listDiv = this.util.createElement('DIV');
+    setSubmenu: function (core) {
+        const option = core.options;
+        const listDiv = core.util.createElement('DIV');
         listDiv.className = 'se-submenu se-list-layer se-list-format';
 
         const defaultList = {
             code: {
-                name: this.lang.menu.code,
+                name: core.lang.menu.code,
                 class: '__se__t-code',
                 tag: 'code',
             },
             translucent: {
-                name: this.lang.menu.translucent,
+                name: core.lang.menu.translucent,
                 style: 'opacity: 0.5;',
                 tag: 'span',
             },
             shadow: {
-                name: this.lang.menu.shadow,
+                name: core.lang.menu.shadow,
                 class: '__se__t-shadow',
                 tag: 'span',
             }
         };
-        const styleList = !option.textStyles ? this._w.Object.keys(defaultList) : option.textStyles;
+        const styleList = !option.textStyles ? core._w.Object.keys(defaultList) : option.textStyles;
 
         let list = '<div class="se-list-inner"><ul class="se-list-basic">';
         for (let i = 0, len = styleList.length, t, tag, name, attrs, command, value, _class; i < len; i++) {
@@ -6243,12 +6239,14 @@ __webpack_require__.r(__webpack_exports__);
     add: function (core) {
         core.addModule([_modules_dialog__WEBPACK_IMPORTED_MODULE_0___default.a, _modules_component__WEBPACK_IMPORTED_MODULE_1___default.a, _modules_resizing__WEBPACK_IMPORTED_MODULE_2___default.a, _modules_fileManager__WEBPACK_IMPORTED_MODULE_3___default.a]);
         
+        const options = core.options;
         const context = core.context;
         const contextImage = context.image = {
             _infoList: [], // @Override fileManager
             _infoIndex: 0, // @Override fileManager
             _uploadFileLength: 0, // @Override fileManager
-            sizeUnit: context.option._imageSizeUnit,
+            focusElement: null, // @Override dialog // This element has focus when the dialog is opened.
+            sizeUnit: options._imageSizeUnit,
             _altText: '',
             _linkElement: null,
             _align: 'none',
@@ -6270,13 +6268,13 @@ __webpack_require__.r(__webpack_exports__);
             _element_t: 0,
             _defaultSizeX: 'auto',
             _defaultSizeY: 'auto',
-            _origin_w: context.option.imageWidth === 'auto' ? '' : context.option.imageWidth,
-            _origin_h: context.option.imageHeight === 'auto' ? '' : context.option.imageHeight,
+            _origin_w: options.imageWidth === 'auto' ? '' : options.imageWidth,
+            _origin_h: options.imageHeight === 'auto' ? '' : options.imageHeight,
             _proportionChecked: true,
-            _resizing: context.option.imageResizing,
-            _resizeDotHide: !context.option.imageHeightShow,
-            _rotation: context.option.imageRotation,
-            _onlyPercentage: context.option.imageSizeOnlyPercentage,
+            _resizing: options.imageResizing,
+            _resizeDotHide: !options.imageHeightShow,
+            _rotation: options.imageRotation,
+            _onlyPercentage: options.imageSizeOnlyPercentage,
             _ratio: false,
             _ratioX: 1,
             _ratioY: 1,
@@ -6287,7 +6285,7 @@ __webpack_require__.r(__webpack_exports__);
         };
 
         /** image dialog */
-        let image_dialog = this.setDialog.call(core);
+        let image_dialog = this.setDialog(core);
         contextImage.modal = image_dialog;
         contextImage.imgInputFile = image_dialog.querySelector('._se_image_file');
         contextImage.imgUrlFile = image_dialog.querySelector('._se_image_url');
@@ -6301,12 +6299,12 @@ __webpack_require__.r(__webpack_exports__);
 
         /** add event listeners */
         image_dialog.querySelector('.se-dialog-tabs').addEventListener('click', this.openTab.bind(core));
-        image_dialog.querySelector('.se-btn-primary').addEventListener('click', this.submit.bind(core));
+        image_dialog.querySelector('form').addEventListener('submit', this.submit.bind(core));
         if (contextImage.imgInputFile) image_dialog.querySelector('.se-file-remove').addEventListener('click', this._removeSelectedFiles.bind(contextImage.imgInputFile, contextImage.imgUrlFile, contextImage.previewSrc));
         if (contextImage.imgInputFile && contextImage.imgUrlFile) contextImage.imgInputFile.addEventListener('change', this._fileInputChange.bind(contextImage));
 
-        contextImage.imgLink.addEventListener('input', this._onLinkPreview.bind(contextImage.previewLink, contextImage._v_link, context.options.linkProtocol));
-        if (contextImage.imgUrlFile) contextImage.imgUrlFile.addEventListener('input', this._onLinkPreview.bind(contextImage.previewSrc, contextImage._v_src, context.options.linkProtocol));
+        contextImage.imgLink.addEventListener('input', this._onLinkPreview.bind(contextImage.previewLink, contextImage._v_link, options.linkProtocol));
+        if (contextImage.imgUrlFile) contextImage.imgUrlFile.addEventListener('input', this._onLinkPreview.bind(contextImage.previewSrc, contextImage._v_src, options.linkProtocol));
 
         const imageGalleryButton = image_dialog.querySelector('.__se__gallery');
         if (imageGalleryButton) imageGalleryButton.addEventListener('click', this._openGallery.bind(core));
@@ -6314,12 +6312,12 @@ __webpack_require__.r(__webpack_exports__);
         contextImage.proportion = {};
         contextImage.inputX = {};
         contextImage.inputY = {};
-        if (context.option.imageResizing) {
+        if (options.imageResizing) {
             contextImage.proportion = image_dialog.querySelector('._se_image_check_proportion');
             contextImage.inputX = image_dialog.querySelector('._se_image_size_x');
             contextImage.inputY = image_dialog.querySelector('._se_image_size_y');
-            contextImage.inputX.value = context.option.imageWidth;
-            contextImage.inputY.value = context.option.imageHeight;
+            contextImage.inputX.value = options.imageWidth;
+            contextImage.inputY.value = options.imageHeight;
             
             contextImage.inputX.addEventListener('keyup', this.setInputSize.bind(core, 'x'));
             contextImage.inputY.addEventListener('keyup', this.setInputSize.bind(core, 'y'));
@@ -6339,18 +6337,18 @@ __webpack_require__.r(__webpack_exports__);
     },
 
     /** dialog */
-    setDialog: function () {
-        const option = this.context.option;
-        const lang = this.lang;
-        const dialog = this.util.createElement('DIV');
+    setDialog: function (core) {
+        const option = core.options;
+        const lang = core.lang;
+        const dialog = core.util.createElement('DIV');
 
-        dialog.className = 'se-dialog-content';
+        dialog.className = 'se-dialog-content se-dialog-image';
         dialog.style.display = 'none';
 
         let html = '' +
             '<div class="se-dialog-header">' +
                 '<button type="button" data-command="close" class="se-btn se-dialog-close" class="close" aria-label="Close" title="' + lang.dialogBox.close + '">' +
-                    this.icons.cancel +
+                    core.icons.cancel +
                 '</button>' +
                 '<span class="se-modal-title">' + lang.dialogBox.imageBox.title + '</span>' +
             '</div>' +
@@ -6368,7 +6366,7 @@ __webpack_require__.r(__webpack_exports__);
                                 '<label>' + lang.dialogBox.imageBox.file + '</label>' +
                                 '<div class="se-dialog-form-files">' +
                                     '<input class="se-input-form _se_image_file" type="file" accept="' + option.imageAccept + '"' + (option.imageMultipleFile ? ' multiple="multiple"' : '') + '/>' +
-                                    '<button type="button" class="se-btn se-dialog-files-edge-button se-file-remove" title="' + lang.controller.remove + '">' + this.icons.cancel + '</button>' +
+                                    '<button type="button" class="se-btn se-dialog-files-edge-button se-file-remove" title="' + lang.controller.remove + '">' + core.icons.cancel + '</button>' +
                                 '</div>' +
                             '</div>' ;
                     }
@@ -6379,7 +6377,7 @@ __webpack_require__.r(__webpack_exports__);
                                 '<label>' + lang.dialogBox.imageBox.url + '</label>' +
                                 '<div class="se-dialog-form-files">' +
                                     '<input class="se-input-form se-input-url _se_image_url" type="text" />' +
-                                    ((option.imageGalleryUrl && this.plugins.imageGallery) ? '<button type="button" class="se-btn se-dialog-files-edge-button __se__gallery" title="' + lang.toolbar.imageGallery + '">' + this.icons.image_gallery + '</button>' : '') +
+                                    ((option.imageGalleryUrl && core.plugins.imageGallery) ? '<button type="button" class="se-btn se-dialog-files-edge-button __se__gallery" title="' + lang.toolbar.imageGallery + '">' + core.icons.image_gallery + '</button>' : '') +
                                 '</div>' +
                                 '<pre class="se-link-preview"></pre>' +
                             '</div>';
@@ -6413,7 +6411,7 @@ __webpack_require__.r(__webpack_exports__);
                             '<label class="se-dialog-size-x"' + heightDisplay + '>' + (onlyPercentage ? '%' : 'x') + '</label>' +
                             '<input type="text" class="se-input-control _se_image_size_y" placeholder="auto"' + onlyPercentDisplay + (onlyPercentage ? ' max="100"' : '') + heightDisplay + '/>' +
                             '<label' + onlyPercentDisplay + heightDisplay + '><input type="checkbox" class="se-dialog-btn-check _se_image_check_proportion" checked/>&nbsp;' + lang.dialogBox.proportion + '</label>' +
-                            '<button type="button" title="' + lang.dialogBox.revertButton + '" class="se-btn se-dialog-btn-revert" style="float: right;">' + this.icons.revert + '</button>' +
+                            '<button type="button" title="' + lang.dialogBox.revertButton + '" class="se-btn se-dialog-btn-revert" style="float: right;">' + core.icons.revert + '</button>' +
                         '</div>' ;
             }
 
@@ -6528,11 +6526,11 @@ __webpack_require__.r(__webpack_exports__);
         const contextImage = this.context.image;
         
         if (!update) {
-            contextImage.inputX.value = contextImage._origin_w = this.context.option.imageWidth === contextImage._defaultSizeX ? '' : this.context.option.imageWidth;
-            contextImage.inputY.value = contextImage._origin_h = this.context.option.imageHeight === contextImage._defaultSizeY ? '' : this.context.option.imageHeight;
-            if (contextImage.imgInputFile && this.context.options.imageMultipleFile) contextImage.imgInputFile.setAttribute('multiple', 'multiple');
+            contextImage.inputX.value = contextImage._origin_w = this.options.imageWidth === contextImage._defaultSizeX ? '' : this.options.imageWidth;
+            contextImage.inputY.value = contextImage._origin_h = this.options.imageHeight === contextImage._defaultSizeY ? '' : this.options.imageHeight;
+            if (contextImage.imgInputFile && this.options.imageMultipleFile) contextImage.imgInputFile.setAttribute('multiple', 'multiple');
         } else {
-            if (contextImage.imgInputFile && this.context.options.imageMultipleFile) contextImage.imgInputFile.removeAttribute('multiple');
+            if (contextImage.imgInputFile && this.options.imageMultipleFile) contextImage.imgInputFile.removeAttribute('multiple');
         }
     },
 
@@ -6628,7 +6626,7 @@ __webpack_require__.r(__webpack_exports__);
             }
         }
 
-        const limitSize = this.context.option.imageUploadSizeLimit;
+        const limitSize = this.options.imageUploadSizeLimit;
         if (limitSize > 0) {
             let infoSize = 0;
             const imagesInfo = this.context.image._infoList;
@@ -6697,7 +6695,7 @@ __webpack_require__.r(__webpack_exports__);
             return;
         }
 
-        const imageUploadUrl = this.context.option.imageUploadUrl;
+        const imageUploadUrl = this.options.imageUploadUrl;
         const filesLen = this.context.dialog.updateModal ? 1 : files.length;
 
         // server upload
@@ -6706,7 +6704,7 @@ __webpack_require__.r(__webpack_exports__);
             for (let i = 0; i < filesLen; i++) {
                 formData.append('file-' + i, files[i]);
             }
-            this.plugins.fileManager.upload.call(this, imageUploadUrl, this.context.option.imageUploadHeader, formData, this.plugins.image.callBack_imgUpload.bind(this, info), this.functions.onImageUploadError);
+            this.plugins.fileManager.upload.call(this, imageUploadUrl, this.options.imageUploadHeader, formData, this.plugins.image.callBack_imgUpload.bind(this, info), this.functions.onImageUploadError);
         } else { // base64
             this.plugins.image.setup_reader.call(this, files, info.linkValue, info.linkNewWindow, info.inputWidth, info.inputHeight, info.align, filesLen, info.isUpdate);
         }
@@ -7056,7 +7054,8 @@ __webpack_require__.r(__webpack_exports__);
         contextImage._cover = this.util.getParentElement(element, 'FIGURE');
         contextImage._container = this.util.getParentElement(element, this.util.isMediaComponent);
         contextImage._caption = this.util.getChildElement(contextImage._cover, 'FIGCAPTION');
-        contextImage._align = element.getAttribute('data-align') || 'none';
+        contextImage._align = element.style.float || element.getAttribute('data-align') || 'none';
+        element.style.float = '';
 
         if (size) {
             contextImage._element_w = size.w;
@@ -7099,20 +7098,13 @@ __webpack_require__.r(__webpack_exports__);
     },
 
     /**
-     * @Override resizing
-     */
-    sizeRevert: function () {
-        this.plugins.resizing._module_sizeRevert.call(this, this.context.image);
-    },
-
-    /**
-     * @Override resizing
+     * @Override fileManager
      */
     applySize: function (w, h) {
         const contextImage = this.context.image;
 
-        if (!w) w = contextImage.inputX.value || this.context.option.imageWidth;
-        if (!h) h = contextImage.inputY.value || this.context.option.imageHeight;
+        if (!w) w = contextImage.inputX.value || this.options.imageWidth;
+        if (!h) h = contextImage.inputY.value || this.options.imageHeight;
         
         if ((contextImage._onlyPercentage && !!w) || /%$/.test(w)) {
             this.plugins.image.setPercentSize.call(this, w, h);
@@ -7129,15 +7121,25 @@ __webpack_require__.r(__webpack_exports__);
     /**
      * @Override resizing
      */
+    sizeRevert: function () {
+        this.plugins.resizing._module_sizeRevert.call(this, this.context.image);
+    },
+
+    /**
+     * @Override resizing
+     */
     setSize: function (w, h, notResetPercentage, direction) {
         const contextImage = this.context.image;
         const onlyW = /^(rw|lw)$/.test(direction);
         const onlyH = /^(th|bh)$/.test(direction);
 
-        this.plugins.image.cancelPercentAttr.call(this);
-
-        if (!onlyH) contextImage._element.style.width = this.util.isNumber(w) ? w + contextImage.sizeUnit : w;
-        if (!onlyW) contextImage._element.style.height = this.util.isNumber(h) ? h + contextImage.sizeUnit : /%$/.test(h) ? '' : h;
+        if (!onlyH) {
+            contextImage._element.style.width = this.util.isNumber(w) ? w + contextImage.sizeUnit : w;
+            this.plugins.image.cancelPercentAttr.call(this);
+        }
+        if (!onlyW) {
+            contextImage._element.style.height = this.util.isNumber(h) ? h + contextImage.sizeUnit : /%$/.test(h) ? '' : h;
+        }
 
         if (contextImage._align === 'center') this.plugins.image.setAlign.call(this, null, null, null, null);
         if (!notResetPercentage) contextImage._element.removeAttribute('data-percentage');
@@ -7269,15 +7271,6 @@ __webpack_require__.r(__webpack_exports__);
         element.setAttribute('data-align', align);
     },
 
-    resetAlign: function () {
-        const contextImage = this.context.image;
-
-        contextImage._element.setAttribute('data-align', '');
-        contextImage._align = 'none';
-        contextImage._cover.style.margin = '0';
-        this.util.removeClass(contextImage._container, contextImage._floatClassRegExp);
-    },
-
     /**
      * @Override dialog
      */
@@ -7299,8 +7292,8 @@ __webpack_require__.r(__webpack_exports__);
         this.plugins.image.openTab.call(this, 'init');
 
         if (contextImage._resizing) {
-            contextImage.inputX.value = this.context.option.imageWidth === contextImage._defaultSizeX ? '' : this.context.option.imageWidth;
-            contextImage.inputY.value = this.context.option.imageHeight === contextImage._defaultSizeY ? '' : this.context.option.imageHeight;
+            contextImage.inputX.value = this.options.imageWidth === contextImage._defaultSizeX ? '' : this.options.imageWidth;
+            contextImage.inputY.value = this.options.imageHeight === contextImage._defaultSizeY ? '' : this.options.imageHeight;
             contextImage.proportion.checked = true;
             contextImage._ratio = false;
             contextImage._ratioX = 1;
@@ -7337,7 +7330,7 @@ __webpack_require__.r(__webpack_exports__);
 
         const context = core.context;
         context.link = {
-            focusElement: null,
+            focusElement: null, // @Override dialog // This element has focus when the dialog is opened.
             linkNewWindowCheck: null,
             linkAnchorText: null,
             _linkAnchor: null,
@@ -7345,23 +7338,26 @@ __webpack_require__.r(__webpack_exports__);
         };
 
         /** link dialog */
-        let link_dialog = this.setDialog.call(core);
+        let link_dialog = this.setDialog(core);
         context.link.modal = link_dialog;
         context.link.focusElement = link_dialog.querySelector('._se_link_url');
         context.link.linkAnchorText = link_dialog.querySelector('._se_link_text');
         context.link.linkNewWindowCheck = link_dialog.querySelector('._se_link_check');
         context.link.preview = link_dialog.querySelector('.se-link-preview');
+        context.link.bookmark = link_dialog.querySelector('.se-link-bookmark');
+        context.link.bookmarkButton = link_dialog.querySelector('._se_bookmark_button');
+        context.link.rel = core.options.linkRel.length > 0 ? link_dialog.querySelector('.se-link-rel') : null;
 
         /** link controller */
-        let link_controller = this.setController_LinkButton.call(core);
+        let link_controller = this.setController_LinkButton(core);
         context.link.linkController = link_controller;
         context.link._linkAnchor = null;
-        link_controller.addEventListener('mousedown', core.eventStop);
 
         /** add event listeners */
-        link_dialog.querySelector('.se-btn-primary').addEventListener('click', this.submit.bind(core));
+        link_dialog.querySelector('form').addEventListener('submit', this.submit.bind(core));
         link_controller.addEventListener('click', this.onClick_linkController.bind(core));
-        context.link.focusElement.addEventListener('input', this._onLinkPreview.bind(context.link.preview, context.link, context.options.linkProtocol));
+        context.link.focusElement.addEventListener('input', this._onLinkPreview.bind(core, context.link.preview, context.link, core.options.linkProtocol));
+        context.link.bookmarkButton.addEventListener('click', this.onClick_bookmarkButton.bind(core));
 
         /** append html */
         context.dialog.modal.appendChild(link_dialog);
@@ -7374,25 +7370,32 @@ __webpack_require__.r(__webpack_exports__);
     },
 
     /** dialog */
-    setDialog: function () {
-        const lang = this.lang;
-        const dialog = this.util.createElement('DIV');
+    setDialog: function (core) {
+        const lang = core.lang;
+        const dialog = core.util.createElement('DIV');
+        const rel = core.options.linkRel;
 
         dialog.className = 'se-dialog-content';
         dialog.style.display = 'none';
-        dialog.innerHTML = '' +
+        let html = '' +
             '<form class="editor_link">' +
                 '<div class="se-dialog-header">' +
                     '<button type="button" data-command="close" class="se-btn se-dialog-close" aria-label="Close" title="' + lang.dialogBox.close + '">' +
-                        this.icons.cancel +
+                        core.icons.cancel +
                     '</button>' +
                     '<span class="se-modal-title">' + lang.dialogBox.linkBox.title + '</span>' +
                 '</div>' +
                 '<div class="se-dialog-body">' +
                     '<div class="se-dialog-form">' +
                         '<label>' + lang.dialogBox.linkBox.url + '</label>' +
-                        '<input class="se-input-form se-input-url _se_link_url" type="text" />' +
-                        '<pre class="se-link-preview"></pre>' +
+                        '<div class="se-dialog-form-files">' +
+                            '<input class="se-input-form se-input-url _se_link_url" type="text" placeholder="' + (core.options.protocol || '') + '" />' +
+                            '<button type="button" class="se-btn se-dialog-files-edge-button _se_bookmark_button" title="' + lang.dialogBox.linkBox.bookmark + '">' + core.icons.bookmark + '</button>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div style="width: 100%; display: flex;">' +
+                        '<span class="se-svg se-link-bookmark" style="flex: unset; display: none;">' + core.icons.bookmark + '</span>' +
+                        '<pre class="se-link-preview" style="flex: auto;"></pre>' +
                     '</div>' +
                     '<div class="se-dialog-form">' +
                         '<label>' + lang.dialogBox.linkBox.text + '</label><input class="se-input-form _se_link_text" type="text" />' +
@@ -7401,19 +7404,28 @@ __webpack_require__.r(__webpack_exports__);
                         '<label><input type="checkbox" class="se-dialog-btn-check _se_link_check" />&nbsp;' + lang.dialogBox.linkBox.newWindowCheck + '</label>' +
                     '</div>' +
                 '</div>' +
-                '<div class="se-dialog-footer">' +
+                '<div class="se-dialog-footer">';
+                    if (rel.length > 0) {
+                        html += '<select class="se-input-select se-link-rel" title="rel">';
+                        for (let i = 0, len = rel.length; i < len; i++) {
+                            html += '<option value="' + rel[i] + '">' + rel[i] + '</option>';
+                        }
+                        html += '</select>';
+                    }
+                    html += '' +
                     '<button type="submit" class="se-btn-primary" title="' + lang.dialogBox.submitButton + '"><span>' + lang.dialogBox.submitButton + '</span></button>' +
                 '</div>' +
             '</form>';
 
+        dialog.innerHTML = html;
         return dialog;
     },
 
     /** modify controller button */
-    setController_LinkButton: function () {
-        const lang = this.lang;
-        const icons = this.icons;
-        const link_btn = this.util.createElement('DIV');
+    setController_LinkButton: function (core) {
+        const lang = core.lang;
+        const icons = core.icons;
+        const link_btn = core.util.createElement('DIV');
 
         link_btn.className = 'se-controller se-controller-link';
         link_btn.innerHTML = '' +
@@ -7445,9 +7457,39 @@ __webpack_require__.r(__webpack_exports__);
         this.plugins.dialog.open.call(this, 'link', 'link' === this.currentControllerName);
     },
 
-    _onLinkPreview: function (context, protocol, e) {
-        const value = e.target.value.trim();
-        context._linkValue = this.textContent = !value ? '' : (protocol && value.indexOf('://') === -1 && value.indexOf('#') !== 0) ? protocol + value : value.indexOf('://') === -1 ? '/' + value : value;
+    _onLinkPreview: function (preview, context, protocol, e) {
+        const value = typeof e === 'string' ? e : e.target.value.trim();
+        const linkHTTP = value.indexOf('://') === -1 && value.indexOf('#') !== 0;
+        context._linkValue = preview.textContent = !value ? '' : (protocol && linkHTTP) ? protocol + value : linkHTTP ? '/' + value : value;
+        if (value.indexOf('#') === 0) {
+            context.bookmark.style.display = 'block';
+            this.util.addClass(context.bookmarkButton, 'active');
+        } else {
+            context.bookmark.style.display = 'none';
+            this.util.removeClass(context.bookmarkButton, 'active');
+        }
+    },
+
+    _updateAnchor: function (anchor, url, alt, targetEl, relEl) {
+        if (/^\#/.test(url)) {
+            anchor.id = url.substr(1);
+        } else {
+            anchor.removeAttribute('id');
+        }
+
+        anchor.href = url;
+        anchor.textContent = alt;
+
+        if (targetEl.checked) anchor.target = '_blank';
+        else anchor.removeAttribute('target');
+
+        if (relEl) {
+            anchor.rel = relEl.options[relEl.selectedIndex].value;
+        } else if (anchor.id) {
+            anchor.rel = 'bookmark';
+        } else {
+            anchor.removeAttribute('rel');
+        }
     },
 
     submit: function (e) {
@@ -7466,9 +7508,7 @@ __webpack_require__.r(__webpack_exports__);
 
             if (!this.context.dialog.updateModal) {
                 const oA = this.util.createElement('A');
-                oA.href = url;
-                oA.textContent = anchorText;
-                oA.target = (contextLink.linkNewWindowCheck.checked ? '_blank' : '');
+                this.plugins.link._updateAnchor(oA, url, anchorText, contextLink.linkNewWindowCheck, contextLink.rel);
 
                 const selectedFormats = this.getSelectedElements();
                 if (selectedFormats.length > 1) {
@@ -7481,9 +7521,7 @@ __webpack_require__.r(__webpack_exports__);
 
                 this.setRange(oA.childNodes[0], 0, oA.childNodes[0], oA.textContent.length);
             } else {
-                contextLink._linkAnchor.href = url;
-                contextLink._linkAnchor.textContent = anchorText;
-                contextLink._linkAnchor.target = (contextLink.linkNewWindowCheck.checked ? '_blank' : '');
+                this.plugins.link._updateAnchor(contextLink._linkAnchor, url, anchorText, contextLink.linkNewWindowCheck, contextLink.rel);
 
                 // set range
                 const textNode = contextLink._linkAnchor.childNodes[0];
@@ -7533,10 +7571,13 @@ __webpack_require__.r(__webpack_exports__);
             contextLink.linkAnchorText.value = this.getSelection().toString();
         } else if (contextLink._linkAnchor) {
             this.context.dialog.updateModal = true;
-            contextLink._linkValue = contextLink.preview.textContent = contextLink.focusElement.value = contextLink._linkAnchor.href;
+            contextLink._linkValue = contextLink.preview.textContent = contextLink.focusElement.value = (contextLink._linkAnchor.id ? '#' + contextLink._linkAnchor.id : contextLink._linkAnchor.href);
             contextLink.linkAnchorText.value = contextLink._linkAnchor.textContent;
             contextLink.linkNewWindowCheck.checked = (/_blank/i.test(contextLink._linkAnchor.target) ? true : false);
+            if (contextLink.rel) contextLink.rel.value = contextLink._linkAnchor.rel;
         }
+
+        this.plugins.link._onLinkPreview.call(this, contextLink.preview, contextLink, this.options.linkProtocol, contextLink._linkValue);
     },
 
     call_controller: function (selectionATag) {
@@ -7548,8 +7589,26 @@ __webpack_require__.r(__webpack_exports__);
         link.title = selectionATag.textContent;
         link.textContent = selectionATag.textContent;
 
+        this.util.addClass(selectionATag, 'on');
         this.setControllerPosition(linkBtn, selectionATag, 'bottom', {left: 0, top: 0});
-        this.controllersOn(linkBtn, selectionATag, 'link');
+        this.controllersOn(linkBtn, selectionATag, 'link', this.util.removeClass.bind(this.util, this.context.link._linkAnchor, 'on'));
+    },
+
+    onClick_bookmarkButton: function () {
+        const contextLink = this.context.link;
+        let url = contextLink.focusElement.value;
+        if (/^\#/.test(url)) {
+            url = url.substr(1);
+            contextLink.bookmark.style.display = 'none';
+            this.util.removeClass(contextLink.bookmarkButton, 'active');
+        } else {
+            url = '#' + url;
+            contextLink.bookmark.style.display = 'block';
+            this.util.addClass(contextLink.bookmarkButton, 'active');
+        }
+
+        contextLink._linkValue = contextLink.preview.textContent = contextLink.focusElement.value = url;
+        contextLink.focusElement.focus();
     },
 
     onClick_linkController: function (e) {
@@ -7565,6 +7624,7 @@ __webpack_require__.r(__webpack_exports__);
             contextLink._linkValue = contextLink.preview.textContent = contextLink.focusElement.value = contextLink._linkAnchor.href;
             contextLink.linkAnchorText.value = contextLink._linkAnchor.textContent;
             contextLink.linkNewWindowCheck.checked = (/_blank/i.test(contextLink._linkAnchor.target) ? true : false);
+            if (contextLink.rel) contextLink.rel.value = contextLink._linkAnchor.rel;
             this.plugins.dialog.open.call(this, 'link', true);
         }
         else if (/unlink/.test(command)) {
@@ -7596,6 +7656,7 @@ __webpack_require__.r(__webpack_exports__);
         contextLink._linkValue = contextLink.preview.textContent = contextLink.focusElement.value = '';
         contextLink.linkAnchorText.value = '';
         contextLink.linkNewWindowCheck.checked = false;
+        if (contextLink.rel) contextLink.rel.value = contextLink.rel.options[0].value;
     }
 });
 
@@ -7634,17 +7695,19 @@ __webpack_require__.r(__webpack_exports__);
     add: function (core) {
         core.addModule([_modules_dialog__WEBPACK_IMPORTED_MODULE_0___default.a, _modules_component__WEBPACK_IMPORTED_MODULE_1___default.a, _modules_resizing__WEBPACK_IMPORTED_MODULE_2___default.a, _modules_fileManager__WEBPACK_IMPORTED_MODULE_3___default.a]);
 
+        const options = core.options;
         const context = core.context;
         const contextVideo = context.video = {
             _infoList: [], // @Override fileManager
             _infoIndex: 0, // @Override fileManager
             _uploadFileLength: 0, // @Override fileManager
-            sizeUnit: context.option._videoSizeUnit,
+            focusElement: null, // @Override dialog // This element has focus when the dialog is opened.
+            sizeUnit: options._videoSizeUnit,
             _align: 'none',
             _floatClassRegExp: '__se__float\\-[a-z]+',
-            _youtubeQuery: context.option.youtubeQuery,
-            _videoRatio: (context.option.videoRatio * 100) + '%',
-            _defaultRatio: (context.option.videoRatio * 100) + '%',
+            _youtubeQuery: options.youtubeQuery,
+            _videoRatio: (options.videoRatio * 100) + '%',
+            _defaultRatio: (options.videoRatio * 100) + '%',
             _linkValue: '',
             // @require @Override component
             _element: null,
@@ -7658,14 +7721,14 @@ __webpack_require__.r(__webpack_exports__);
             _element_l: 0,
             _element_t: 0,
             _defaultSizeX: '100%',
-            _defaultSizeY: (context.option.videoRatio * 100) + '%',
-            _origin_w: context.option.videoWidth === '100%' ? '' : context.option.videoWidth,
-            _origin_h: context.option.videoHeight === '56.25%' ? '' : context.option.videoHeight,
+            _defaultSizeY: (options.videoRatio * 100) + '%',
+            _origin_w: options.videoWidth === '100%' ? '' : options.videoWidth,
+            _origin_h: options.videoHeight === '56.25%' ? '' : options.videoHeight,
             _proportionChecked: true,
-            _resizing: context.option.videoResizing,
-            _resizeDotHide: !context.option.videoHeightShow,
-            _rotation: context.option.videoRotation,
-            _onlyPercentage: context.option.videoSizeOnlyPercentage,
+            _resizing: options.videoResizing,
+            _resizeDotHide: !options.videoHeightShow,
+            _rotation: options.videoRotation,
+            _onlyPercentage: options.videoSizeOnlyPercentage,
             _ratio: false,
             _ratioX: 1,
             _ratioY: 1,
@@ -7673,7 +7736,7 @@ __webpack_require__.r(__webpack_exports__);
         };
 
         /** video dialog */
-        let video_dialog = this.setDialog.call(core);
+        let video_dialog = this.setDialog(core);
         contextVideo.modal = video_dialog;
         contextVideo.videoInputFile = video_dialog.querySelector('._se_video_file');
         contextVideo.videoUrlFile = video_dialog.querySelector('.se-input-url');
@@ -7681,22 +7744,22 @@ __webpack_require__.r(__webpack_exports__);
         contextVideo.preview = video_dialog.querySelector('.se-link-preview');
 
         /** add event listeners */
-        video_dialog.querySelector('.se-btn-primary').addEventListener('click', this.submit.bind(core));
+        video_dialog.querySelector('form').addEventListener('submit', this.submit.bind(core));
         if (contextVideo.videoInputFile) video_dialog.querySelector('.se-dialog-files-edge-button').addEventListener('click', this._removeSelectedFiles.bind(contextVideo.videoInputFile, contextVideo.videoUrlFile, contextVideo.preview));
         if (contextVideo.videoInputFile && contextVideo.videoUrlFile) contextVideo.videoInputFile.addEventListener('change', this._fileInputChange.bind(contextVideo));
-        if (contextVideo.videoUrlFile) contextVideo.videoUrlFile.addEventListener('input', this._onLinkPreview.bind(contextVideo.preview, contextVideo, context.options.linkProtocol));
+        if (contextVideo.videoUrlFile) contextVideo.videoUrlFile.addEventListener('input', this._onLinkPreview.bind(contextVideo.preview, contextVideo, options.linkProtocol));
 
         contextVideo.proportion = {};
         contextVideo.videoRatioOption = {};
         contextVideo.inputX = {};
         contextVideo.inputY = {};
-        if (context.option.videoResizing) {
+        if (options.videoResizing) {
             contextVideo.proportion = video_dialog.querySelector('._se_video_check_proportion');
             contextVideo.videoRatioOption = video_dialog.querySelector('.se-video-ratio');
             contextVideo.inputX = video_dialog.querySelector('._se_video_size_x');
             contextVideo.inputY = video_dialog.querySelector('._se_video_size_y');
-            contextVideo.inputX.value = context.option.videoWidth;
-            contextVideo.inputY.value = context.option.videoHeight;
+            contextVideo.inputX.value = options.videoWidth;
+            contextVideo.inputY.value = options.videoHeight;
 
             contextVideo.inputX.addEventListener('keyup', this.setInputSize.bind(core, 'x'));
             contextVideo.inputY.addEventListener('keyup', this.setInputSize.bind(core, 'y'));
@@ -7717,10 +7780,10 @@ __webpack_require__.r(__webpack_exports__);
     },
 
     /** dialog */
-    setDialog: function () {
-        const option = this.context.option;
-        const lang = this.lang;
-        const dialog = this.util.createElement('DIV');
+    setDialog: function (core) {
+        const option = core.options;
+        const lang = core.lang;
+        const dialog = core.util.createElement('DIV');
 
         dialog.className = 'se-dialog-content';
         dialog.style.display = 'none';
@@ -7728,7 +7791,7 @@ __webpack_require__.r(__webpack_exports__);
             '<form method="post" enctype="multipart/form-data">' +
                 '<div class="se-dialog-header">' +
                     '<button type="button" data-command="close" class="se-btn se-dialog-close" aria-label="Close" title="' + lang.dialogBox.close + '">' +
-                        this.icons.cancel +
+                        core.icons.cancel +
                     '</button>' +
                     '<span class="se-modal-title">' + lang.dialogBox.videoBox.title + '</span>' +
                 '</div>' +
@@ -7740,7 +7803,7 @@ __webpack_require__.r(__webpack_exports__);
                             '<label>' + lang.dialogBox.videoBox.file + '</label>' +
                             '<div class="se-dialog-form-files">' +
                                 '<input class="se-input-form _se_video_file" type="file" accept="' + option.videoAccept + '"' + (option.videoMultipleFile ? ' multiple="multiple"' : '') + '/>' +
-                                '<button type="button" data-command="filesRemove" class="se-btn se-dialog-files-edge-button se-file-remove" title="' + lang.controller.remove + '">' + this.icons.cancel + '</button>' +
+                                '<button type="button" data-command="filesRemove" class="se-btn se-dialog-files-edge-button se-file-remove" title="' + lang.controller.remove + '">' + core.icons.cancel + '</button>' +
                             '</div>' +
                         '</div>' ;
                 }
@@ -7779,7 +7842,7 @@ __webpack_require__.r(__webpack_exports__);
                                 html += '<option value="' + ratioList[i].value + '"' + (ratio.toString() === ratioList[i].value.toString() ? ' selected' : '') + '>' + ratioList[i].name + '</option>';
                             }
                         html += '</select>' +
-                        '<button type="button" title="' + lang.dialogBox.revertButton + '" class="se-btn se-dialog-btn-revert" style="float: right;">' + this.icons.revert + '</button>' +
+                        '<button type="button" title="' + lang.dialogBox.revertButton + '" class="se-btn se-dialog-btn-revert" style="float: right;">' + core.icons.revert + '</button>' +
                     '</div>' +
                     '<div class="se-dialog-form se-dialog-form-footer"' + onlyPercentDisplay + onlyWidthDisplay + '>' +
                         '<label><input type="checkbox" class="se-dialog-btn-check _se_video_check_proportion" checked/>&nbsp;' + lang.dialogBox.proportion + '</label>' +
@@ -7835,7 +7898,7 @@ __webpack_require__.r(__webpack_exports__);
     _setTagAttrs: function (element) {
         element.setAttribute('controls', true);
 
-        const attrs = this.context.options.videoTagAttrs;
+        const attrs = this.options.videoTagAttrs;
         if (!attrs) return;
 
         for (let key in attrs) {
@@ -7854,7 +7917,7 @@ __webpack_require__.r(__webpack_exports__);
         element.frameBorder = '0';
         element.allowFullscreen = true;
 
-        const attrs = this.context.options.videoIframeAttrs;
+        const attrs = this.options.videoIframeAttrs;
         if (!attrs) return;
 
         for (let key in attrs) {
@@ -7916,12 +7979,12 @@ __webpack_require__.r(__webpack_exports__);
         const contextVideo = this.context.video;
 
         if (!update) {
-            contextVideo.inputX.value = contextVideo._origin_w = this.context.option.videoWidth === contextVideo._defaultSizeX ? '' : this.context.option.videoWidth;
-            contextVideo.inputY.value = contextVideo._origin_h = this.context.option.videoHeight === contextVideo._defaultSizeY ? '' : this.context.option.videoHeight;
+            contextVideo.inputX.value = contextVideo._origin_w = this.options.videoWidth === contextVideo._defaultSizeX ? '' : this.options.videoWidth;
+            contextVideo.inputY.value = contextVideo._origin_h = this.options.videoHeight === contextVideo._defaultSizeY ? '' : this.options.videoHeight;
             contextVideo.proportion.disabled = true;
-            if (contextVideo.videoInputFile && this.context.options.videoMultipleFile) contextVideo.videoInputFile.setAttribute('multiple', 'multiple');
+            if (contextVideo.videoInputFile && this.options.videoMultipleFile) contextVideo.videoInputFile.setAttribute('multiple', 'multiple');
         } else {
-            if (contextVideo.videoInputFile && this.context.options.videoMultipleFile) contextVideo.videoInputFile.removeAttribute('multiple');
+            if (contextVideo.videoInputFile && this.options.videoMultipleFile) contextVideo.videoInputFile.removeAttribute('multiple');
         }
 
         if (contextVideo._resizing) {
@@ -8010,7 +8073,7 @@ __webpack_require__.r(__webpack_exports__);
             }
         }
 
-        const limitSize = this.context.option.videoUploadSizeLimit;
+        const limitSize = this.options.videoUploadSizeLimit;
         if (limitSize > 0) {
             let infoSize = 0;
             const videosInfo = this.context.video._infoList;
@@ -8077,7 +8140,7 @@ __webpack_require__.r(__webpack_exports__);
             return;
         }
 
-        const videoUploadUrl = this.context.option.videoUploadUrl;
+        const videoUploadUrl = this.options.videoUploadUrl;
         const filesLen = this.context.dialog.updateModal ? 1 : files.length;
 
         // server upload
@@ -8086,7 +8149,7 @@ __webpack_require__.r(__webpack_exports__);
             for (let i = 0; i < filesLen; i++) {
                 formData.append('file-' + i, files[i]);
             }
-            this.plugins.fileManager.upload.call(this, videoUploadUrl, this.context.option.videoUploadHeader, formData, this.plugins.video.callBack_videoUpload.bind(this, info), this.functions.onVideoUploadError);
+            this.plugins.fileManager.upload.call(this, videoUploadUrl, this.options.videoUploadHeader, formData, this.plugins.video.callBack_videoUpload.bind(this, info), this.functions.onVideoUploadError);
         } else {
             throw Error('[SUNEDITOR.videoUpload.fail] cause : There is no "videoUploadUrl" option.');
         }
@@ -8295,7 +8358,8 @@ __webpack_require__.r(__webpack_exports__);
         contextVideo._element = element;
         contextVideo._cover = this.util.getParentElement(element, 'FIGURE');
         contextVideo._container = this.util.getParentElement(element, this.util.isMediaComponent);
-        contextVideo._align = element.getAttribute('data-align') || 'none';
+        contextVideo._align = element.style.float || element.getAttribute('data-align') || 'none';
+        element.style.float = '';
 
         if (size) {
             contextVideo._element_w = size.w;
@@ -8370,20 +8434,13 @@ __webpack_require__.r(__webpack_exports__);
     },
 
     /**
-     * @Override resizing
-     */
-    sizeRevert: function () {
-        this.plugins.resizing._module_sizeRevert.call(this, this.context.video);
-    },
-
-    /**
-     * @Override resizing
+     * @Override fileManager
      */
     applySize: function (w, h) {
         const contextVideo = this.context.video;
 
-        if (!w) w = contextVideo.inputX.value || this.context.option.videoWidth;
-        if (!h) h = contextVideo.inputY.value || this.context.option.videoHeight;
+        if (!w) w = contextVideo.inputX.value || this.options.videoWidth;
+        if (!h) h = contextVideo.inputY.value || this.options.videoHeight;
         
         if (contextVideo._onlyPercentage || /%$/.test(w) || !w) {
             this.plugins.video.setPercentSize.call(this, (w || '100%'), (h || (/%$/.test(contextVideo._videoRatio) ? contextVideo._videoRatio : contextVideo._defaultRatio)));
@@ -8395,6 +8452,13 @@ __webpack_require__.r(__webpack_exports__);
         }
 
         return false;
+    },
+
+    /**
+     * @Override resizing
+     */
+    sizeRevert: function () {
+        this.plugins.resizing._module_sizeRevert.call(this, this.context.video);
     },
 
     /**
@@ -8539,15 +8603,6 @@ __webpack_require__.r(__webpack_exports__);
         element.setAttribute('data-align', align);
     },
 
-    resetAlign: function () {
-        const contextVideo = this.context.video;
-
-        contextVideo._element.setAttribute('data-align', '');
-        contextVideo._align = 'none';
-        contextVideo._cover.style.margin = '0';
-        this.util.removeClass(contextVideo._container, contextVideo._floatClassRegExp);
-    },
-
     /**
      * @Override dialog
      */
@@ -8560,13 +8615,13 @@ __webpack_require__.r(__webpack_exports__);
             contextVideo.preview.style.textDecoration = '';
         }
 
-        contextVideo._origin_w = this.context.option.videoWidth;
-        contextVideo._origin_h = this.context.option.videoHeight;
+        contextVideo._origin_w = this.options.videoWidth;
+        contextVideo._origin_h = this.options.videoHeight;
         contextVideo.modal.querySelector('input[name="suneditor_video_radio"][value="none"]').checked = true;
         
         if (contextVideo._resizing) {
-            contextVideo.inputX.value = this.context.option.videoWidth === contextVideo._defaultSizeX ? '' : this.context.option.videoWidth;
-            contextVideo.inputY.value = this.context.option.videoHeight === contextVideo._defaultSizeY ? '' : this.context.option.videoHeight;
+            contextVideo.inputX.value = this.options.videoWidth === contextVideo._defaultSizeX ? '' : this.options.videoWidth;
+            contextVideo.inputY.value = this.options.videoHeight === contextVideo._defaultSizeY ? '' : this.options.videoHeight;
             contextVideo.proportion.checked = true;
             contextVideo.proportion.disabled = true;
             this.plugins.video.setVideoRatioSelect.call(this, contextVideo._defaultRatio);
@@ -8611,10 +8666,10 @@ __webpack_require__.r(__webpack_exports__);
             _infoList: [], // @Override fileManager
             _infoIndex: 0, // @Override fileManager
             _uploadFileLength: 0, // @Override fileManager
-            focusElement: null, // @Override // This element has focus when the dialog is opened.
+            focusElement: null, // @Override dialog // This element has focus when the dialog is opened.
             targetSelect: null,
-            _origin_w: context.option.audioWidth,
-            _origin_h: context.option.audioHeight,
+            _origin_w: core.options.audioWidth,
+            _origin_h: core.options.audioHeight,
             _linkValue: '',
             // @require @Override component
             _element: null,
@@ -8623,7 +8678,7 @@ __webpack_require__.r(__webpack_exports__);
         };
 
         /** dialog */
-        let audio_dialog = this.setDialog.call(core);
+        let audio_dialog = this.setDialog(core);
         contextAudio.modal = audio_dialog;
         contextAudio.audioInputFile = audio_dialog.querySelector('._se_audio_files');
         contextAudio.audioUrlFile = audio_dialog.querySelector('.se-input-url');
@@ -8631,17 +8686,15 @@ __webpack_require__.r(__webpack_exports__);
         contextAudio.preview = audio_dialog.querySelector('.se-link-preview');
 
         /** controller */
-        let audio_controller = this.setController.call(core);
+        let audio_controller = this.setController(core);
         contextAudio.controller = audio_controller;
 
-        audio_controller.addEventListener('mousedown', core.eventStop);
-
         /** add event listeners */
-        audio_dialog.querySelector('.se-btn-primary').addEventListener('click', this.submit.bind(core));
+        audio_dialog.querySelector('form').addEventListener('submit', this.submit.bind(core));
         if (contextAudio.audioInputFile) audio_dialog.querySelector('.se-dialog-files-edge-button').addEventListener('click', this._removeSelectedFiles.bind(contextAudio.audioInputFile, contextAudio.audioUrlFile, contextAudio.preview));
         if (contextAudio.audioInputFile && contextAudio.audioUrlFile) contextAudio.audioInputFile.addEventListener('change', this._fileInputChange.bind(contextAudio));
         audio_controller.addEventListener('click', this.onClick_controller.bind(core));
-        if (contextAudio.audioUrlFile) contextAudio.audioUrlFile.addEventListener('input', this._onLinkPreview.bind(contextAudio.preview, contextAudio, context.options.linkProtocol));
+        if (contextAudio.audioUrlFile) contextAudio.audioUrlFile.addEventListener('input', this._onLinkPreview.bind(contextAudio.preview, contextAudio, core.options.linkProtocol));
 
         /** append html */
         context.dialog.modal.appendChild(audio_dialog);
@@ -8654,10 +8707,10 @@ __webpack_require__.r(__webpack_exports__);
     },
 
     /** HTML - dialog */
-    setDialog: function () {
-        const option = this.context.option;
-        const lang = this.lang;
-        const dialog = this.util.createElement('DIV');
+    setDialog: function (core) {
+        const option = core.options;
+        const lang = core.lang;
+        const dialog = core.util.createElement('DIV');
 
         dialog.className = 'se-dialog-content';
         dialog.style.display = 'none';
@@ -8665,7 +8718,7 @@ __webpack_require__.r(__webpack_exports__);
             '<form method="post" enctype="multipart/form-data">' +
                 '<div class="se-dialog-header">' +
                     '<button type="button" data-command="close" class="se-btn se-dialog-close" aria-label="Close" title="' + lang.dialogBox.close + '">' +
-                        this.icons.cancel +
+                        core.icons.cancel +
                     '</button>' +
                     '<span class="se-modal-title">' + lang.dialogBox.audioBox.title + '</span>' +
                 '</div>' +
@@ -8677,7 +8730,7 @@ __webpack_require__.r(__webpack_exports__);
                             '<label>' + lang.dialogBox.audioBox.file + '</label>' +
                             '<div class="se-dialog-form-files">' +
                                 '<input class="se-input-form _se_audio_files" type="file" accept="' + option.audioAccept + '"' + (option.audioMultipleFile ? ' multiple="multiple"' : '') + '/>' +
-                                '<button type="button" data-command="filesRemove" class="se-btn se-dialog-files-edge-button se-file-remove" title="' + lang.controller.remove + '">' + this.icons.cancel + '</button>' +
+                                '<button type="button" data-command="filesRemove" class="se-btn se-dialog-files-edge-button se-file-remove" title="' + lang.controller.remove + '">' + core.icons.cancel + '</button>' +
                             '</div>' +
                         '</div>';
                 }
@@ -8704,10 +8757,10 @@ __webpack_require__.r(__webpack_exports__);
     },
 
     /** HTML - controller */
-    setController: function () {
-        const lang = this.lang;
-        const icons = this.icons;
-        const link_btn = this.util.createElement('DIV');
+    setController: function (core) {
+        const lang = core.lang;
+        const icons = core.icons;
+        const link_btn = core.util.createElement('DIV');
 
         link_btn.className = 'se-controller se-controller-link';
         link_btn.innerHTML = '' +
@@ -8764,7 +8817,7 @@ __webpack_require__.r(__webpack_exports__);
     _setTagAttrs: function (element) {
         element.setAttribute('controls', true);
 
-        const attrs = this.context.options.audioTagAttrs;
+        const attrs = this.options.audioTagAttrs;
         if (!attrs) return;
 
         for (let key in attrs) {
@@ -8840,13 +8893,13 @@ __webpack_require__.r(__webpack_exports__);
 
         if (!update) {
             this.plugins.audio.init.call(this);
-            if (contextAudio.audioInputFile && this.context.options.audioMultipleFile) contextAudio.audioInputFile.setAttribute('multiple', 'multiple');
+            if (contextAudio.audioInputFile && this.options.audioMultipleFile) contextAudio.audioInputFile.setAttribute('multiple', 'multiple');
         } else if (contextAudio._element) {
             this.context.dialog.updateModal = true;
             contextAudio._linkValue = contextAudio.preview.textContent = contextAudio.audioUrlFile.value = contextAudio._element.src;
-            if (contextAudio.audioInputFile && this.context.options.audioMultipleFile) contextAudio.audioInputFile.removeAttribute('multiple');
+            if (contextAudio.audioInputFile && this.options.audioMultipleFile) contextAudio.audioInputFile.removeAttribute('multiple');
         } else {
-            if (contextAudio.audioInputFile && this.context.options.audioMultipleFile) contextAudio.audioInputFile.removeAttribute('multiple');
+            if (contextAudio.audioInputFile && this.options.audioMultipleFile) contextAudio.audioInputFile.removeAttribute('multiple');
         }
     },
 
@@ -8893,7 +8946,7 @@ __webpack_require__.r(__webpack_exports__);
             }
         }
 
-        const limitSize = this.context.option.audioUploadSizeLimit;
+        const limitSize = this.options.audioUploadSizeLimit;
         if (limitSize > 0) {
             let infoSize = 0;
             const audiosInfo = this.context.audio._infoList;
@@ -8957,7 +9010,7 @@ __webpack_require__.r(__webpack_exports__);
             return;
         }
 
-        const audioUploadUrl = this.context.option.audioUploadUrl;
+        const audioUploadUrl = this.options.audioUploadUrl;
         const filesLen = this.context.dialog.updateModal ? 1 : files.length;
 
         // create formData
@@ -8967,7 +9020,7 @@ __webpack_require__.r(__webpack_exports__);
         }
 
         // server upload
-        this.plugins.fileManager.upload.call(this, audioUploadUrl, this.context.option.audioUploadHeader, formData, this.plugins.audio.callBack_upload.bind(this, info), this.functions.onAudioUploadError);
+        this.plugins.fileManager.upload.call(this, audioUploadUrl, this.options.audioUploadHeader, formData, this.plugins.audio.callBack_upload.bind(this, info), this.functions.onAudioUploadError);
     },
 
     callBack_upload: function (info, xmlHttp) {
@@ -9214,7 +9267,8 @@ __webpack_require__.r(__webpack_exports__);
                 title: 'Indsæt link',
                 url: 'URL til link',
                 text: 'Tekst for link',
-                newWindowCheck: 'Åben i nyt faneblad'
+                newWindowCheck: 'Åben i nyt faneblad',
+                bookmark: 'Bogmærke'
             },
             mathBox: {
                 title: 'Math',
@@ -9405,7 +9459,8 @@ __webpack_require__.r(__webpack_exports__);
                 title: 'Link einfügen',
                 url: 'Link-URL',
                 text: 'Link-Text',
-                newWindowCheck: 'In neuem Fenster anzeigen'
+                newWindowCheck: 'In neuem Fenster anzeigen',
+                bookmark: 'Lesezeichen'
             },
             mathBox: {
                 title: 'Mathematik',
@@ -9595,7 +9650,8 @@ __webpack_require__.r(__webpack_exports__);
 				title: 'Insertar Link',
 				url: '¿Hacia que URL lleva el link?',
 				text: 'Texto para mostrar',
-				newWindowCheck: 'Abrir en una nueva ventana'
+				newWindowCheck: 'Abrir en una nueva ventana',
+                bookmark: 'Marcador'
 			},
 			mathBox: {
                 title: 'Matemáticas',
@@ -9785,7 +9841,8 @@ __webpack_require__.r(__webpack_exports__);
                 title: 'Insérer un lien',
                 url: 'Adresse URL du lien',
                 text: 'Texte à afficher',
-                newWindowCheck: 'Ouvrir dans une nouvelle fenêtre'
+                newWindowCheck: 'Ouvrir dans une nouvelle fenêtre',
+                bookmark: 'Signet'
             },
             mathBox: {
                 title: 'Math',
@@ -9976,7 +10033,8 @@ __webpack_require__.r(__webpack_exports__);
                 title: 'リンクの挿入',
                 url: 'インターネットアドレス',
                 text: '画面のテキスト',
-                newWindowCheck: '別ウィンドウで開く'
+                newWindowCheck: '別ウィンドウで開く',
+                bookmark: 'ブックマーク'
             },
             mathBox: {
                 title: '数学',
@@ -10166,7 +10224,8 @@ __webpack_require__.r(__webpack_exports__);
                 title: '링크 삽입',
                 url: '인터넷 주소',
                 text: '화면 텍스트',
-                newWindowCheck: '새창으로 열기'
+                newWindowCheck: '새창으로 열기',
+                bookmark: '북마크'
             },
             mathBox: {
                 title: '수식',
@@ -10357,7 +10416,8 @@ __webpack_require__.r(__webpack_exports__);
                 title: 'Inserir link',
                 url: 'URL para link',
                 text: 'Texto à mostrar',
-                newWindowCheck: 'Abrir em nova guia'
+                newWindowCheck: 'Abrir em nova guia',
+                bookmark: 'marca páginas'
             },
             mathBox: {
                 title: 'Matemática',
@@ -10547,7 +10607,8 @@ __webpack_require__.r(__webpack_exports__);
                 title: 'Вставить ссылку',
                 url: 'Ссылка',
                 text: 'Текст',
-                newWindowCheck: 'Открывать в новом окне'
+                newWindowCheck: 'Открывать в новом окне',
+                bookmark: 'Закладка'
             },
             mathBox: {
                 title: 'математический',
@@ -10737,7 +10798,8 @@ __webpack_require__.r(__webpack_exports__);
                 title: 'Inserisci un Link',
                 url: 'Indirizzo in link',
                 text: 'Applica Testo da visualizzare',
-                newWindowCheck: 'Apri in una nuova finestra'
+                newWindowCheck: 'Apri in una nuova finestra',
+                bookmark: 'Segnalibro'
             },
             mathBox: {
                 title: 'Matematica',
@@ -10928,7 +10990,8 @@ __webpack_require__.r(__webpack_exports__);
                 title: '插入超链接',
                 url: '网址',
                 text: '字体',
-                newWindowCheck: '在新标签页中打开'
+                newWindowCheck: '在新标签页中打开',
+                bookmark: '书签'
             },
             mathBox: {
                 title: '数学',
@@ -11118,7 +11181,8 @@ __webpack_require__.r(__webpack_exports__);
                 title: 'Inserează Link',
                 url: 'Adresă link',
                 text: 'Text de afișat',
-                newWindowCheck: 'Deschide în fereastră nouă'
+                newWindowCheck: 'Deschide în fereastră nouă',
+                bookmark: 'Marcaj'
             },
             mathBox: {
                 title: 'Matematică',
@@ -11308,7 +11372,8 @@ __webpack_require__.r(__webpack_exports__);
                 title: 'Wstaw odnośnik',
                 url: 'Adres URL',
                 text: 'Tekst do wyświetlenia',
-                newWindowCheck: 'Otwórz w nowym oknie'
+                newWindowCheck: 'Otwórz w nowym oknie',
+                bookmark: 'Zakładka'
             },
             mathBox: {
                 title: 'Matematyczne',
@@ -11498,7 +11563,8 @@ __webpack_require__.r(__webpack_exports__);
                 title: 'به‌سته‌ر دابنێ',
                 url: 'به‌سته‌ر',
                 text: 'تێكستی به‌سته‌ر',
-                newWindowCheck: 'له‌ په‌نجه‌ره‌یه‌كی نوێ بكه‌ره‌وه‌'
+                newWindowCheck: 'له‌ په‌نجه‌ره‌یه‌كی نوێ بكه‌ره‌وه‌',
+                bookmark: 'المرجعية'
             },
             mathBox: {
                 title: 'بیركاری',
@@ -11688,7 +11754,8 @@ __webpack_require__.r(__webpack_exports__);
                 title: 'Ievietot saiti',
                 url: 'Saites URL',
                 text: 'Parādāmais teksts',
-                newWindowCheck: 'Atvērt jaunā logā'
+                newWindowCheck: 'Atvērt jaunā logā',
+                bookmark: 'Grāmatzīme'
             },
             mathBox: {
                 title: 'Matemātika',
@@ -11794,6 +11861,393 @@ __webpack_require__.r(__webpack_exports__);
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
+/*
+ * wysiwyg web editor
+ *
+ * suneditor.js
+ * Copyright 2017 JiHong Lee.
+ * 
+ * Swedish translation by olehrb at github or gmail
+ *
+ * MIT license.
+ */
+
+
+(function (global, factory) {
+    if ( true && typeof module.exports === 'object') {
+        module.exports = global.document ?
+            factory(global, true) :
+            function (w) {
+                if (!w.document) {
+                    throw new Error('SUNEDITOR_LANG a window with a document');
+                }
+                return factory(w);
+            };
+    } else {
+        factory(global);
+    }
+}(typeof window !== 'undefined' ? window : this, function (window, noGlobal) {
+    const lang = {
+        code: 'se',
+        toolbar: {
+            default: 'Default',
+            save: 'Spara',
+            font: 'Typsnitt',
+            formats: 'Format',
+            fontSize: 'Textstorlek',
+            bold: 'Fet',
+            underline: 'Understruket',
+            italic: 'Kursiv',
+            strike: 'Överstruket',
+            subscript: 'Sänkt skrift',
+            superscript: 'Höjd skrift',
+            removeFormat: 'Ta bort formattering',
+            fontColor: 'Textfärg',
+            hiliteColor: 'Bakgrundsfärg',
+            indent: 'Minska indrag',
+            outdent: 'Öka indrag',
+            align: 'Justering',
+            alignLeft: 'Vänsterjustering',
+            alignRight: 'Högerjustering',
+            alignCenter: 'Mittenjusteirng',
+            alignJustify: 'Justera indrag',
+            list: 'Listor',
+            orderList: 'Numrerad lista',
+            unorderList: 'Oordnad lista',
+            horizontalRule: 'Horisontell linje',
+            hr_solid: 'Solid',
+            hr_dotted: 'Punkter',
+            hr_dashed: 'Prickad',
+            table: 'Tabell',
+            link: 'Länk',
+            math: 'Math',
+            image: 'Bild',
+            video: 'Video',
+            audio: 'Ljud',
+            fullScreen: 'Helskärm',
+            showBlocks: 'Visa block',
+            codeView: 'Visa koder',
+            undo: 'Ångra',
+            redo: 'Gör om',
+            preview: 'Preview',
+            print: 'Print',
+            tag_p: 'Paragraf',
+            tag_div: 'Normal (DIV)',
+            tag_h: 'Rubrik',
+            tag_blockquote: 'Citer',
+            tag_pre: 'Kod',
+            template: 'Mall',
+            lineHeight: 'Linjehöjd',
+            paragraphStyle: 'Stil på stycke',
+            textStyle: 'Textstil',
+            imageGallery: 'Bildgalleri',
+            mention: 'Namn'
+        },
+        dialogBox: {
+            linkBox: {
+                title: 'Lägg till länk',
+                url: 'URL till länk',
+                text: 'Länktext',
+                newWindowCheck: 'Öppna i nytt fönster',
+                bookmark: 'Bokmärke'
+            },
+            mathBox: {
+                title: 'Math',
+                inputLabel: 'Matematisk notation',
+                fontSizeLabel: 'Textstorlek',
+                previewLabel: 'Preview'
+            },
+            imageBox: {
+                title: 'Lägg till bild',
+                file: 'Lägg till från fil',
+                url: 'Lägg till från URL',
+                altText: 'Alternativ text'
+            },
+            videoBox: {
+                title: 'Lägg till video',
+                file: 'Lägg till från fil',
+                url: 'Bädda in video / YouTube,Vimeo'
+            },
+            audioBox: {
+                title: 'Lägg till ljud',
+                file: 'Lägg till från fil',
+                url: 'Lägg till från URL'
+            },
+            browser: {
+                tags: 'Tags',
+                search: 'Sök',
+            },
+            caption: 'Lägg till beskrivning',
+            close: 'Stäng',
+            submitButton: 'Skicka',
+            revertButton: 'Återgå',
+            proportion: 'Spara proportioner',
+            basic: 'Basic',
+            left: 'Vänster',
+            right: 'Höger',
+            center: 'Center',
+            width: 'Bredd',
+            height: 'Höjd',
+            size: 'Storlek',
+            ratio: 'Förhållande'
+        },
+        controller: {
+            edit: 'Redigera',
+            unlink: 'Ta bort länk',
+            remove: 'Ta bort',
+            insertRowAbove: 'Lägg till rad över',
+            insertRowBelow: 'Lägg till rad under',
+            deleteRow: 'Ta bort rad',
+            insertColumnBefore: 'Lägg till kolumn före',
+            insertColumnAfter: 'Lägg till kolumn efter',
+            deleteColumn: 'Ta bort kolumner',
+            fixedColumnWidth: 'Fast kolumnbredd',
+            resize100: 'Förstora 100%',
+            resize75: 'Förstora 75%',
+            resize50: 'Förstora 50%',
+            resize25: 'Förstora 25%',
+            autoSize: 'Autostorlek',
+            mirrorHorizontal: 'Spegling, horisontell',
+            mirrorVertical: 'Spegling, vertikal',
+            rotateLeft: 'Rotera till vänster',
+            rotateRight: 'Rotera till höger',
+            maxSize: 'Maxstorlek',
+            minSize: 'Minsta storlek',
+            tableHeader: 'Rubrik tabell',
+            mergeCells: 'Sammanfoga celler (merge)',
+            splitCells: 'Separera celler',
+            HorizontalSplit: 'Separera horisontalt',
+            VerticalSplit: 'Separera vertikalt'
+        },
+        menu: {
+            spaced: 'Avstånd',
+            bordered: 'Avgränsningslinje',
+            neon: 'Neon',
+            translucent: 'Genomskinlig',
+            shadow: 'Skugga',
+            code: 'Kod'
+        }
+    };
+
+    if (typeof noGlobal === typeof undefined) {
+        if (!window.SUNEDITOR_LANG) {
+            Object.defineProperty(window, 'SUNEDITOR_LANG', {
+                enumerable: true,
+                writable: false,
+                configurable: false,
+                value: {}
+            });
+        }
+
+        Object.defineProperty(window.SUNEDITOR_LANG, 'se', {
+            enumerable: true,
+            writable: true,
+            configurable: true,
+            value: lang
+        });
+    }
+
+    return lang;
+}));
+
+
+/***/ }),
+/* 44 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+/*
+ * wysiwyg web editor
+ *
+ * suneditor.js
+ * Copyright 2017 JiHong Lee.
+ * MIT license.
+ */
+
+
+(function (global, factory) {
+    if ( true && typeof module.exports === 'object') {
+        module.exports = global.document ?
+            factory(global, true) :
+            function (w) {
+                if (!w.document) {
+                    throw new Error('SUNEDITOR_LANG a window with a document');
+                }
+                return factory(w);
+            };
+    } else {
+        factory(global);
+    }
+})(typeof window !== "undefined" ? window : this, function(window, noGlobal) {
+    const lang = {
+        code: "ua",
+        toolbar: {
+            default: "По замовчуванням",
+            save: "Зберегти",
+            font: "Шрифт",
+            formats: "Стиль абзацу",
+            fontSize: "Розмір шрифту",
+            bold: "Жирний",
+            underline: "Підкреслений",
+            italic: "Курсив",
+            strike: "Перекреслити",
+            subscript: "Нижній індекс",
+            superscript: "Верхній індекс",
+            removeFormat: "Очистити форматування",
+            fontColor: "Колір тексту",
+            hiliteColor: "Колір виділення",
+            indent: "Збільшити відступ",
+            outdent: "Зменшити відступ",
+            align: "Вирівнювання",
+            alignLeft: "За лівим краєм",
+            alignRight: "За правим краєм",
+            alignCenter: "По центру",
+            alignJustify: "За шириною",
+            list: "Список",
+            orderList: "Нумерований",
+            unorderList: "Маркований",
+            horizontalRule: "Горизонтальна лінія",
+            hr_solid: "Суцільна",
+            hr_dotted: "Пунктирна",
+            hr_dashed: "Штрихова",
+            table: "Таблиця",
+            link: "Посилання",
+            math: "Формула",
+            image: "Зображення",
+            video: "Відео",
+            audio: "Аудіо",
+            fullScreen: "Повний екран",
+            showBlocks: "Показати блоки",
+            codeView: "Редагувати як HTML",
+            undo: "Скасувати",
+            redo: "Виконати знову",
+            preview: "Попередній перегляд",
+            print: "Друк",
+            tag_p: "Абзац",
+            tag_div: "Базовий",
+            tag_h: "Заголовок",
+            tag_blockquote: "Цитата",
+            tag_pre: "Код",
+            template: "Шаблон",
+            lineHeight: "Висота лінії",
+            paragraphStyle: "Стиль абзацу",
+            textStyle: "Стиль тексту",
+            imageGallery: "Галерея",
+            mention: "Згадати"
+        },
+        dialogBox: {
+            linkBox: {
+                title: "Вставити посилання",
+                url: "Посилання",
+                text: "Текст",
+                newWindowCheck: "Відкривати в новому вікні",
+                bookmark: 'Закладка'
+            },
+            mathBox: {
+                title: "Формула",
+                inputLabel: "Математична запис",
+                fontSizeLabel: "Розмір шрифту",
+                previewLabel: "Попередній перегляд"
+            },
+            imageBox: {
+                title: "Вставити зображення",
+                file: "Виберіть файл",
+                url: "Посилання на зображення",
+                altText: "Текстовий опис зображення"
+            },
+            videoBox: {
+                title: "Вставити відео",
+                file: "Виберіть файл",
+                url: "Посилання на відео, Youtube, Vimeo"
+            },
+            audioBox: {
+                title: "Вставити аудіо",
+                file: "Виберіть файл",
+                url: "Посилання на аудіо"
+            },
+            browser: {
+                tags: "Теги",
+                search: "Пошук"
+            },
+            caption: "Додати підпис",
+            close: "Закрити",
+            submitButton: "Підтвердити",
+            revertButton: "Скинути",
+            proportion: "Зберегти пропорції",
+            basic: "Без обтікання",
+            left: "Зліва",
+            right: "Справа",
+            center: "По центру",
+            width: "Ширина",
+            height: "Висота",
+            size: "Розмір",
+            ratio: "Співвідношення"
+        },
+        controller: {
+            edit: "Змінити",
+            unlink: "Прибрати посилання",
+            remove: "Видалити",
+            insertRowAbove: "Вставити рядок вище",
+            insertRowBelow: "Вставити рядок нижче",
+            deleteRow: "Видалити рядок",
+            insertColumnBefore: "Вставити стовпець зліва",
+            insertColumnAfter: "Вставити стовпець справа",
+            deleteColumn: "Видалити стовпець",
+            fixedColumnWidth: "Фіксована ширина стовпця",
+            resize100: "Розмір 100%",
+            resize75: "Розмір 75%",
+            resize50: "Розмір 50%",
+            resize25: "Розмір 25%",
+            autoSize: "Авто розмір",
+            mirrorHorizontal: "Відобразити по горизонталі",
+            mirrorVertical: "Відобразити по вертикалі",
+            rotateLeft: "Повернути проти годинникової стрілки",
+            rotateRight: "Повернути за годинниковою стрілкою",
+            maxSize: "Ширина за розміром сторінки",
+            minSize: "Ширина за вмістом",
+            tableHeader: "Заголовок таблиці",
+            mergeCells: "Об'єднати клітинки",
+            splitCells: "Розділити клітинку",
+            HorizontalSplit: "Розділити горизонтально",
+            VerticalSplit: "Розділити вертикально"
+        },
+        menu: {
+            spaced: "Інтервал",
+            bordered: "З лініями",
+            neon: "Неон",
+            translucent: "Напівпрозорий",
+            shadow: "Тінь",
+            code: "Код"
+        }
+    };
+
+    if (typeof noGlobal === typeof undefined) {
+        if (!window.SUNEDITOR_LANG) {
+            Object.defineProperty(window, "SUNEDITOR_LANG", {
+                enumerable: true,
+                writable: false,
+                configurable: false,
+                value: {},
+            });
+        }
+
+        Object.defineProperty(window.SUNEDITOR_LANG, "ua", {
+            enumerable: true,
+            writable: true,
+            configurable: true,
+            value: lang,
+        });
+    }
+
+    return lang;
+});
+
+
+/***/ }),
+/* 45 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
 /**
  * Copyright (c) 2013-present, Facebook, Inc.
  *
@@ -11803,7 +12257,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
-var ReactPropTypesSecret = __webpack_require__(44);
+var ReactPropTypesSecret = __webpack_require__(46);
 
 function emptyFunction() {}
 function emptyFunctionWithReset() {}
@@ -11861,7 +12315,7 @@ module.exports = function() {
 
 
 /***/ }),
-/* 44 */
+/* 46 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -11880,7 +12334,7 @@ module.exports = ReactPropTypesSecret;
 
 
 /***/ }),
-/* 45 */
+/* 47 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -11997,6 +12451,7 @@ var external_react_default = /*#__PURE__*/__webpack_require__.n(external_react_)
    line_break: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19,6a1,1,0,0,0-1,1v4a1,1,0,0,1-1,1H7.41l1.3-1.29A1,1,0,0,0,7.29,9.29l-3,3a1,1,0,0,0-.21.33,1,1,0,0,0,0,.76,1,1,0,0,0,.21.33l3,3a1,1,0,0,0,1.42,0,1,1,0,0,0,0-1.42L7.41,14H17a3,3,0,0,0,3-3V7A1,1,0,0,0,19,6Z"/></svg>',
    audio: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14,3.23V5.29C16.89,6.15 19,8.83 19,12C19,15.17 16.89,17.84 14,18.7V20.77C18,19.86 21,16.28 21,12C21,7.72 18,4.14 14,3.23M16.5,12C16.5,10.23 15.5,8.71 14,7.97V16C15.5,15.29 16.5,13.76 16.5,12M3,9V15H7L12,20V4L7,9H3Z" /></svg>',
    image_gallery: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="30 30 150 150"><g><path d="M152.775,120.548V51.651c0-12.271-9.984-22.254-22.254-22.254H43.727c-12.271,0-22.254,9.983-22.254,22.254v68.896c0,12.27,9.983,22.254,22.254,22.254h86.795C142.791,142.802,152.775,132.817,152.775,120.548z M36.394,51.651c0-4.042,3.291-7.333,7.333-7.333h86.795c4.042,0,7.332,3.291,7.332,7.333v23.917l-14.938-17.767c-1.41-1.678-3.487-2.649-5.68-2.658h-0.029c-2.184,0-4.255,0.954-5.674,2.613L76.709,98.519l-9.096-9.398c-1.427-1.474-3.392-2.291-5.448-2.273c-2.052,0.025-4.004,0.893-5.396,2.4L36.394,111.32V51.651z M41.684,127.585l20.697-22.416l9.312,9.622c1.461,1.511,3.489,2.334,5.592,2.27c2.101-0.066,4.075-1.013,5.44-2.612l34.436-40.308l20.693,24.613v21.794c0,4.042-3.29,7.332-7.332,7.332H43.727C43.018,127.88,42.334,127.775,41.684,127.585z M182.616,152.5V75.657c0-4.12-3.34-7.46-7.461-7.46c-4.119,0-7.46,3.34-7.46,7.46V152.5c0,4.112-3.347,7.46-7.461,7.46h-94c-4.119,0-7.46,3.339-7.46,7.459c0,4.123,3.341,7.462,7.46,7.462h94C172.576,174.881,182.616,164.841,182.616,152.5z"/></g></svg>',
+   bookmark: '<svg viewBox="0 0 24 24"><path d="M17,3H7A2,2 0 0,0 5,5V21L12,18L19,21V5C19,3.89 18.1,3 17,3Z" /></svg>',
    // More icons
    more_text: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="10 10 180 180"><g><path d="M49.711,142.188h49.027c2.328,0.002,4.394,1.492,5.129,3.699l9.742,29.252c0.363,1.092,1.385,1.828,2.537,1.83l15.883,0.01c0.859,0,1.667-0.412,2.17-1.109s0.641-1.594,0.37-2.41l-16.625-50.045L86.503,28.953c-0.36-1.097-1.383-1.839-2.537-1.842H64.532c-1.153-0.001-2.178,0.736-2.542,1.831L13.847,173.457c-0.271,0.816-0.135,1.713,0.369,2.412c0.503,0.697,1.311,1.109,2.171,1.109h15.872c1.151,0,2.173-0.736,2.537-1.828l9.793-29.287C45.325,143.66,47.39,142.18,49.711,142.188L49.711,142.188z M53.493,119.098l15.607-46.9c0.744-2.196,2.806-3.674,5.125-3.674s4.381,1.478,5.125,3.674l15.607,46.904c0.537,1.621,0.263,3.402-0.736,4.789c-1.018,1.408-2.649,2.24-4.386,2.24H58.615c-1.736,0-3.368-0.832-4.386-2.24C53.23,122.504,52.956,120.721,53.493,119.098L53.493,119.098z M190.465,63.32c0-2.919-1.015-5.396-3.059-7.428c-2.029-2.031-4.496-3.047-7.383-3.047c-2.889,0-5.355,1.016-7.388,3.047c-2.029,2.032-3.056,4.498-3.056,7.386c0,2.889,1.026,5.354,3.056,7.385c2.032,2.032,4.499,3.059,7.388,3.059c2.887,0,5.354-1.026,7.383-3.059C189.45,68.633,190.465,66.178,190.465,63.32L190.465,63.32z M190.465,101.994c0-2.858-1.015-5.313-3.059-7.333c-2.029-2.042-4.496-3.047-7.383-3.047c-2.889,0-5.355,1.005-7.388,3.047c-2.029,2.021-3.056,4.486-3.056,7.376c0,2.887,1.026,5.352,3.056,7.395c2.032,2.021,4.499,3.047,7.388,3.047c2.887,0,5.354-1.025,7.383-3.047C189.45,107.389,190.465,104.914,190.465,101.994L190.465,101.994z M190.465,140.76c0-2.918-1.015-5.395-3.059-7.438c-2.029-2.041-4.496-3.047-7.383-3.047c-2.889,0-5.355,1.006-7.388,3.047c-2.029,2.043-3.056,4.52-3.056,7.438c0,2.922,1.026,5.398,3.056,7.439c2.032,2.021,4.499,3.047,7.388,3.047c2.887,0,5.354-1.025,7.383-3.047C189.45,146.158,190.465,143.682,190.465,140.76L190.465,140.76z"/></g></svg>',
    more_paragraph: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="10 10 180 180"><g><path d="M128.39,28.499H63.493c-25.558,0-46.354,20.796-46.354,46.354c0,25.559,20.796,46.353,46.354,46.353h9.271v55.625h18.542V47.04h9.271V176.83h18.543V47.04h9.271V28.499z M72.764,102.664h-9.271c-15.337,0-27.813-12.475-27.813-27.812c0-15.336,12.476-27.813,27.813-27.813h9.271V102.664z M190.465,63.32c0-2.919-1.015-5.396-3.059-7.428c-2.029-2.031-4.496-3.047-7.383-3.047c-2.889,0-5.355,1.016-7.388,3.047c-2.029,2.032-3.056,4.498-3.056,7.386c0,2.889,1.026,5.354,3.056,7.385c2.032,2.032,4.499,3.059,7.388,3.059c2.887,0,5.354-1.026,7.383-3.059C189.45,68.633,190.465,66.178,190.465,63.32L190.465,63.32z M190.465,101.994c0-2.858-1.015-5.313-3.059-7.333c-2.029-2.042-4.496-3.047-7.383-3.047c-2.889,0-5.355,1.005-7.388,3.047c-2.029,2.021-3.056,4.486-3.056,7.376c0,2.887,1.026,5.352,3.056,7.395c2.032,2.021,4.499,3.047,7.388,3.047c2.887,0,5.354-1.025,7.383-3.047C189.45,107.389,190.465,104.914,190.465,101.994L190.465,101.994z M190.465,140.76c0-2.918-1.015-5.395-3.059-7.438c-2.029-2.041-4.496-3.047-7.383-3.047c-2.889,0-5.355,1.006-7.388,3.047c-2.029,2.043-3.056,4.52-3.056,7.438c0,2.922,1.026,5.398,3.056,7.439c2.032,2.021,4.499,3.047,7.388,3.047c2.887,0,5.354-1.025,7.383-3.047C189.45,146.158,190.465,143.682,190.465,140.76L190.465,140.76z"/></g></svg>',
@@ -12388,6 +12843,16 @@ const util_util = {
      */
     isComponent: function (element) {
         return element && (/se-component/.test(element.className) || /^(TABLE|HR)$/.test(element.nodeName));
+    },
+
+    /**
+     * @description Checks for "__se__uneditable" in the class list.
+     * Components with class "__se__uneditable" cannot be modified.
+     * @param {Element} element The element to check
+     * @returns {Boolean}
+     */
+    isUneditableComponent: function (element) {
+        return element && this.hasClass(element, '__se__uneditable');
     },
 
     /**
@@ -13035,7 +13500,7 @@ const util_util = {
 
         return {
             left: offsetLeft + (iframe ? wysiwygFrame.parentElement.offsetLeft : 0),
-            top: (offsetTop - wysiwyg.scrollTop) + (iframe ? wysiwygFrame.parentElement.offsetTop : 0)
+            top: (offsetTop - (wysiwyg ? wysiwyg.scrollTop : 0)) + (iframe ? wysiwygFrame.parentElement.offsetTop : 0)
         };
     },
 
@@ -13662,12 +14127,29 @@ const util_util = {
     },
 
     /**
+     * @description Get key of the options.allowStyles
+     * @param {Node} node Node
+     * @returns {String}
+     * @private
+     */
+    _getCheckFormat: function (node) {
+        return node.nodeType === 3 ? 'null' :
+         this.isComponent(node) ? 'component' :
+         this.isClosureFreeFormatElement(node) ? 'closureFreeFormat' :
+         this.isFreeFormatElement(node) ? 'freeFormat' :
+         this.isClosureRangeFormatElement(node) ? 'closureRangeFormat' :
+         this.isRangeFormatElement(node) ? 'rangeFormat' :
+         this.isFormatElement(node) ? 'format' : node.nodeName.toLowerCase();
+    },
+
+    /**
      * @description Fix tags that do not fit the editor format.
      * @param {Element} documentFragment Document fragment "DOCUMENT_FRAGMENT_NODE" (nodeType === 11)
      * @param {RegExp} htmlCheckWhitelistRegExp Editor tags whitelist (core._htmlCheckWhitelistRegExp)
+     * @param {Object} allowStyles options.allowStyles
      * @private
      */
-    _consistencyCheckOfHTML: function (documentFragment, htmlCheckWhitelistRegExp) {
+    _consistencyCheckOfHTML: function (documentFragment, htmlCheckWhitelistRegExp, allowStyles) {
         /**
          * It is can use ".children(util.getListChildren)" to exclude text nodes, but "documentFragment.children" is not supported in IE.
          * So check the node type and exclude the text no (current.nodeType !== 1)
@@ -13706,10 +14188,27 @@ const util_util = {
                 }
             }
 
-            return current.parentNode !== documentFragment &&
+            const result = current.parentNode !== documentFragment &&
              (this.isFormatElement(current) || this.isComponent(current) || this.isList(current)) &&
              !this.isRangeFormatElement(current.parentNode) && !this.isListCell(current.parentNode) &&
              !this.getParentElement(current, this.isComponent) && nrtag;
+
+            // @v3
+            //  if (!result) {
+            //     const styles = allowStyles[this._getCheckFormat(current)];
+            //     if (!!styles && styles.length > 0) {
+            //         let s = '';
+            //         const currentStyle = current.style;
+            //         for (let i = 0, len = styles.length; i < len; i++) {
+            //             s += styles[i] + ':' + currentStyle[styles[i]] + '; ';
+            //         }
+                    
+            //         if (!s) current.removeAttribute('style');
+            //         else current.style.cssText = s;
+            //     }
+            //  }
+
+            return result;
         }.bind(this));
 
         for (let i = 0, len = removeTags.length; i < len; i++) {
@@ -13754,7 +14253,7 @@ const util_util = {
         for (let i = 0, len = withoutFormatCells.length, t, f; i < len; i++) {
             t = withoutFormatCells[i];
             f = this.createElement('DIV');
-            f.innerHTML = t.textContent.trim().length === 0 ? '<br>' : t.innerHTML;
+            f.innerHTML = (t.textContent.trim().length === 0 && t.children.length === 0) ? '<br>' : t.innerHTML;
             t.innerHTML = f.outerHTML;
         }
     },
@@ -14032,22 +14531,20 @@ const util_util = {
      * @description Add or reset options
      * @param {Object} mergeOptions New options property
      * @param {Object} context Context object of core
-     * @param {Object} plugins Origin plugins
      * @param {Object} originOptions Origin options
      * @returns {Object} pluginCallButtons
      * @private
      */
-    _setOptions: function (mergeOptions, context, plugins, originOptions) {
+    _setOptions: function (mergeOptions, context, originOptions) {
         this._initOptions(context.element.originElement, mergeOptions);
 
         const el = context.element;
         const relative = el.relative;
         const editorArea = el.editorArea;
         const isNewToolbarContainer = mergeOptions.toolbarContainer && mergeOptions.toolbarContainer !== originOptions.toolbarContainer;
-        const isNewToolbar = !!mergeOptions.buttonList || mergeOptions.mode !== originOptions.mode || isNewToolbarContainer;
-        const isNewPlugins = !!mergeOptions.plugins;
+        const isNewToolbar = mergeOptions.buttonList !== originOptions.buttonList || mergeOptions.mode !== originOptions.mode || isNewToolbarContainer;
 
-        const tool_bar = this._createToolBar(document, (isNewToolbar ? mergeOptions.buttonList : originOptions.buttonList), (isNewPlugins ? mergeOptions.plugins : plugins), mergeOptions);
+        const tool_bar = this._createToolBar(document, (isNewToolbar ? mergeOptions.buttonList : originOptions.buttonList), mergeOptions.plugins, mergeOptions);
         if (tool_bar.pluginCallButtons.math) this._checkKatexMath(mergeOptions.katex);
         const arrow = document.createElement('DIV');
         arrow.className = 'se-arrow';
@@ -14095,8 +14592,8 @@ const util_util = {
         else lib_util.removeClass(el.topArea, 'se-rtl');
 
         return {
-            callButtons: isNewToolbar ? tool_bar.pluginCallButtons : null,
-            plugins: isNewToolbar || isNewPlugins ? tool_bar.plugins : null,
+            callButtons: tool_bar.pluginCallButtons,
+            plugins: tool_bar.plugins,
             toolbar: tool_bar
         };
     },
@@ -14218,6 +14715,23 @@ const util_util = {
         /** Values */
         options.lang = options.lang || en_default.a;
         options.defaultTag = typeof options.defaultTag === 'string' ? options.defaultTag : 'p';
+        const textTags = options.textTags = [{bold: 'STRONG', underline: 'U', italic: 'EM', strike: 'DEL'}, (options.textTags || {})].reduce(function (_default, _new) {
+            for (let key in _new) {
+                if (lib_util.hasOwn(_new, key)) _default[key] = _new[key];
+            }
+            return _default;
+        }, {});
+        options._textTagsMap = {
+            'strong': textTags.bold,
+            'b': textTags.bold,
+            'u': textTags.underline,
+            'ins': textTags.underline,
+            'em': textTags.italic,
+            'i': textTags.italic,
+            'del': textTags.strike,
+            'strike': textTags.strike,
+            's': textTags.strike
+        };
         options.value = typeof options.value === 'string' ? options.value : null;
         options.historyStackDelayTime = typeof options.historyStackDelayTime === 'number' ? options.historyStackDelayTime : 400;
         /** Whitelist */
@@ -14225,6 +14739,31 @@ const util_util = {
         options._editorTagsWhitelist = options._defaultTagsWhitelist + (typeof options.addTagsWhitelist === 'string' && options.addTagsWhitelist.length > 0 ? '|' + options.addTagsWhitelist : '');
         options.pasteTagsWhitelist = typeof options.pasteTagsWhitelist === 'string' ? options.pasteTagsWhitelist : options._editorTagsWhitelist;
         options.attributesWhitelist = (!options.attributesWhitelist || typeof options.attributesWhitelist !== 'object') ? null : options.attributesWhitelist;
+        // @v3
+        // const defaultAllowStyles = {
+        //     format: ['margin-left', 'margin-right', 'text-align', 'line-height'],
+        //     rangeFormat: [],
+        //     closureRangeFormat: [],
+        //     freeFormat: [],
+        //     closureFreeFormat: [],
+        //     component: [],
+        //     span: ['font-family', 'color', 'background-color', 'font-size']
+        // };
+        // options.allowStyles = (!options.allowStyles || typeof options.allowStyles !== 'object') ? defaultAllowStyles : [defaultAllowStyles, options.allowStyles].reduce(function (_default, _new) {
+        //     for (let key in _new) {
+        //         if (!_default[key]) _default[key] = [];
+        //         const newStyle = _new[key];
+        //         if (typeof newStyle === 'string') {
+        //             _default[key] = !newStyle ? [] : newStyle.split('|');
+        //         } else {
+        //             for (let i = 0, len = newStyle.length, n; i < len; i++) {
+        //                 n = newStyle[i];
+        //                 if (_default[key].indexOf(n) === -1) _default[key].push(n)
+        //             }
+        //         }
+        //     }
+        //     return _default;
+        // }, {});
         /** Layout */
         options.mode = options.mode || 'classic'; // classic, inline, balloon, balloon-always
         options.rtl = !!options.rtl;
@@ -14232,6 +14771,7 @@ const util_util = {
         options.toolbarWidth = options.toolbarWidth ? (lib_util.isNumber(options.toolbarWidth) ? options.toolbarWidth + 'px' : options.toolbarWidth) : 'auto';
         options.toolbarContainer = typeof options.toolbarContainer === 'string' ? document.querySelector(options.toolbarContainer) : options.toolbarContainer;
         options.stickyToolbar = (/balloon/i.test(options.mode) || !!options.toolbarContainer) ? -1 : options.stickyToolbar === undefined ? 0 : (/^\d+/.test(options.stickyToolbar) ? lib_util.getNumber(options.stickyToolbar, 0) : -1);
+        options.fullScreenOffset = options.fullScreenOffset === undefined ? 0 : (/^\d+/.test(options.fullScreenOffset) ? lib_util.getNumber(options.fullScreenOffset, 0) : 0);
         options.iframe = options.fullPage || options.iframe;
         options.fullPage = !!options.fullPage;
         options.iframeCSSFileName = options.iframe ? typeof options.iframeCSSFileName === 'string' ? [options.iframeCSSFileName] : (options.iframeCSSFileName || ['suneditor']) : null;
@@ -14322,9 +14862,12 @@ const util_util = {
         options.audioAccept = (typeof options.audioAccept !== 'string' || options.audioAccept.trim() === "*") ? 'audio/*' : options.audioAccept.trim() || 'audio/*';
         /** Table */
         options.tableCellControllerPosition = typeof options.tableCellControllerPosition === 'string' ? options.tableCellControllerPosition.toLowerCase() : 'cell';
+        /** Link */
+        options.linkProtocol = typeof options.linkProtocol === 'string' ? options.linkProtocol : null;
+        options.linkRel = Array.isArray(options.linkRel) ? options.linkRel : [];
         /** Key actions */
         options.tabDisable = !!options.tabDisable;
-        options.shortcutsDisable = (Array.isArray(options.shortcutsDisable) && options.shortcutsDisable.length > 0) ? options.shortcutsDisable.map(function (v) { return v.toLowerCase(); }) : [];
+        options.shortcutsDisable = Array.isArray(options.shortcutsDisable) ? options.shortcutsDisable : [];
         options.shortcutsHint = options.shortcutsHint === undefined ? true : !!options.shortcutsHint;
         /** Defining save button */
         options.callBackSave = !options.callBackSave ? null : options.callBackSave;
@@ -14332,9 +14875,8 @@ const util_util = {
         options.templates = !options.templates ? null : options.templates;
         /** ETC */
         options.placeholder = typeof options.placeholder === 'string' ? options.placeholder : null;
-        options.linkProtocol = typeof options.linkProtocol === 'string' ? options.linkProtocol : null;
         /** Buttons */
-        options.buttonList = !!options.buttonList ? JSON.parse(JSON.stringify(options.buttonList)) : [
+        options.buttonList = !!options.buttonList ? options.buttonList : [
             ['undo', 'redo'],
             ['bold', 'underline', 'italic', 'strike', 'subscript', 'superscript'],
             ['removeFormat'],
@@ -14378,15 +14920,15 @@ const util_util = {
         const lang = options.lang;
         const cmd = lib_util.isOSX_IOS ? '⌘' : 'CTRL';
         const addShift = lib_util.isOSX_IOS ? '⇧' : '+SHIFT';
-        const shortcutsDisable = !options.shortcutsHint ? ['bold', 'strike', 'underline', 'italic', 'undo', 'indent'] : options.shortcutsDisable;
+        const shortcutsDisable = !options.shortcutsHint ? ['bold', 'strike', 'underline', 'italic', 'undo', 'indent', 'save'] : options.shortcutsDisable;
         const indentKey = options.rtl ? ['[',']'] : [']','['];
 
         return {
             /** default command */
-            bold: ['_se_command_bold', lang.toolbar.bold + '<span class="se-shortcut">' + (shortcutsDisable.indexOf('bold') > -1 ? '' : cmd + '+<span class="se-shortcut-key">B</span>') + '</span>', 'STRONG', '', icons.bold],
-            underline: ['_se_command_underline', lang.toolbar.underline + '<span class="se-shortcut">' + (shortcutsDisable.indexOf('underline') > -1 ? '' : cmd + '+<span class="se-shortcut-key">U</span>') + '</span>', 'U', '', icons.underline],
-            italic: ['_se_command_italic', lang.toolbar.italic + '<span class="se-shortcut">' + (shortcutsDisable.indexOf('italic') > -1 ? '' : cmd + '+<span class="se-shortcut-key">I</span>') + '</span>', 'EM', '', icons.italic],
-            strike: ['_se_command_strike', lang.toolbar.strike + '<span class="se-shortcut">' + (shortcutsDisable.indexOf('strike') > -1 ? '' : cmd + addShift + '+<span class="se-shortcut-key">S</span>') + '</span>', 'DEL', '', icons.strike],
+            bold: ['_se_command_bold', lang.toolbar.bold + '<span class="se-shortcut">' + (shortcutsDisable.indexOf('bold') > -1 ? '' : cmd + '+<span class="se-shortcut-key">B</span>') + '</span>', 'bold', '', icons.bold],
+            underline: ['_se_command_underline', lang.toolbar.underline + '<span class="se-shortcut">' + (shortcutsDisable.indexOf('underline') > -1 ? '' : cmd + '+<span class="se-shortcut-key">U</span>') + '</span>', 'underline', '', icons.underline],
+            italic: ['_se_command_italic', lang.toolbar.italic + '<span class="se-shortcut">' + (shortcutsDisable.indexOf('italic') > -1 ? '' : cmd + '+<span class="se-shortcut-key">I</span>') + '</span>', 'italic', '', icons.italic],
+            strike: ['_se_command_strike', lang.toolbar.strike + '<span class="se-shortcut">' + (shortcutsDisable.indexOf('strike') > -1 ? '' : cmd + addShift + '+<span class="se-shortcut-key">S</span>') + '</span>', 'strike', '', icons.strike],
             subscript: ['_se_command_subscript', lang.toolbar.subscript, 'SUB', '', icons.subscript],
             superscript: ['_se_command_superscript', lang.toolbar.superscript, 'SUP', '', icons.superscript],
             removeFormat: ['', lang.toolbar.removeFormat, 'removeFormat', '', icons.erase],
@@ -14399,7 +14941,7 @@ const util_util = {
             redo: ['_se_command_redo se-resizing-enabled', lang.toolbar.redo + '<span class="se-shortcut">' + (shortcutsDisable.indexOf('undo') > -1 ? '' : cmd + '+<span class="se-shortcut-key">Y</span> / ' + cmd + addShift + '+<span class="se-shortcut-key">Z</span>') + '</span>', 'redo', '', icons.redo],
             preview: ['se-resizing-enabled', lang.toolbar.preview, 'preview', '', icons.preview],
             print: ['se-resizing-enabled', lang.toolbar.print, 'print', '', icons.print],
-            save: ['_se_command_save se-resizing-enabled', lang.toolbar.save, 'save', '', icons.save],
+            save: ['_se_command_save se-resizing-enabled', lang.toolbar.save + '<span class="se-shortcut">' + (shortcutsDisable.indexOf('save') > -1 ? '' : cmd + '+<span class="se-shortcut-key">S</span>') + '</span>', 'save', '', icons.save],
             /** plugins - command */
             blockquote: ['', lang.toolbar.tag_blockquote, 'blockquote', 'command', icons.blockquote],
             /** plugins - submenu */
@@ -14511,6 +15053,7 @@ const util_util = {
         tool_bar.appendChild(_buttonTray);
 
         /** create button list */
+        buttonList = JSON.parse(JSON.stringify(buttonList));
         const icons = options.icons;
         const defaultButtonList = this._defaultButtons(options);
         const pluginCallButtons = {};
@@ -14629,14 +15172,15 @@ const util_util = {
             }
         }
 
-        const lastFloat = _buttonTray.lastElementChild.style.float;
-        if (!!lastFloat) {
-            const sv =  separator_vertical.cloneNode(false);
-            sv.style.float = lastFloat;
-            _buttonTray.appendChild(sv);
+        switch (_buttonTray.children.length) {
+            case 0:
+                _buttonTray.style.display = 'none';
+                break;
+            case 1:
+                lib_util.removeClass(_buttonTray.firstElementChild, 'se-btn-module-border');
+                break;
         }
 
-        if (_buttonTray.children.length === 1) lib_util.removeClass(_buttonTray.firstElementChild, 'se-btn-module-border');
         if (responsiveButtons.length > 0) responsiveButtons.unshift(buttonList);
         if (moreLayer.children.length > 0) _buttonTray.appendChild(moreLayer);
 
@@ -14740,7 +15284,7 @@ const _Context = function (element, cons, options) {
 /* harmony default export */ var lib_history = (function (core, change) {
     const _w = core._w;
     const util = core.util;
-    const delayTime = core.context.options.historyStackDelayTime;
+    const delayTime = core.options.historyStackDelayTime;
     let editor = core.context.element;
     let undo = core.context.tool.undo;
     let redo = core.context.tool.redo;
@@ -15077,6 +15621,11 @@ const _Context = function (element, cons, options) {
          * @description Functions object
          */
         functions: null,
+
+        /**
+         * @description Editor options
+         */
+        options: null,
 
         /**
          * @description Notice object
@@ -15417,10 +15966,10 @@ const _Context = function (element, cons, options) {
          * @private
          */
         _defaultCommand: {
-            bold: 'STRONG',
-            underline: 'U',
-            italic: 'EM',
-            strike: 'DEL',
+            bold: options.textTags.bold,
+            underline: options.textTags.underline,
+            italic: options.textTags.italic,
+            strike: options.textTags.strike,
             subscript: 'SUB',
             superscript: 'SUP'
         },
@@ -15719,6 +16268,15 @@ const _Context = function (element, cons, options) {
          * @param {KeyboardEvent|MouseEvent|null} e Event object when called from mousedown and keydown events registered in "core.controllersOn"
          */
         controllersOff: function (e) {
+            this._lineBreaker.style.display = 'none';
+            const len = this.controllerArray.length;
+
+            if (e && e.target && len > 0) {
+                for (let i = 0; i < len; i++) {
+                    if (typeof this.controllerArray[i].contains === 'function' && this.controllerArray[i].contains(e.target)) return;
+                }
+            }
+            
             if (this._fileManager.pluginRegExp.test(this.currentControllerName) && e && e.type === 'keydown' && e.keyCode !== 27) return;
             context.element.lineBreaker_t.style.display = context.element.lineBreaker_b.style.display = 'none';
             this._variable._lineBreakComp = null;
@@ -15733,7 +16291,6 @@ const _Context = function (element, cons, options) {
             this.removeDocEvent('keydown', this._bindControllersOff);
             this._bindControllersOff = null;
 
-            const len = this.controllerArray.length;
             if (len > 0) {
                 for (let i = 0; i < len; i++) {
                     if (typeof this.controllerArray[i] === 'function') this.controllerArray[i]();
@@ -15772,6 +16329,8 @@ const _Context = function (element, cons, options) {
             const l = offset.left - context.element.wysiwygFrame.scrollLeft + addOffset.left;
             const controllerW = controller.offsetWidth;
             const referElW = referEl.offsetWidth;
+            
+            const allow = util.hasClass(controller.firstElementChild, 'se-arrow') ? controller.firstElementChild : null;
 
             // rtl (Width value of the arrow element is 22px)
             if (options.rtl) {
@@ -15780,13 +16339,13 @@ const _Context = function (element, cons, options) {
                 controller.style.left = (l - rtlW + rtlL) + 'px';
                 
                 if (rtlW > 0) {
-                    controller.firstElementChild.style.left = ((controllerW - 14 < 10 + rtlW) ? (controllerW - 14) : (10 + rtlW)) + 'px';
+                    if (allow) allow.style.left = ((controllerW - 14 < 10 + rtlW) ? (controllerW - 14) : (10 + rtlW)) + 'px';
                 }
                 
                 const overSize = context.element.wysiwygFrame.offsetLeft - controller.offsetLeft;
                 if (overSize > 0) {
                     controller.style.left = '0px';
-                    controller.firstElementChild.style.left = overSize + 'px';
+                    if (allow) allow.style.left = overSize + 'px';
                 }
             } else {
                 controller.style.left = l + 'px';
@@ -15794,22 +16353,13 @@ const _Context = function (element, cons, options) {
                 const overSize = context.element.wysiwygFrame.offsetWidth - (controller.offsetLeft + controllerW);
                 if (overSize < 0) {
                     controller.style.left = (controller.offsetLeft + overSize) + 'px';
-                    controller.firstElementChild.style.left = (20 - overSize) + 'px';
+                    if (allow) allow.style.left = (20 - overSize) + 'px';
                 } else {
-                    controller.firstElementChild.style.left = '20px';
+                    if (allow) allow.style.left = '20px';
                 }
             }
 
             controller.style.visibility = '';
-        },
-
-        /**
-         * @description Run event.stopPropagation and event.preventDefault.
-         * @param {Object} e Event Object
-         */
-        eventStop: function (e) {
-            e.stopPropagation();
-            e.preventDefault();
         },
 
         /**
@@ -15889,6 +16439,17 @@ const _Context = function (element, cons, options) {
         },
 
         /**
+         * @description Focusout to wysiwyg area (.blur())
+         */
+        blur: function () {
+            if (options.iframe) {
+                context.element.wysiwygFrame.blur();
+            } else {
+                context.element.wysiwyg.blur();
+            }
+        },
+
+        /**
          * @description Set current editor's range object and return.
          * @param {Node} startCon The startContainer property of the selection object.
          * @param {Number} startOff The startOffset property of the selection object.
@@ -15900,6 +16461,14 @@ const _Context = function (element, cons, options) {
             if (!startCon || !endCon) return;
             if (startOff > startCon.textContent.length) startOff = startCon.textContent.length;
             if (endOff > endCon.textContent.length) endOff = endCon.textContent.length;
+            if (util.isFormatElement(startCon)) {
+                startCon = startCon.childNodes[startOff] || startCon;
+                startOff = 0;
+            }
+            if (util.isFormatElement(endCon)) {
+                endCon = endCon.childNodes[endOff] || endCon;
+                endOff = startOff > 1 ? startOff : 0;
+            }
             
             const range = this._wd.createRange();
 
@@ -16282,10 +16851,34 @@ const _Context = function (element, cons, options) {
          * @description Determine if this offset is the edge offset of container
          * @param {Node} container The node of the selection object. (range.startContainer..)
          * @param {Number} offset The offset of the selection object. (core.getRange().startOffset...)
+         * @param {String|undefined} dir Select check point - Both edge, Front edge or End edge. ("front": Front edge, "end": End edge, undefined: Both edge)
          * @returns {Boolean}
          */
-        isEdgePoint: function (container, offset) {
-            return (offset === 0) || (!container.nodeValue && offset === 1) || (offset === container.nodeValue.length);
+        isEdgePoint: function (container, offset, dir) {
+            return (dir !== 'end' && offset === 0) || ((!dir || dir !== 'front') && !container.nodeValue && offset === 1) || ((!dir || dir === 'end') && !!container.nodeValue && offset === container.nodeValue.length);
+        },
+
+        /**
+         * @description Check if the container and offset values are the edges of the format tag
+         * @param {Node} container The node of the selection object. (range.startContainer..)
+         * @param {Number} offset The offset of the selection object. (core.getRange().startOffset...)
+         * @param {String} dir Select check point - "front": Front edge, "end": End edge, undefined: Both edge.
+         * @returns {Boolean}
+         */
+        isEdgeFormat: function (node, offset, dir) {
+            if (!this.isEdgePoint(node, offset, dir)) return false;
+
+            let result = true;
+            dir = dir === 'front' ? 'previousSibling' : 'nextSibling';
+            while (node && !util.isFormatElement(node) && !util.isWysiwygDiv(node)) {
+                if (!node[dir] || (util.isBreak(node[dir]) && !node[dir][dir])) {
+                    node = node.parentNode;
+                } else {
+                    result = false;
+                    node = null;
+                }
+            }
+            return result;
         },
 
         /**
@@ -16414,6 +17007,7 @@ const _Context = function (element, cons, options) {
          * @param {String} pluginName Plugin name (image, video)
          */
         selectComponent: function (element, pluginName) {
+            if (util.isUneditableComponent(util.getParentElement(element, util.isComponent)) || util.isUneditableComponent(element)) return false;
             if (!this.hasFocus) this.focus();
             const plugin = this.plugins[pluginName];
             if (!plugin) return;
@@ -16567,7 +17161,7 @@ const _Context = function (element, cons, options) {
                             parentNode = prevContainer.nodeType === 3 ? prevContainer.parentNode : prevContainer;
                             if (parentNode.contains(container)) {
                                 afterNode = container;
-                                while (afterNode.parentNode === parentNode) {
+                                while (afterNode.parentNode !== parentNode) {
                                     afterNode = afterNode.parentNode;
                                 }
                             } else {
@@ -16840,7 +17434,7 @@ const _Context = function (element, cons, options) {
 
             container = endCon && endCon.parentNode ? endCon : startCon && startCon.parentNode ? startCon : (range.endContainer || range.startContainer);
             
-            if (!util.isWysiwygDiv(container)) {
+            if (!util.isWysiwygDiv(container) && container.childNodes.length === 0) {
                 const rc = util.removeItemAllParents(container, function (current) {
                     if (this.isComponent(current)) return false;
                     const text = current.textContent;
@@ -17999,7 +18593,7 @@ const _Context = function (element, cons, options) {
                             appendNode = newNode;
                         }
                         
-                        if (_isMaintainedNode(newInnerNode.parentNode) && !_isMaintainedNode(childNode)) {
+                        if (_isMaintainedNode(newInnerNode.parentNode) && !_isMaintainedNode(childNode) && !util.onlyZeroWidthSpace(newInnerNode)) {
                             newInnerNode = newInnerNode.cloneNode(false);
                             pNode.appendChild(newInnerNode);
                             nNodeArray.push(newInnerNode);
@@ -18925,7 +19519,7 @@ const _Context = function (element, cons, options) {
                 }
             } else if (/submenu/.test(display)) {
                 this.submenuOff();
-            } else {
+            } else if (!/command/.test(display)) {
                 this.submenuOff();
                 this.containerOff();
             }
@@ -18933,17 +19527,39 @@ const _Context = function (element, cons, options) {
 
         /**
          * @description Execute command of command button(All Buttons except submenu and dialog)
-         * (selectAll, codeView, fullScreen, indent, outdent, undo, redo, removeFormat, print, preview, showBlocks, save, bold, underline, italic, strike, subscript, superscript)
+         * (selectAll, codeView, fullScreen, indent, outdent, undo, redo, removeFormat, print, preview, showBlocks, save, bold, underline, italic, strike, subscript, superscript, copy, cut, paste)
          * @param {Element|null} target The element of command button
          * @param {String} command Property of command button (data-value)
          */
         commandHandler: function (target, command) {
             switch (command) {
+                case 'copy':
+                case 'cut':
+                    this.execCommand(command);
+                    break;
+                case 'paste':
+                    break;
                 case 'selectAll':
                     const wysiwyg = context.element.wysiwyg;
-                    const first = util.getChildElement(wysiwyg.firstChild, function (current) { return current.childNodes.length === 0 || current.nodeType === 3; }, false) || wysiwyg.firstChild;
-                    const last = util.getChildElement(wysiwyg.lastChild, function (current) { return current.childNodes.length === 0 || current.nodeType === 3; }, true) || wysiwyg.lastChild;
+                    let first = util.getChildElement(wysiwyg.firstChild, function (current) { return current.childNodes.length === 0 || current.nodeType === 3; }, false) || wysiwyg.firstChild;
+                    let last = util.getChildElement(wysiwyg.lastChild, function (current) { return current.childNodes.length === 0 || current.nodeType === 3; }, true) || wysiwyg.lastChild;
                     if (!first || !last) return;
+                    if (util.isMedia(first)) {
+                        const info = this.getFileComponent(first);
+                        const br = util.createElement('BR');
+                        const format = util.createElement(options.defaultTag);
+                        format.appendChild(br);
+                        first = info ? info.component : first;
+                        first.parentNode.insertBefore(format, first);
+                        first = br;
+                    }
+                    if (util.isMedia(last)) {
+                        const br = util.createElement('BR');
+                        const format = util.createElement(options.defaultTag);
+                        format.appendChild(br);
+                        wysiwyg.appendChild(format);
+                        last = br;
+                    }
                     this.setRange(first, 0, last, last.textContent.length);
                     break;
                 case 'codeView':
@@ -19252,7 +19868,7 @@ const _Context = function (element, cons, options) {
                 toolbar.style.display = 'block';
 
                 _var.innerHeight_fullScreen = (_w.innerHeight - toolbar.offsetHeight);
-                editorArea.style.height = _var.innerHeight_fullScreen + 'px';
+                editorArea.style.height = (_var.innerHeight_fullScreen - options.fullScreenOffset) + 'px';
 
                 util.changeElement(element.firstElementChild, icons.reduction);
 
@@ -19261,6 +19877,7 @@ const _Context = function (element, cons, options) {
                     this._iframeAutoHeight();
                 }
 
+                context.element.topArea.style.marginTop = options.fullScreenOffset + 'px';
                 util.addClass(this._styleCommandMap.fullScreen, 'active');
             } else {
                 _var.isFullScreen = false;
@@ -19292,6 +19909,7 @@ const _Context = function (element, cons, options) {
                 event.onScroll_window();
                 util.changeElement(element.firstElementChild, icons.expansion);
 
+                context.element.topArea.style.marginTop = '';
                 util.removeClass(this._styleCommandMap.fullScreen, 'active');
             }
 
@@ -19387,7 +20005,7 @@ const _Context = function (element, cons, options) {
                     '<!DOCTYPE html><html>' +
                     '<head>' +
                     wDoc.head.innerHTML +
-                    '<style>body {overflow:auto !important; width:' + w + '; border:1px solid #ccc; margin: 10px auto !important; height:auto !important;}</style>' +
+                    '<style>body {overflow:auto !important; margin: 10px auto !important; height:auto !important;}</style>' +
                     '</head>' +
                     '<body ' + arrts + '>' + contentsHTML + '</body>' +
                     '</html>'
@@ -19411,7 +20029,7 @@ const _Context = function (element, cons, options) {
                     '<title>' + lang.toolbar.preview + '</title>' +
                     linkHTML +
                     '</head>' +
-                    '<body class="' + options._editableClass + '" style="width:' + w + '; border:1px solid #ccc; margin:10px auto !important; height:auto !important;">' + contentsHTML + '</body>' +
+                    '<body class="' + options._editableClass + '" style="margin:10px auto !important; height:auto !important;">' + contentsHTML + '</body>' +
                     '</html>'
                 );
             }
@@ -19443,7 +20061,7 @@ const _Context = function (element, cons, options) {
          */
         setIframeContents: function (ctx) {
             if (!options.iframe) return false;
-            if (ctx.head) this._wd.head.innerHTML = ctx.head.replace(/<script\s*.*>.*<\/script>/g, '');
+            if (ctx.head) this._wd.head.innerHTML = ctx.head.replace(/<script[\s\S]*>[\s\S]*<\/script>/gi, '');
             if (ctx.body) this._wd.body.innerHTML = this.convertContentsForEditor(ctx.body);
         },
 
@@ -19519,7 +20137,7 @@ const _Context = function (element, cons, options) {
         _tagConvertor: function (text) {
             if (!this._disallowedTextTagsRegExp) return text;
 
-            const ec = {'b': 'strong', 'i': 'em', 'ins': 'u', 'strike': 'del', 's': 'del'};
+            const ec = options._textTagsMap;
             return text.replace(this._disallowedTextTagsRegExp, function (m, t, n) {
                 return t + (typeof ec[n] === 'string' ? ec[n] : n);
             });
@@ -19534,7 +20152,7 @@ const _Context = function (element, cons, options) {
         _deleteDisallowedTags: function (html) {
             return html
                 .replace(/\n/g, '')
-                .replace(/<(script|style).*>(\n|.)*<\/(script|style)>/gi, '')
+                .replace(/<(script|style)[\s\S]*>[\s\S]*<\/(script|style)>/gi, '')
                 .replace(/<[a-z0-9]+\:[a-z0-9]+[^>^\/]*>[^>]*<\/[a-z0-9]+\:[a-z0-9]+>/gi, '')
                 .replace(this.editorTagsWhitelistRegExp, '');
         },
@@ -19557,7 +20175,17 @@ const _Context = function (element, cons, options) {
                     else v = m.match(this._attributesWhitelistRegExp);
 
                     if (/<span/i.test(t) && (!v || !/style=/i.test(v.toString()))) {
+                    // @v3
+                    // if (!v || !/style=/i.test(v.toString())) {
                         const sv = m.match(/style\s*=\s*"[^"]*"/);
+                        if (sv) {
+                            if (!v) v = [];
+                            v.push(sv[0]);
+                        }
+                    }
+
+                    if (/<a\b/i.test(t)) {
+                        const sv = m.match(/id\s*=\s*"[^"]*"/);
                         if (sv) {
                             if (!v) v = [];
                             v.push(sv[0]);
@@ -19576,7 +20204,7 @@ const _Context = function (element, cons, options) {
 
             const dom = _d.createRange().createContextualFragment(html);
             try {
-                util._consistencyCheckOfHTML(dom, this._htmlCheckWhitelistRegExp);
+                util._consistencyCheckOfHTML(dom, this._htmlCheckWhitelistRegExp, options.allowStyles);
             } catch (error) {
                 console.warn('[SUNEDITOR.cleanHTML.consistencyCheck.fail] ' + error);
             }
@@ -19631,7 +20259,17 @@ const _Context = function (element, cons, options) {
                     else v = m.match(this._attributesWhitelistRegExp);
 
                     if (/<span/i.test(t) && (!v || !/style=/i.test(v.toString()))) {
+                    // @v3
+                    // if (!v || !/style=/i.test(v.toString())) {
                         const sv = m.match(/style\s*=\s*"[^"]*"/);
+                        if (sv) {
+                            if (!v) v = [];
+                            v.push(sv[0]);
+                        }
+                    }
+
+                    if (/<a\b/i.test(t)) {
+                        const sv = m.match(/id\s*=\s*"[^"]*"/);
                         if (sv) {
                             if (!v) v = [];
                             v.push(sv[0]);
@@ -19650,9 +20288,23 @@ const _Context = function (element, cons, options) {
             const dom = _d.createRange().createContextualFragment(this._deleteDisallowedTags(contents));
 
             try {
-                util._consistencyCheckOfHTML(dom, this._htmlCheckWhitelistRegExp);
+                util._consistencyCheckOfHTML(dom, this._htmlCheckWhitelistRegExp, options.allowStyles);
             } catch (error) {
                 console.warn('[SUNEDITOR.convertContentsForEditor.consistencyCheck.fail] ' + error);
+            }
+
+            if (this.managedTagsInfo && this.managedTagsInfo.query) {
+                const textCompList = dom.querySelectorAll(this.managedTagsInfo.query);
+                for (let i = 0, len = textCompList.length, initMethod, classList; i < len; i++) {
+                    classList = [].slice.call(textCompList[i].classList);
+                    for (let c = 0, cLen = classList.length; c < cLen; c++) {
+                        initMethod = this.managedTagsInfo.map[classList[c]];
+                        if (initMethod) {
+                            initMethod(textCompList[i]);
+                            break;
+                        }
+                    }
+                }
             }
             
             const domTree = dom.childNodes;
@@ -19908,7 +20560,7 @@ const _Context = function (element, cons, options) {
             }
 
             // set disallow text nodes
-            const disallowTextTags = ['b', 'i', 'ins', 's', 'strike'];
+            const disallowTextTags = _w.Object.keys(options._textTagsMap);
             const allowTextTags = !options.addTagsWhitelist ? [] : options.addTagsWhitelist.split('|').filter(function (v) { return /b|i|ins|s|strike/i.test(v); });
             for (let i = 0; i < allowTextTags.length; i++) {
                 disallowTextTags.splice(disallowTextTags.indexOf(allowTextTags[i].toLowerCase()), 1);
@@ -20027,15 +20679,16 @@ const _Context = function (element, cons, options) {
             this.resizingDisabledButtons = context.element.toolbar.querySelectorAll('.se-toolbar button:not([class~="se-resizing-enabled"])');
             const tool = context.tool;
             this.commandMap = {
-                STRONG: tool.bold,
-                U: tool.underline,
-                EM: tool.italic,
-                DEL: tool.strike,
                 SUB: tool.subscript,
                 SUP: tool.superscript,
                 OUTDENT: tool.outdent,
                 INDENT: tool.indent
             };
+            this.commandMap[options.textTags.bold.toUpperCase()] = tool.bold;
+            this.commandMap[options.textTags.underline.toUpperCase()] = tool.underline;
+            this.commandMap[options.textTags.italic.toUpperCase()] = tool.italic;
+            this.commandMap[options.textTags.strike.toUpperCase()] = tool.strike;
+            
             this._styleCommandMap = {
                 fullScreen: tool.fullScreen,
                 showBlocks: tool.showBlocks,
@@ -20259,7 +20912,7 @@ const _Context = function (element, cons, options) {
         _directionKeyCode: new _w.RegExp('^(8|13|3[2-9]|40|46)$'),
         _nonTextKeyCode: new _w.RegExp('^(8|13|1[6-9]|20|27|3[3-9]|40|45|46|11[2-9]|12[0-3]|144|145)$'),
         _historyIgnoreKeyCode: new _w.RegExp('^(1[6-9]|20|27|3[3-9]|40|45|11[2-9]|12[0-3]|144|145)$'),
-        _onButtonsCheck: new _w.RegExp('^(STRONG|U|EM|DEL|SUB|SUP)$'),
+        _onButtonsCheck: new _w.RegExp('^(' + _w.Object.keys(options._textTagsMap).join('|') + ')$', 'i'),
         _frontZeroWidthReg: new _w.RegExp(util.zeroWidthSpace + '+', ''),
         _keyCodeShortcut: {
             65: 'A',
@@ -20283,22 +20936,24 @@ const _Context = function (element, cons, options) {
                     break;
                 case 'B':
                     if (options.shortcutsDisable.indexOf('bold') === -1) {
-                        command = 'STRONG';
+                        command = 'bold';
                     }
                     break;
                 case 'S':
                     if (shift && options.shortcutsDisable.indexOf('strike') === -1) {
-                        command = 'DEL';
+                        command = 'strike';
+                    } else if (!shift && options.shortcutsDisable.indexOf('save') === -1) {
+                        command = 'save';
                     }
                     break;
                 case 'U':
                     if (options.shortcutsDisable.indexOf('underline') === -1) {
-                        command = 'U';
+                        command = 'underline';
                     }
                     break;
                 case 'I':
                     if (options.shortcutsDisable.indexOf('italic') === -1) {
-                        command = 'EM';
+                        command = 'italic';
                     }
                     break;
                 case 'Z':
@@ -20752,6 +21407,36 @@ const _Context = function (element, cons, options) {
             if (typeof functions.onInput === 'function') functions.onInput(e, core);
         },
 
+        _isUneditableNode: function (range, isFront) {
+            const container = isFront ? range.startContainer : range.endContainer;
+            const offset = isFront ? range.startOffset : range.endOffset;
+            const siblingKey = isFront ? 'previousSibling' : 'nextSibling';
+            const isElement = container.nodeType === 1;
+            let siblingNode;
+
+            if (isElement) {
+                siblingNode = event._isUneditableNode_getSibling(container.childNodes[offset], siblingKey, container);
+                return siblingNode && siblingNode.nodeType === 1 && siblingNode.getAttribute('contenteditable') === 'false';
+            } else {
+                siblingNode = event._isUneditableNode_getSibling(container, siblingKey, container);
+                return core.isEdgePoint(container, offset, isFront ? 'front' : 'end') && (siblingNode && siblingNode.nodeType === 1 && siblingNode.getAttribute('contenteditable') === 'false');
+            }
+        },
+
+        _isUneditableNode_getSibling: function (selectNode, siblingKey, container) {
+            if (!selectNode) return null;
+            let siblingNode = selectNode[siblingKey];
+
+            if (!siblingNode) {
+                siblingNode = util.getFormatElement(container);
+                siblingNode = siblingNode ? siblingNode[siblingKey] : null;
+                if (siblingNode && !util.isComponent(siblingNode)) siblingNode = siblingKey === 'previousSibling' ? siblingNode.firstElementChild : siblingNode.lastElementChild;
+                else return null;
+            }
+
+            return siblingNode;
+        },
+
         _onShortcutKey: false,
         onKeyDown_wysiwyg: function (e) {
             const keyCode = e.keyCode;
@@ -20821,13 +21506,19 @@ const _Context = function (element, cons, options) {
                             e.preventDefault();
                             e.stopPropagation();
 
-                            formatEl.innerHTML = '<br>';
-                            const attrs = formatEl.attributes;
-                            while (attrs[0]) {
-                                formatEl.removeAttribute(attrs[0].name);
+                            if (formatEl.nodeName.toUpperCase() === options.defaultTag.toUpperCase()) {
+                                formatEl.innerHTML = '<br>';
+                                const attrs = formatEl.attributes;
+                                while (attrs[0]) {
+                                    formatEl.removeAttribute(attrs[0].name);
+                                }
+                            } else {
+                                const defaultFormat = util.createElement(options.defaultTag);
+                                defaultFormat.innerHTML = '<br>';
+                                formatEl.parentElement.replaceChild(defaultFormat, formatEl);
                             }
-                            core.nativeFocus();
 
+                            core.nativeFocus();
                             return false;
                         }
                     }
@@ -20856,6 +21547,13 @@ const _Context = function (element, cons, options) {
                             core.setRange(prev, offset, prev, offset);
                             break;
                         }
+                    }
+
+                    // tag[contenteditable="false"]
+                    if (event._isUneditableNode(range, true)) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        break;
                     }
 
                     // nested list
@@ -20939,17 +21637,22 @@ const _Context = function (element, cons, options) {
                     }
 
                     // component
-                    if (!selectRange && (range.startOffset === 0 || (selectionNode === formatEl ? !!formatEl.childNodes[range.startOffset] : false))) {
+                    if (!selectRange && formatEl && (range.startOffset === 0 || (selectionNode === formatEl ? !!formatEl.childNodes[range.startOffset] : false))) {
                         const sel = selectionNode === formatEl ? formatEl.childNodes[range.startOffset] : selectionNode;
+                        const prev = formatEl.previousSibling;
                         // select file component
                         const ignoreZWS = (commonCon.nodeType === 3 || util.isBreak(commonCon)) && !commonCon.previousSibling && range.startOffset === 0;
-                        if (!sel.previousSibling && (util.isComponent(commonCon.previousSibling) || (ignoreZWS && util.isComponent(formatEl.previousSibling)))) {
-                            const fileComponentInfo = core.getFileComponent(formatEl.previousSibling);
+                        if (!sel.previousSibling && (util.isComponent(commonCon.previousSibling) || (ignoreZWS && util.isComponent(prev)))) {
+                            const fileComponentInfo = core.getFileComponent(prev);
                             if (fileComponentInfo) {
                                 e.preventDefault();
                                 e.stopPropagation();
                                 if (formatEl.textContent.length === 0) util.removeItem(formatEl);
-                                core.selectComponent(fileComponentInfo.target, fileComponentInfo.pluginName);
+                                if (core.selectComponent(fileComponentInfo.target, fileComponentInfo.pluginName) === false) core.blur();
+                            } else if (util.isComponent(prev)) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                util.removeItem(prev);
                             }
                             break;
                         }
@@ -20972,6 +21675,13 @@ const _Context = function (element, cons, options) {
                     }
 
                     if (selectRange && event._hardDelete()) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        break;
+                    }
+
+                    // tag[contenteditable="false"]
+                    if (event._isUneditableNode(range, false)) {
                         e.preventDefault();
                         e.stopPropagation();
                         break;
@@ -21003,7 +21713,10 @@ const _Context = function (element, cons, options) {
                             const fileComponentInfo = core.getFileComponent(nextEl);
                             if (fileComponentInfo) {
                                 e.stopPropagation();
-                                core.selectComponent(fileComponentInfo.target, fileComponentInfo.pluginName);
+                                if (core.selectComponent(fileComponentInfo.target, fileComponentInfo.pluginName) === false) core.blur();
+                            } else if (util.isComponent(nextEl)) {
+                                e.stopPropagation();
+                                util.removeItem(nextEl);
                             }
 
                             break;
@@ -21201,6 +21914,13 @@ const _Context = function (element, cons, options) {
                         }
                     }
 
+                    if (!shift && /^H[1-6]$/i.test(formatEl.nodeName) && core.isEdgeFormat(range.endContainer, range.endOffset, 'end')) {
+                        e.preventDefault();
+                        const newFormat = core.appendFormatTag(formatEl, options.defaultTag);
+                        core.setRange(newFormat, 1, newFormat, 1);
+                        break;
+                    }
+
                     if (!shift && freeFormatEl) {
                         e.preventDefault();
                         const selectionFormat = selectionNode === freeFormatEl;
@@ -21314,7 +22034,7 @@ const _Context = function (element, cons, options) {
                         container.parentNode.insertBefore(newEl, container);
                         
                         core.callPlugin(fileComponentName, function () {
-                            core.selectComponent(compContext._element, fileComponentName);
+                            if (core.selectComponent(compContext._element, fileComponentName) === false) core.blur();
                         }, null);
                     }
                     
@@ -21339,6 +22059,14 @@ const _Context = function (element, cons, options) {
                         tablePlugin.onTableCellMultiSelect.call(core, cell, true);
                         return;
                     }
+                }
+            } else if (shift && (util.isOSX_IOS ? alt : ctrl) && keyCode === 32) {
+                e.preventDefault();
+                e.stopPropagation();
+                const nbsp = core.insertNode(util.createTextNode('\u00a0'));
+                if (nbsp && nbsp.container) {
+                    core.setRange(nbsp.container, nbsp.endOffset, nbsp.container, nbsp.endOffset);
+                    return;
                 }
             }
 
@@ -21420,7 +22148,6 @@ const _Context = function (element, cons, options) {
 
         onScroll_wysiwyg: function (e) {
             core.controllersOff();
-            core._lineBreaker.style.display = 'none';
             if (core._isBalloon) event._hideToolbar();
             if (typeof functions.onScroll === 'function') functions.onScroll(e, core);
         },
@@ -21463,6 +22190,9 @@ const _Context = function (element, cons, options) {
         onMouseDown_resizingBar: function (e) {
             e.stopPropagation();
 
+            core.submenuOff();
+            core.controllersOff();
+
             core._variable.resizeClientY = e.clientY;
             context.element.resizeBackground.style.display = 'block';
 
@@ -21487,7 +22217,7 @@ const _Context = function (element, cons, options) {
 
             const responsiveSize = event._responsiveButtonSize;
             if (responsiveSize) {
-                const windowWidth = _w.innerWidth;
+                const windowWidth = context.element.toolbar.offsetWidth;
                 let responsiveWidth = 'default';
                 for (let i = 1, len = responsiveSize.length; i < len; i++) {
                     if (windowWidth < responsiveSize[i]) {
@@ -21974,6 +22704,7 @@ const _Context = function (element, cons, options) {
                 return;
             }
 
+            event._responsiveCurrentSize = 'default';
             const sizeArray = event._responsiveButtonSize = [];
             const buttonsObj = event._responsiveButtons = {default: _responsiveButtons[0]};
             for (let i = 1, len = _responsiveButtons.length, size, buttonGroup; i < len; i++) {
@@ -22007,11 +22738,17 @@ const _Context = function (element, cons, options) {
         onInput: null,
         onKeyDown: null,
         onKeyUp: null,
-        onChange: null,
         onCopy: null,
         onCut: null,
         onFocus: null,
         onBlur: null,
+
+        /**
+         * @description Event functions
+         * @param {String} contents Current contents
+         * @param {Object} core Core object
+         */
+        onChange: null,
 
         /**
          * @description Event functions (drop, paste)
@@ -22307,7 +23044,7 @@ const _Context = function (element, cons, options) {
             const _initHTML = el.wysiwyg.innerHTML;
 
             // set option
-            const cons = lib_constructor._setOptions(mergeOptions, context, core.plugins, options);        
+            const cons = lib_constructor._setOptions(mergeOptions, context, options);        
 
             if (cons.callButtons) {
                 pluginCallButtons = cons.callButtons;
@@ -22321,7 +23058,7 @@ const _Context = function (element, cons, options) {
             // reset context
             if (el._menuTray.children.length === 0) this._menuTray = {};
             _responsiveButtons = cons.toolbar.responsiveButtons;
-            options = mergeOptions;
+            core.options = options = mergeOptions;
             core.lang = lang = options.lang;
 
             if (options.iframe) {
@@ -22681,6 +23418,7 @@ const _Context = function (element, cons, options) {
     /************ Core init ************/
     // functions
     core.functions = functions;
+    core.options = options;
 
     // Create to sibling node
     let contextEl = context.element;
@@ -22716,6 +23454,7 @@ const _Context = function (element, cons, options) {
 
     return functions;
 });
+
 // CONCATENATED MODULE: ./node_modules/suneditor/src/suneditor.js
 /*
  * wysiwyg web editor
@@ -22909,6 +23648,12 @@ var getLanguage = function getLanguage(lang) {
 
         case 'lv':
           return __webpack_require__(42);
+
+        case 'se':
+          return __webpack_require__(43);
+
+        case 'ua':
+          return __webpack_require__(44);
 
         default:
           return __webpack_require__(4);
