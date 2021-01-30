@@ -104,6 +104,8 @@ export default interface SetOptions {
   customPlugins?: Array<Plugin> | Record<string, Plugin>;
   previewTemplate?: string;
   defaultTag?: string;
+  linkRelDefault?: {default?: string; check_new_window?: string; check_bookmark?: string;};
+  mediaAutoSelect?: boolean;
   textTags?: {
     bold: string;
     underline: string;

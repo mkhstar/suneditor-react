@@ -82,7 +82,7 @@ module.exports =
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 47);
+/******/ 	return __webpack_require__(__webpack_require__.s = 48);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -99,7 +99,7 @@ module.exports =
 if (false) { var throwOnDirectAccess, ReactIs; } else {
   // By explicitly using `prop-types` you are opting into new production behavior.
   // http://fb.me/prop-types-in-prod
-  module.exports = __webpack_require__(45)();
+  module.exports = __webpack_require__(46)();
 }
 
 
@@ -194,8 +194,6 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
          * @private
          */
         _onClick_dialog: function (e) {
-            e.stopPropagation();
-
             if (/close/.test(e.target.getAttribute('data-command')) || this.context.dialog._closeSignal) {
                 this.plugins.dialog.close.call(this);
             }
@@ -789,6 +787,7 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
                 url: 'URL to link',
                 text: 'Text to display',
                 newWindowCheck: 'Open in new window',
+                downloadLinkCheck: 'Download link',
                 bookmark: 'Bookmark'
             },
             mathBox: {
@@ -922,13 +921,7 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
         };
 
         /** set submenu */
-        let listDiv = this.createColorList(core, this._makeColorList);
-
-        /** caching */
-        context.colorPicker.colorListHTML = listDiv;
-
-        /** empty memory */
-        listDiv = null;
+        context.colorPicker.colorListHTML = this.createColorList(core, this._makeColorList);
     },
 
     /**
@@ -1105,6 +1098,351 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
 
 /***/ }),
 /* 6 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/*
+ * wysiwyg web editor
+ *
+ * suneditor.js
+ * Copyright 2017 JiHong Lee.
+ * MIT license.
+ */
+
+
+/* harmony default export */ __webpack_exports__["a"] = ({
+    name: 'anchor',
+    add: function (core) {
+        core.context.anchor = {
+            caller: {},
+            forms: this.setDialogForm(core),
+            host: core._w.location.origin + core._w.location.pathname
+        };
+    },
+
+    /** dialog */
+    setDialogForm: function (core) {
+        const lang = core.lang;
+        const relList = core.options.linkRel;
+        const defaultRel = (core.options.linkRelDefault.default || '').split(' ');
+        const icons = core.icons;
+        const forms = core.util.createElement('DIV');
+
+        let html = '<div class="se-dialog-body">' +
+            '<div class="se-dialog-form">' +
+                '<label>' + lang.dialogBox.linkBox.url + '</label>' +
+                '<div class="se-dialog-form-files">' +
+                    '<input class="se-input-form se-input-url" type="text" placeholder="' + (core.options.protocol || '') + '" />' +
+                    '<button type="button" class="se-btn se-dialog-files-edge-button _se_bookmark_button" title="' + lang.dialogBox.linkBox.bookmark + '">' + icons.bookmark + '</button>' +
+                '</div>' +
+                '<div class="se-anchor-preview-form">' +
+                    '<span class="se-svg se-anchor-preview-icon _se_anchor_bookmark_icon">' + icons.bookmark + '</span>' +
+                    '<span class="se-svg se-anchor-preview-icon _se_anchor_download_icon">' + icons.download + '</span>' +
+                    '<pre class="se-link-preview"></pre>' +
+                '</div>' +
+            '</div>' +
+            '<div class="se-dialog-form">' +
+                '<label>' + lang.dialogBox.linkBox.text + '</label><input class="se-input-form _se_anchor_text" type="text" />' +
+            '</div>' +
+            '<div class="se-dialog-form-footer">' +
+                '<label><input type="checkbox" class="se-dialog-btn-check _se_anchor_check" />&nbsp;' + lang.dialogBox.linkBox.newWindowCheck + '</label>' +
+                '<label><input type="checkbox" class="se-dialog-btn-check _se_anchor_download" />&nbsp;' + lang.dialogBox.linkBox.downloadLinkCheck + '</label>';
+            if (relList.length > 0) {
+                html += '<div class="se-anchor-rel"><button type="button" class="se-btn se-btn-select se-anchor-rel-btn">&lt;rel&gt;</button>' +
+                    '<div class="se-anchor-rel-wrapper"><pre class="se-link-preview se-anchor-rel-preview"></pre></div>' +
+                    '<div class="se-list-layer">' +
+                        '<div class="se-list-inner">' +
+                            '<ul class="se-list-basic se-list-checked">';
+                for (let i = 0, len = relList.length, rel; i < len; i++) {
+                    rel = relList[i];
+                    html += '<li><button type="button" class="se-btn-list' + (defaultRel.indexOf(rel) > -1 ? ' se-checked' : '') + '" data-command="' + rel + '" title="' + rel + '"><span class="se-svg">' + icons.checked + '</span>' + rel + '</button></li>';
+                }
+                html += '</ul></div></div></div>';
+            }
+
+        html += '</div></div>';
+
+        forms.innerHTML = html;
+        return forms;
+    },
+
+    initEvent: function (pluginName, forms) {
+        const anchorPlugin = this.plugins.anchor;
+        const context = this.context.anchor.caller[pluginName] = {
+            modal: forms,
+            urlInput: null,
+            linkDefaultRel: this.options.linkRelDefault,
+            defaultRel: this.options.linkRelDefault.default || '',
+            currentRel: [],
+            linkAnchor: null,
+            linkValue: ''
+        };
+
+        if (typeof context.linkDefaultRel.default === 'string') context.linkDefaultRel.default = context.linkDefaultRel.default.trim();
+        if (typeof context.linkDefaultRel.check_new_window === 'string') context.linkDefaultRel.check_new_window = context.linkDefaultRel.check_new_window.trim();
+        if (typeof context.linkDefaultRel.check_bookmark === 'string') context.linkDefaultRel.check_bookmark = context.linkDefaultRel.check_bookmark.trim();
+
+        context.urlInput = forms.querySelector('.se-input-url');
+        context.anchorText = forms.querySelector('._se_anchor_text');
+        context.newWindowCheck = forms.querySelector('._se_anchor_check');
+        context.downloadCheck = forms.querySelector('._se_anchor_download');
+        context.download = forms.querySelector('._se_anchor_download_icon');
+        context.preview = forms.querySelector('.se-link-preview');
+        context.bookmark = forms.querySelector('._se_anchor_bookmark_icon');
+        context.bookmarkButton = forms.querySelector('._se_bookmark_button');
+        
+        /** rel */
+        if (this.options.linkRel.length > 0) {
+            context.relButton = forms.querySelector('.se-anchor-rel-btn');
+            context.relList = forms.querySelector('.se-list-layer');
+            context.relPreview = forms.querySelector('.se-anchor-rel-preview');
+            context.relButton.addEventListener('click', anchorPlugin.onClick_relButton.bind(this, context));
+            context.relList.addEventListener('click', anchorPlugin.onClick_relList.bind(this, context));
+        }
+
+        context.newWindowCheck.addEventListener('change', anchorPlugin.onChange_newWindowCheck.bind(this, context));
+        context.downloadCheck.addEventListener('change', anchorPlugin.onChange_downloadCheck.bind(this, context));
+        context.urlInput.addEventListener('input', anchorPlugin.setLinkPreview.bind(this, context, this.options.linkProtocol));
+        context.bookmarkButton.addEventListener('click', anchorPlugin.onClick_bookmarkButton.bind(this, context));
+    },
+
+    on: function (contextAnchor, update) {
+        if (!update) {
+            this.plugins.anchor.init.call(this, contextAnchor);
+            contextAnchor.anchorText.value = this.getSelection().toString();
+        } else if (contextAnchor.linkAnchor) {
+            this.context.dialog.updateModal = true;
+            contextAnchor.linkValue = contextAnchor.preview.textContent = contextAnchor.urlInput.value = (contextAnchor.linkAnchor.id ? '#' + contextAnchor.linkAnchor.id : contextAnchor.linkAnchor.href);
+            contextAnchor.anchorText.value = contextAnchor.linkAnchor.getAttribute('alt') || contextAnchor.linkAnchor.textContent;
+            contextAnchor.newWindowCheck.checked = (/_blank/i.test(contextAnchor.linkAnchor.target) ? true : false);
+            contextAnchor.downloadCheck.checked = contextAnchor.linkAnchor.download;
+        }
+
+        this.plugins.anchor.setRel.call(this, contextAnchor, (update && contextAnchor.linkAnchor) ? contextAnchor.linkAnchor.rel : contextAnchor.defaultRel);
+        this.plugins.anchor.setLinkPreview.call(this, contextAnchor, this.options.linkProtocol, contextAnchor.linkValue);
+    },
+
+    _closeRelMenu: null,
+    toggleRelList: function (contextAnchor, show) {
+        if (!show) {
+            if (this.plugins.anchor._closeRelMenu) this.plugins.anchor._closeRelMenu();
+        } else {
+            const target = contextAnchor.relButton;
+            const relList = contextAnchor.relList;
+            this.util.addClass(target, 'active');
+            relList.style.visibility = 'hidden';
+            relList.style.display = 'block';
+            if (!this.options.rtl) relList.style.left = (target.offsetLeft + target.offsetWidth + 1) + 'px';
+            else relList.style.left = (target.offsetLeft - relList.offsetWidth - 1) + 'px';
+            relList.style.top = (target.offsetTop + (target.offsetHeight / 2) - (relList.offsetHeight / 2)) + 'px';
+            relList.style.visibility = '';
+
+            this.plugins.anchor._closeRelMenu = function (context, target, e) {
+                if (e && (context.relButton.contains(e.target) || context.relList.contains(e.target))) return;
+                this.util.removeClass(target, 'active');
+                context.relList.style.display = 'none';
+                this.modalForm.removeEventListener('click', this.plugins.anchor._closeRelMenu);
+                this.plugins.anchor._closeRelMenu = null;
+            }.bind(this, contextAnchor, target);
+    
+            this.modalForm.addEventListener('click', this.plugins.anchor._closeRelMenu);
+        }
+    },
+
+    onClick_relButton: function (contextAnchor, e) {
+        this.plugins.anchor.toggleRelList.call(this, contextAnchor, !this.util.hasClass(e.target, 'active'));
+    },
+
+    onClick_relList: function (contextAnchor, e) {
+        const target = e.target;
+        const cmd = target.getAttribute('data-command');
+        if (!cmd) return;
+        
+        const current = contextAnchor.currentRel;
+        const checked = this.util.toggleClass(target, 'se-checked');
+        const index = current.indexOf(cmd);
+        if (checked) {
+            if (index === -1) current.push(cmd);
+        } else {
+            if (index > -1) current.splice(index, 1);
+        }
+
+        contextAnchor.relPreview.title = contextAnchor.relPreview.textContent = current.join(' ');
+    },
+
+    setRel: function (contextAnchor, relAttr) {
+        const relListEl = contextAnchor.relList;
+        const rels = contextAnchor.currentRel = !relAttr ? [] : relAttr.split(' ');
+        if (!relListEl) return;
+
+        const checkedRel = relListEl.querySelectorAll('button');
+        for (let i = 0, len = checkedRel.length, cmd; i < len; i++) {
+            cmd = checkedRel[i].getAttribute('data-command');
+            if (rels.indexOf(cmd) > -1) {
+                this.util.addClass(checkedRel[i], 'se-checked');
+            } else {
+                this.util.removeClass(checkedRel[i], 'se-checked');
+            }
+        }
+
+        contextAnchor.relPreview.title = contextAnchor.relPreview.textContent = rels.join(' ');
+    },
+
+    setLinkPreview: function (context, protocol, e) {
+        const preview = context.preview;
+        const value = typeof e === 'string' ? e : e.target.value.trim();
+        const reservedProtocol  = /^(mailto\:|https*\:\/\/)/.test(value);
+        const sameProtocol = !protocol ? false : this._w.RegExp('^' + value.substr(0, protocol.length)).test(protocol);
+        context.linkValue = preview.textContent = !value ? '' : (protocol && !reservedProtocol && !sameProtocol) ? protocol + value : reservedProtocol ? value : /^www\./.test(value) ? 'http://' + value : this.context.anchor.host + value;
+
+        if (value.indexOf('#') === 0) {
+            context.bookmark.style.display = 'block';
+            this.util.addClass(context.bookmarkButton, 'active');
+        } else {
+            context.bookmark.style.display = 'none';
+            this.util.removeClass(context.bookmarkButton, 'active');
+        }
+
+        if (value.indexOf('#') === -1 && context.downloadCheck.checked) {
+            context.download.style.display = 'block';
+        } else {
+            context.download.style.display = 'none';
+        }
+    },
+
+    updateAnchor: function (anchor, url, alt, contextAnchor, notText) {
+        // bookmark
+        if (/^\#/.test(url)) {
+            anchor.id = url.substr(1);
+        } else {
+            anchor.removeAttribute('id');
+        }
+
+        // download
+        if (!/^\#/.test(url) && contextAnchor.downloadCheck.checked) {
+            anchor.setAttribute('download', alt || url);
+        } else {
+            anchor.removeAttribute('download');
+        }
+
+        // new window
+        if (contextAnchor.newWindowCheck.checked) anchor.target = '_blank';
+        else anchor.removeAttribute('target');
+        
+        // rel
+        const rel = contextAnchor.currentRel.join(' ');
+        if (!rel) anchor.removeAttribute('rel');
+        else anchor.rel = rel;
+
+        // est url, alt
+        anchor.href = url;
+        anchor.setAttribute('alt', alt);
+        anchor.textContent = notText ? '' : alt;
+    },
+
+    createAnchor: function (contextAnchor, notText) {
+        if (contextAnchor.linkValue.length === 0) return null;
+        
+        const url = contextAnchor.linkValue;
+        const anchor = contextAnchor.anchorText;
+        const anchorText = anchor.value.length === 0 ? url : anchor.value;
+
+        const oA = contextAnchor.linkAnchor || this.util.createElement('A');
+        this.plugins.anchor.updateAnchor(oA, url, anchorText, contextAnchor, notText);
+
+        contextAnchor.linkValue = contextAnchor.preview.textContent = contextAnchor.urlInput.value = contextAnchor.anchorText.value = '';
+
+        return oA;
+    },
+
+    onClick_bookmarkButton: function (contextAnchor) {
+        let url = contextAnchor.urlInput.value;
+        if (/^\#/.test(url)) {
+            url = url.substr(1);
+            contextAnchor.bookmark.style.display = 'none';
+            this.util.removeClass(contextAnchor.bookmarkButton, 'active');
+        } else {
+            url = '#' + url;
+            contextAnchor.bookmark.style.display = 'block';
+            this.util.addClass(contextAnchor.bookmarkButton, 'active');
+            contextAnchor.downloadCheck.checked = false;
+            contextAnchor.download.style.display = 'none';
+        }
+
+        contextAnchor.linkValue = contextAnchor.preview.textContent = contextAnchor.urlInput.value = url;
+        contextAnchor.urlInput.focus();
+    },
+
+    onChange_newWindowCheck: function (contextAnchor, e) {
+        if (typeof contextAnchor.linkDefaultRel.check_new_window !== 'string') return;
+        if (e.target.checked) {
+            this.plugins.anchor.setRel.call(this, contextAnchor, this.plugins.anchor._relMerge.call(this, contextAnchor, contextAnchor.linkDefaultRel.check_new_window));
+        } else {
+            this.plugins.anchor.setRel.call(this, contextAnchor, this.plugins.anchor._relDelete.call(this, contextAnchor, contextAnchor.linkDefaultRel.check_new_window));
+        }
+    },
+
+    onChange_downloadCheck: function (contextAnchor, e) {
+        if (e.target.checked) {
+            contextAnchor.download.style.display = 'block';
+            contextAnchor.bookmark.style.display = 'none';
+            this.util.removeClass(contextAnchor.bookmarkButton, 'active');
+            contextAnchor.linkValue = contextAnchor.preview.textContent = contextAnchor.urlInput.value = contextAnchor.urlInput.value.replace(/^\#+/, '');
+            if (typeof contextAnchor.linkDefaultRel.check_bookmark === 'string') {
+                this.plugins.anchor.setRel.call(this, contextAnchor, this.plugins.anchor._relMerge.call(this, contextAnchor, contextAnchor.linkDefaultRel.check_bookmark));
+            }
+        } else {
+            contextAnchor.download.style.display = 'none';
+            if (typeof contextAnchor.linkDefaultRel.check_bookmark === 'string') {
+                this.plugins.anchor.setRel.call(this, contextAnchor, this.plugins.anchor._relDelete.call(this, contextAnchor, contextAnchor.linkDefaultRel.check_bookmark));
+            }
+        }
+    },
+
+    _relMerge: function (contextAnchor, relAttr) {
+        const current = contextAnchor.currentRel;
+        if (!relAttr) return current.join(' ');
+        
+        if (/^only\:/.test(relAttr)) {
+            relAttr = relAttr.replace(/^only\:/, '').trim();
+            contextAnchor.currentRel = relAttr.split(' ');
+            return relAttr;
+        }
+
+        const rels = relAttr.split(' ');
+        for (let i = 0, len = rels.length, index; i < len; i++) {
+            index = current.indexOf(rels[i]);
+            if (index === -1) current.push(rels[i]);
+        }
+
+        return current.join(' ');
+    },
+
+    _relDelete: function (contextAnchor, relAttr) {
+        if (!relAttr) return contextAnchor.currentRel.join(' ');
+        if (/^only\:/.test(relAttr)) relAttr = relAttr.replace(/^only\:/, '').trim();
+
+        const rels = contextAnchor.currentRel.join(' ').replace(this._w.RegExp(relAttr + '\\s*'), '');
+        contextAnchor.currentRel = rels.split(' ');
+        return rels;
+    },
+
+    init: function (contextAnchor) {
+        contextAnchor.linkAnchor = null;
+        contextAnchor.linkValue = contextAnchor.preview.textContent = contextAnchor.urlInput.value = '';
+        contextAnchor.anchorText.value = '';
+        contextAnchor.newWindowCheck.checked = false;
+        contextAnchor.downloadCheck.checked = false;
+        this.plugins.anchor.setRel.call(this, contextAnchor, contextAnchor.defaultRel);
+        if (contextAnchor.relList) {
+            this.plugins.anchor.toggleRelList.call(this, contextAnchor, false);
+        }
+    }
+});
+
+
+/***/ }),
+/* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1999,13 +2337,13 @@ if (false) { var throwOnDirectAccess, ReactIs; } else {
 }));
 
 /***/ }),
-/* 7 */
+/* 8 */
 /***/ (function(module, exports) {
 
 module.exports = require("react");
 
 /***/ }),
-/* 8 */
+/* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2375,7 +2713,7 @@ module.exports = require("react");
 }));
 
 /***/ }),
-/* 9 */
+/* 10 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2538,7 +2876,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 10 */
+/* 11 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2826,12 +3164,12 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 11 */
+/* 12 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _modules_fileBrowser__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(8);
+/* harmony import */ var _modules_fileBrowser__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(9);
 /* harmony import */ var _modules_fileBrowser__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_modules_fileBrowser__WEBPACK_IMPORTED_MODULE_0__);
 /*
  * wysiwyg web editor
@@ -2893,13 +3231,13 @@ __webpack_require__.r(__webpack_exports__);
         this.callPlugin('image', function () {
             const file = {name: target.parentNode.querySelector('.__se__img_name').textContent, size: 0};
             this.context.image._altText = target.alt;
-            this.plugins.image.create_image.call(this, target.src, '', false, this.context.image._origin_w, this.context.image._origin_h, 'none', file);
+            this.plugins.image.create_image.call(this, target.src, null, this.context.image._origin_w, this.context.image._origin_h, 'none', file);
         }.bind(this), null);
     }
 });
 
 /***/ }),
-/* 12 */
+/* 13 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2953,7 +3291,7 @@ __webpack_require__.r(__webpack_exports__);
 });
 
 /***/ }),
-/* 13 */
+/* 14 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -3092,7 +3430,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 14 */
+/* 15 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -3201,7 +3539,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 15 */
+/* 16 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -3321,7 +3659,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 16 */
+/* 17 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -3605,7 +3943,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 17 */
+/* 18 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -3715,7 +4053,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 18 */
+/* 19 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -3806,7 +4144,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 19 */
+/* 20 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -3918,7 +4256,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 20 */
+/* 21 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -4373,7 +4711,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 21 */
+/* 22 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -4516,7 +4854,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 22 */
+/* 23 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -4696,7 +5034,7 @@ __webpack_require__.r(__webpack_exports__);
                     icons.split_cell +
                     '<span class="se-tooltip-inner"><span class="se-tooltip-text">' + lang.controller.splitCells + '</span></span>' +
                 '</button>' +
-                '<div class="se-btn-group-sub sun-editor-common se-list-layer">' +
+                '<div class="se-btn-group-sub sun-editor-common se-list-layer se-table-split">' +
                     '<div class="se-list-inner">' +
                         '<ul class="se-list-basic">' +
                             '<li class="se-btn-list" data-command="split" data-value="vertical" style="line-height:32px;" title="' + lang.controller.VerticalSplit + '">' + 
@@ -5313,11 +5651,11 @@ __webpack_require__.r(__webpack_exports__);
         this.plugins.table._closeSplitMenu = function () {
             this.util.removeClass(this.context.table.splitButton, 'on');
             this.context.table.splitMenu.style.display = 'none';
-            this.removeDocEvent('mousedown', this.plugins.table._closeSplitMenu);
+            this.removeDocEvent('click', this.plugins.table._closeSplitMenu);
             this.plugins.table._closeSplitMenu = null;
         }.bind(this);
 
-        this.addDocEvent('mousedown', this.plugins.table._closeSplitMenu);
+        this.addDocEvent('click', this.plugins.table._closeSplitMenu);
     },
 
     splitCells: function (direction) {
@@ -5955,7 +6293,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 23 */
+/* 24 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -6031,7 +6369,7 @@ __webpack_require__.r(__webpack_exports__);
 });
 
 /***/ }),
-/* 24 */
+/* 25 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -6206,19 +6544,20 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 25 */
+/* 26 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _modules_dialog__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(1);
 /* harmony import */ var _modules_dialog__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_modules_dialog__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _modules_component__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(2);
-/* harmony import */ var _modules_component__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_modules_component__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var _modules_resizing__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(6);
-/* harmony import */ var _modules_resizing__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(_modules_resizing__WEBPACK_IMPORTED_MODULE_2__);
-/* harmony import */ var _modules_fileManager__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(3);
-/* harmony import */ var _modules_fileManager__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(_modules_fileManager__WEBPACK_IMPORTED_MODULE_3__);
+/* harmony import */ var _modules_anchor__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(6);
+/* harmony import */ var _modules_component__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(2);
+/* harmony import */ var _modules_component__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(_modules_component__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var _modules_resizing__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(7);
+/* harmony import */ var _modules_resizing__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(_modules_resizing__WEBPACK_IMPORTED_MODULE_3__);
+/* harmony import */ var _modules_fileManager__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(3);
+/* harmony import */ var _modules_fileManager__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(_modules_fileManager__WEBPACK_IMPORTED_MODULE_4__);
 /*
  * wysiwyg web editor
  *
@@ -6233,11 +6572,12 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
+
 /* harmony default export */ __webpack_exports__["default"] = ({
     name: 'image',
     display: 'dialog',
     add: function (core) {
-        core.addModule([_modules_dialog__WEBPACK_IMPORTED_MODULE_0___default.a, _modules_component__WEBPACK_IMPORTED_MODULE_1___default.a, _modules_resizing__WEBPACK_IMPORTED_MODULE_2___default.a, _modules_fileManager__WEBPACK_IMPORTED_MODULE_3___default.a]);
+        core.addModule([_modules_dialog__WEBPACK_IMPORTED_MODULE_0___default.a, _modules_anchor__WEBPACK_IMPORTED_MODULE_1__[/* default */ "a"], _modules_component__WEBPACK_IMPORTED_MODULE_2___default.a, _modules_resizing__WEBPACK_IMPORTED_MODULE_3___default.a, _modules_fileManager__WEBPACK_IMPORTED_MODULE_4___default.a]);
         
         const options = core.options;
         const context = core.context;
@@ -6247,11 +6587,10 @@ __webpack_require__.r(__webpack_exports__);
             _uploadFileLength: 0, // @Override fileManager
             focusElement: null, // @Override dialog // This element has focus when the dialog is opened.
             sizeUnit: options._imageSizeUnit,
+            _linkElement: '',
             _altText: '',
-            _linkElement: null,
             _align: 'none',
             _floatClassRegExp: '__se__float\\-[a-z]+',
-            _v_link: {_linkValue: ''},
             _v_src: {_linkValue: ''},
             svgDefaultSize: '30%',
             base64RenderIndex: 0,
@@ -6291,20 +6630,15 @@ __webpack_require__.r(__webpack_exports__);
         contextImage.imgUrlFile = image_dialog.querySelector('._se_image_url');
         contextImage.focusElement = contextImage.imgInputFile || contextImage.imgUrlFile;
         contextImage.altText = image_dialog.querySelector('._se_image_alt');
-        contextImage.imgLink = image_dialog.querySelector('._se_image_link');
-        contextImage.imgLinkNewWindowCheck = image_dialog.querySelector('._se_image_link_check');
         contextImage.captionCheckEl = image_dialog.querySelector('._se_image_check_caption');
-        contextImage.previewLink = image_dialog.querySelector('._se_tab_content_url .se-link-preview');
         contextImage.previewSrc = image_dialog.querySelector('._se_tab_content_image .se-link-preview');
 
         /** add event listeners */
         image_dialog.querySelector('.se-dialog-tabs').addEventListener('click', this.openTab.bind(core));
         image_dialog.querySelector('form').addEventListener('submit', this.submit.bind(core));
         if (contextImage.imgInputFile) image_dialog.querySelector('.se-file-remove').addEventListener('click', this._removeSelectedFiles.bind(contextImage.imgInputFile, contextImage.imgUrlFile, contextImage.previewSrc));
-        if (contextImage.imgInputFile && contextImage.imgUrlFile) contextImage.imgInputFile.addEventListener('change', this._fileInputChange.bind(contextImage));
-
-        contextImage.imgLink.addEventListener('input', this._onLinkPreview.bind(contextImage.previewLink, contextImage._v_link, options.linkProtocol));
         if (contextImage.imgUrlFile) contextImage.imgUrlFile.addEventListener('input', this._onLinkPreview.bind(contextImage.previewSrc, contextImage._v_src, options.linkProtocol));
+        if (contextImage.imgInputFile && contextImage.imgUrlFile) contextImage.imgInputFile.addEventListener('change', this._fileInputChange.bind(contextImage));
 
         const imageGalleryButton = image_dialog.querySelector('.__se__gallery');
         if (imageGalleryButton) imageGalleryButton.addEventListener('click', this._openGallery.bind(core));
@@ -6331,6 +6665,10 @@ __webpack_require__.r(__webpack_exports__);
 
         /** append html */
         context.dialog.modal.appendChild(image_dialog);
+
+        /** link event */
+        core.plugins.anchor.initEvent.call(core, 'image', image_dialog.querySelector('._se_tab_content_url'));
+        contextImage.anchorCtx = core.context.anchor.caller.image;
 
         /** empty memory */
         image_dialog = null;
@@ -6422,13 +6760,7 @@ __webpack_require__.r(__webpack_exports__);
                     '</div>' +
                 '</div>' +
                 '<div class="_se_tab_content _se_tab_content_url" style="display: none">' +
-                    '<div class="se-dialog-body">' +
-                        '<div class="se-dialog-form">' +
-                            '<label>' + lang.dialogBox.linkBox.url + '</label><input class="se-input-form se-input-url _se_image_link" type="text" />' +
-                            '<pre class="se-link-preview"></pre>' +
-                        '</div>' +
-                        '<label><input type="checkbox" class="_se_image_link_check"/>&nbsp;' + lang.dialogBox.linkBox.newWindowCheck + '</label>' +
-                    '</div>' +
+                    core.context.anchor.forms.innerHTML +
                 '</div>' +
                 '<div class="se-dialog-footer">' +
                     '<div>' +
@@ -6532,6 +6864,7 @@ __webpack_require__.r(__webpack_exports__);
         } else {
             if (contextImage.imgInputFile && this.options.imageMultipleFile) contextImage.imgInputFile.removeAttribute('multiple');
         }
+        this.plugins.anchor.on.call(this, contextImage.anchorCtx, update);
     },
 
     /**
@@ -6573,8 +6906,8 @@ __webpack_require__.r(__webpack_exports__);
         // focus
         if (tabName === 'image' && this.context.image.focusElement) {
             this.context.image.focusElement.focus();
-        } else if (tabName === 'url' && this.context.image.imgLink) {
-            this.context.image.imgLink.focus();
+        } else if (tabName === 'url') {
+            this.context.anchor.caller.image.urlInput.focus();
         }
 
         return false;
@@ -6637,7 +6970,7 @@ __webpack_require__.r(__webpack_exports__);
             if ((fileSize + infoSize) > limitSize) {
                 this.closeLoading();
                 const err = '[SUNEDITOR.imageUpload.fail] Size of uploadable total images: ' + (limitSize/1000) + 'KB';
-                if (this.functions.onImageUploadError !== 'function' || this.functions.onImageUploadError(err, { 'limitSize': limitSize, 'currentSize': infoSize, 'uploadSize': fileSize }, this)) {
+                if (typeof this.functions.onImageUploadError !== 'function' || this.functions.onImageUploadError(err, { 'limitSize': limitSize, 'currentSize': infoSize, 'uploadSize': fileSize }, this)) {
                     this.functions.noticeOpen(err);
                 }
                 return;
@@ -6647,9 +6980,9 @@ __webpack_require__.r(__webpack_exports__);
         const contextImage = this.context.image;
         contextImage._uploadFileLength = files.length;
         
+        const anchor = this.plugins.anchor.createAnchor.call(this, contextImage.anchorCtx, true);
         const info = {
-            linkValue: contextImage._v_link._linkValue,
-            linkNewWindow: contextImage.imgLinkNewWindowCheck.checked,
+            anchor: anchor,
             inputWidth: contextImage.inputX.value,
             inputHeight: contextImage.inputY.value,
             align: contextImage._align,
@@ -6706,7 +7039,7 @@ __webpack_require__.r(__webpack_exports__);
             }
             this.plugins.fileManager.upload.call(this, imageUploadUrl, this.options.imageUploadHeader, formData, this.plugins.image.callBack_imgUpload.bind(this, info), this.functions.onImageUploadError);
         } else { // base64
-            this.plugins.image.setup_reader.call(this, files, info.linkValue, info.linkNewWindow, info.inputWidth, info.inputHeight, info.align, filesLen, info.isUpdate);
+            this.plugins.image.setup_reader.call(this, files, info.anchor, info.inputWidth, info.inputHeight, info.align, filesLen, info.isUpdate);
         }
     },
 
@@ -6732,14 +7065,14 @@ __webpack_require__.r(__webpack_exports__);
                 this.plugins.image.update_src.call(this, fileList[i].url, info.element, file);
                 break;
             } else {
-                this.plugins.image.create_image.call(this, fileList[i].url, info.linkValue, info.linkNewWindow, info.inputWidth, info.inputHeight, info.align, file);
+                this.plugins.image.create_image.call(this, fileList[i].url, info.anchor, info.inputWidth, info.inputHeight, info.align, file);
             }
         }
         
         this.closeLoading();
     },
 
-    setup_reader: function (files, imgLinkValue, newWindowCheck, width, height, align, filesLen, isUpdate) {
+    setup_reader: function (files, anchor, width, height, align, filesLen, isUpdate) {
         try {
             this.context.image.base64RenderIndex = filesLen;
             const wFileReader = this._w.FileReader;
@@ -6755,7 +7088,7 @@ __webpack_require__.r(__webpack_exports__);
                     filesStack[index] = { result: reader.result, file: file };
 
                     if (--this.context.image.base64RenderIndex === 0) {
-                        this.plugins.image.onRender_imgBase64.call(this, update, filesStack, updateElement, imgLinkValue, newWindowCheck, width, height, align);
+                        this.plugins.image.onRender_imgBase64.call(this, update, filesStack, updateElement, anchor, width, height, align);
                         this.closeLoading();
                     }
                 }.bind(this, reader, isUpdate, this.context.image._element, file, i);
@@ -6768,7 +7101,7 @@ __webpack_require__.r(__webpack_exports__);
         }
     },
 
-    onRender_imgBase64: function (update, filesStack, updateElement, imgLinkValue, newWindowCheck, width, height, align) {
+    onRender_imgBase64: function (update, filesStack, updateElement, anchor, width, height, align) {
         const updateMethod = this.plugins.image.update_src;
         const createMethod = this.plugins.image.create_image;
         
@@ -6778,7 +7111,7 @@ __webpack_require__.r(__webpack_exports__);
                 this.context.image._element.setAttribute('data-file-size', filesStack[i].file.size);
                 updateMethod.call(this, filesStack[i].result, updateElement, filesStack[i].file);
             } else {
-                createMethod.call(this, filesStack[i].result, imgLinkValue, newWindowCheck, width, height, align, filesStack[i].file);
+                createMethod.call(this, filesStack[i].result, anchor, width, height, align, filesStack[i].file);
             }
         }
     },
@@ -6790,7 +7123,7 @@ __webpack_require__.r(__webpack_exports__);
         try {
             const file = {name: contextImage._v_src._linkValue.split('/').pop(), size: 0};
             if (this.context.dialog.updateModal) this.plugins.image.update_src.call(this, contextImage._v_src._linkValue, contextImage._element, file);
-            else this.plugins.image.create_image.call(this, contextImage._v_src._linkValue, contextImage._v_link._linkValue, contextImage.imgLinkNewWindowCheck.checked, contextImage.inputX.value, contextImage.inputY.value, contextImage._align, file);
+            else this.plugins.image.create_image.call(this, contextImage._v_src._linkValue, this.plugins.anchor.createAnchor.call(this, contextImage.anchorCtx, true), contextImage.inputX.value, contextImage.inputY.value, contextImage._align, file);
         } catch (e) {
             throw Error('[SUNEDITOR.image.URLRendering.fail] cause : "' + e.message + '"');
         } finally {
@@ -6798,16 +7131,12 @@ __webpack_require__.r(__webpack_exports__);
         }
     },
 
-    onRender_link: function (imgTag, imgLinkValue, newWindowCheck) {
-        if (imgLinkValue.trim().length > 0) {
-            const link = this.util.createElement('A');
-            link.href = /^https?:\/\//.test(imgLinkValue) ? imgLinkValue : 'http://' + imgLinkValue;
-            link.target = (newWindowCheck ? '_blank' : '');
-            link.setAttribute('data-image-link', 'image');
-            imgTag.setAttribute('data-image-link', imgLinkValue);
-
-            link.appendChild(imgTag);
-            return link;
+    onRender_link: function (imgTag, anchor) {
+        if (anchor) {
+            anchor.setAttribute('data-image-link', 'image');
+            imgTag.setAttribute('data-image-link', anchor.href);
+            anchor.appendChild(imgTag);
+            return anchor;
         }
 
         return imgTag;
@@ -6856,7 +7185,7 @@ __webpack_require__.r(__webpack_exports__);
         this.plugins.fileManager.resetInfo.call(this, 'image', this.functions.onImageUpload);
     },
 
-    create_image: function (src, linkValue, linkNewWindow, width, height, align, file) {
+    create_image: function (src, anchor, width, height, align, file) {
         const imagePlugin = this.plugins.image;
         const contextImage = this.context.image;
         this.context.resizing._resize_plugin = 'image';
@@ -6864,14 +7193,14 @@ __webpack_require__.r(__webpack_exports__);
         let oImg = this.util.createElement('IMG');
         oImg.src = src;
         oImg.alt = contextImage._altText;
-        oImg = imagePlugin.onRender_link.call(this, oImg, linkValue, linkNewWindow);
         oImg.setAttribute('data-rotate', '0');
+        anchor = imagePlugin.onRender_link.call(this, oImg, anchor);
 
         if (contextImage._resizing) {
             oImg.setAttribute('data-proportion', contextImage._proportionChecked);
         }
 
-        const cover = this.plugins.component.set_cover.call(this, oImg);
+        const cover = this.plugins.component.set_cover.call(this, anchor);
         const container = this.plugins.component.set_container.call(this, cover, 'se-image-container');
 
         // caption
@@ -6891,20 +7220,24 @@ __webpack_require__.r(__webpack_exports__);
         // align
         imagePlugin.setAlign.call(this, align, oImg, cover, container);
 
-        oImg.onload = imagePlugin._image_create_onload.bind(this, oImg, contextImage.svgDefaultSize);
+        oImg.onload = imagePlugin._image_create_onload.bind(this, oImg, contextImage.svgDefaultSize, container);
         if (this.insertComponent(container, true, true, true)) this.plugins.fileManager.setInfo.call(this, 'image', oImg, this.functions.onImageUpload, file, true);
         this.context.resizing._resize_plugin = '';
     },
 
-    _image_create_onload: function (oImg, svgDefaultSize) {
+    _image_create_onload: function (oImg, svgDefaultSize, container) {
         // svg exception handling
         if (oImg.offsetWidth === 0) this.plugins.image.applySize.call(this, svgDefaultSize, '');
-        this.selectComponent.call(this, oImg, 'image');
+        if (this.options.mediaAutoSelect) {
+            this.selectComponent(oImg, 'image');
+        } else {
+            const line = this.appendFormatTag(container, null);
+            this.setRange(line, 0, line, 0);
+        }
     },
 
     update_image: function (init, openController, notHistoryPush) {
         const contextImage = this.context.image;
-        const linkValue = contextImage._v_link._linkValue;
         let imageEl = contextImage._element;
         let cover = contextImage._cover;
         let container = contextImage._container;
@@ -6959,21 +7292,15 @@ __webpack_require__.r(__webpack_exports__);
         }
 
         // link
-        if (linkValue.trim().length > 0) {
-            if (contextImage._linkElement !== null && cover.contains(contextImage._linkElement)) {
-                contextImage._linkElement.href = linkValue;
-                contextImage._linkElement.target = (contextImage.imgLinkNewWindowCheck.checked ? '_blank' : '');
-                imageEl.setAttribute('data-image-link', linkValue);
-            } else {
-                let newEl = this.plugins.image.onRender_link.call(this, imageEl, linkValue, this.context.image.imgLinkNewWindowCheck.checked);
-                cover.insertBefore(newEl, contextImage._caption);
-            }
-        }
-        else if (contextImage._linkElement !== null) {
+        const anchor = this.plugins.anchor.createAnchor.call(this, contextImage.anchorCtx, true);
+        if (anchor) {
+            contextImage._linkElement = anchor;
+            cover.insertBefore(this.plugins.image.onRender_link.call(this, imageEl, anchor), contextImage._caption);
+        } else if (contextImage._linkElement !== null) {
             const imageElement = imageEl;
 
             imageElement.setAttribute('data-image-link', '');
-            let newEl = imageElement.cloneNode(true);
+            const newEl = imageElement.cloneNode(true);
             cover.removeChild(contextImage._linkElement);
             cover.insertBefore(newEl, contextImage._caption);
             imageEl = newEl;
@@ -7049,7 +7376,7 @@ __webpack_require__.r(__webpack_exports__);
         if (!element) return;
         
         const contextImage = this.context.image;
-        contextImage._linkElement = /^A$/i.test(element.parentNode.nodeName) ? element.parentNode : null;
+        contextImage._linkElement = contextImage.anchorCtx.linkAnchor = /^A$/i.test(element.parentNode.nodeName) ? element.parentNode : null;
         contextImage._element = element;
         contextImage._cover = this.util.getParentElement(element, 'FIGURE');
         contextImage._container = this.util.getParentElement(element, this.util.isMediaComponent);
@@ -7084,8 +7411,6 @@ __webpack_require__.r(__webpack_exports__);
             contextImage._v_src._linkValue = contextImage.previewSrc.textContent = contextImage.imgUrlFile.value = contextImage._element.src;
         }
         contextImage._altText = contextImage.altText.value = contextImage._element.alt;
-        contextImage._v_link._linkValue = contextImage.previewLink.textContent = contextImage.imgLink.value = contextImage._linkElement === null ? '' : contextImage._linkElement.href;
-        contextImage.imgLinkNewWindowCheck.checked = contextImage._linkElement && contextImage._linkElement.target === '_blank';
         contextImage.modal.querySelector('input[name="suneditor_image_radio"][value="' + contextImage._align + '"]').checked = true;
         contextImage._align = contextImage.modal.querySelector('input[name="suneditor_image_radio"]:checked').value;
         contextImage._captionChecked = contextImage.captionCheckEl.checked = !!contextImage._caption;
@@ -7284,8 +7609,6 @@ __webpack_require__.r(__webpack_exports__);
         }
 
         contextImage.altText.value = '';
-        contextImage._v_link._linkValue = contextImage.previewLink.textContent = contextImage.imgLink.value = '';
-        contextImage.imgLinkNewWindowCheck.checked = false;
         contextImage.modal.querySelector('input[name="suneditor_image_radio"][value="none"]').checked = true;
         contextImage.captionCheckEl.checked = false;
         contextImage._element = null;
@@ -7299,18 +7622,21 @@ __webpack_require__.r(__webpack_exports__);
             contextImage._ratioX = 1;
             contextImage._ratioY = 1;
         }
+
+        this.plugins.anchor.init.call(this, contextImage.anchorCtx);
     }
 });
 
 
 /***/ }),
-/* 26 */
+/* 27 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _modules_dialog__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(1);
 /* harmony import */ var _modules_dialog__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_modules_dialog__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _modules_anchor__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(6);
 /*
  * wysiwyg web editor
  *
@@ -7322,48 +7648,40 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
+
 /* harmony default export */ __webpack_exports__["default"] = ({
     name: 'link',
     display: 'dialog',
     add: function (core) {
-        core.addModule([_modules_dialog__WEBPACK_IMPORTED_MODULE_0___default.a]);
+        core.addModule([_modules_dialog__WEBPACK_IMPORTED_MODULE_0___default.a, _modules_anchor__WEBPACK_IMPORTED_MODULE_1__[/* default */ "a"]]);
 
         const context = core.context;
-        context.link = {
+        const contextLink = context.link = {
             focusElement: null, // @Override dialog // This element has focus when the dialog is opened.
-            linkNewWindowCheck: null,
-            linkAnchorText: null,
             _linkAnchor: null,
-            _linkValue: ''
+            anchorCtx: null
         };
 
         /** link dialog */
         let link_dialog = this.setDialog(core);
-        context.link.modal = link_dialog;
-        context.link.focusElement = link_dialog.querySelector('._se_link_url');
-        context.link.linkAnchorText = link_dialog.querySelector('._se_link_text');
-        context.link.linkNewWindowCheck = link_dialog.querySelector('._se_link_check');
-        context.link.preview = link_dialog.querySelector('.se-link-preview');
-        context.link.bookmark = link_dialog.querySelector('.se-link-bookmark');
-        context.link.bookmarkButton = link_dialog.querySelector('._se_bookmark_button');
-        context.link.rel = core.options.linkRel.length > 0 ? link_dialog.querySelector('.se-link-rel') : null;
-
+        contextLink.modal = link_dialog;
+        
         /** link controller */
         let link_controller = this.setController_LinkButton(core);
-        context.link.linkController = link_controller;
-        context.link._linkAnchor = null;
+        contextLink.linkController = link_controller;
 
-        /** add event listeners */
         link_dialog.querySelector('form').addEventListener('submit', this.submit.bind(core));
         link_controller.addEventListener('click', this.onClick_linkController.bind(core));
-        context.link.focusElement.addEventListener('input', this._onLinkPreview.bind(core, context.link.preview, context.link, core.options.linkProtocol));
-        context.link.bookmarkButton.addEventListener('click', this.onClick_bookmarkButton.bind(core));
 
         /** append html */
         context.dialog.modal.appendChild(link_dialog);
 
         /** append controller */
         context.element.relative.appendChild(link_controller);
+
+        /** link event */
+        core.plugins.anchor.initEvent.call(core, 'link', link_dialog);
+        contextLink.focusElement = context.anchor.caller.link.urlInput;
 
         /** empty memory */
         link_dialog = null, link_controller = null;
@@ -7373,46 +7691,20 @@ __webpack_require__.r(__webpack_exports__);
     setDialog: function (core) {
         const lang = core.lang;
         const dialog = core.util.createElement('DIV');
-        const rel = core.options.linkRel;
+        const icons = core.icons;
 
         dialog.className = 'se-dialog-content';
         dialog.style.display = 'none';
         let html = '' +
-            '<form class="editor_link">' +
+            '<form>' +
                 '<div class="se-dialog-header">' +
                     '<button type="button" data-command="close" class="se-btn se-dialog-close" aria-label="Close" title="' + lang.dialogBox.close + '">' +
-                        core.icons.cancel +
+                        icons.cancel +
                     '</button>' +
                     '<span class="se-modal-title">' + lang.dialogBox.linkBox.title + '</span>' +
                 '</div>' +
-                '<div class="se-dialog-body">' +
-                    '<div class="se-dialog-form">' +
-                        '<label>' + lang.dialogBox.linkBox.url + '</label>' +
-                        '<div class="se-dialog-form-files">' +
-                            '<input class="se-input-form se-input-url _se_link_url" type="text" placeholder="' + (core.options.protocol || '') + '" />' +
-                            '<button type="button" class="se-btn se-dialog-files-edge-button _se_bookmark_button" title="' + lang.dialogBox.linkBox.bookmark + '">' + core.icons.bookmark + '</button>' +
-                        '</div>' +
-                    '</div>' +
-                    '<div style="width: 100%; display: flex;">' +
-                        '<span class="se-svg se-link-bookmark" style="flex: unset; display: none;">' + core.icons.bookmark + '</span>' +
-                        '<pre class="se-link-preview" style="flex: auto;"></pre>' +
-                    '</div>' +
-                    '<div class="se-dialog-form">' +
-                        '<label>' + lang.dialogBox.linkBox.text + '</label><input class="se-input-form _se_link_text" type="text" />' +
-                    '</div>' +
-                    '<div class="se-dialog-form-footer">' +
-                        '<label><input type="checkbox" class="se-dialog-btn-check _se_link_check" />&nbsp;' + lang.dialogBox.linkBox.newWindowCheck + '</label>' +
-                    '</div>' +
-                '</div>' +
-                '<div class="se-dialog-footer">';
-                    if (rel.length > 0) {
-                        html += '<select class="se-input-select se-link-rel" title="rel">';
-                        for (let i = 0, len = rel.length; i < len; i++) {
-                            html += '<option value="' + rel[i] + '">' + rel[i] + '</option>';
-                        }
-                        html += '</select>';
-                    }
-                    html += '' +
+                core.context.anchor.forms.innerHTML +
+                '<div class="se-dialog-footer">' +
                     '<button type="submit" class="se-btn-primary" title="' + lang.dialogBox.submitButton + '"><span>' + lang.dialogBox.submitButton + '</span></button>' +
                 '</div>' +
             '</form>';
@@ -7457,59 +7749,16 @@ __webpack_require__.r(__webpack_exports__);
         this.plugins.dialog.open.call(this, 'link', 'link' === this.currentControllerName);
     },
 
-    _onLinkPreview: function (preview, context, protocol, e) {
-        const value = typeof e === 'string' ? e : e.target.value.trim();
-        const linkHTTP = value.indexOf('://') === -1 && value.indexOf('#') !== 0;
-        context._linkValue = preview.textContent = !value ? '' : (protocol && linkHTTP) ? protocol + value : linkHTTP ? '/' + value : value;
-        if (value.indexOf('#') === 0) {
-            context.bookmark.style.display = 'block';
-            this.util.addClass(context.bookmarkButton, 'active');
-        } else {
-            context.bookmark.style.display = 'none';
-            this.util.removeClass(context.bookmarkButton, 'active');
-        }
-    },
-
-    _updateAnchor: function (anchor, url, alt, targetEl, relEl) {
-        if (/^\#/.test(url)) {
-            anchor.id = url.substr(1);
-        } else {
-            anchor.removeAttribute('id');
-        }
-
-        anchor.href = url;
-        anchor.textContent = alt;
-
-        if (targetEl.checked) anchor.target = '_blank';
-        else anchor.removeAttribute('target');
-
-        if (relEl) {
-            anchor.rel = relEl.options[relEl.selectedIndex].value;
-        } else if (anchor.id) {
-            anchor.rel = 'bookmark';
-        } else {
-            anchor.removeAttribute('rel');
-        }
-    },
-
     submit: function (e) {
         this.showLoading();
 
         e.preventDefault();
         e.stopPropagation();
 
-        const submitAction = function () {
-            const contextLink = this.context.link;
-            if (contextLink._linkValue.length === 0) return false;
-            
-            const url = contextLink._linkValue;
-            const anchor = contextLink.linkAnchorText;
-            const anchorText = anchor.value.length === 0 ? url : anchor.value;
-
+        try {
+            const oA = this.plugins.anchor.createAnchor.call(this, this.context.anchor.caller.link, false);
+    
             if (!this.context.dialog.updateModal) {
-                const oA = this.util.createElement('A');
-                this.plugins.link._updateAnchor(oA, url, anchorText, contextLink.linkNewWindowCheck, contextLink.rel);
-
                 const selectedFormats = this.getSelectedElements();
                 if (selectedFormats.length > 1) {
                     const oFormat = this.util.createElement(selectedFormats[0].nodeName);
@@ -7518,21 +7767,13 @@ __webpack_require__.r(__webpack_exports__);
                 } else {
                     if (!this.insertNode(oA, null, true)) return;
                 }
-
+    
                 this.setRange(oA.childNodes[0], 0, oA.childNodes[0], oA.textContent.length);
             } else {
-                this.plugins.link._updateAnchor(contextLink._linkAnchor, url, anchorText, contextLink.linkNewWindowCheck, contextLink.rel);
-
                 // set range
-                const textNode = contextLink._linkAnchor.childNodes[0];
+                const textNode = this.context.link._linkAnchor.childNodes[0];
                 this.setRange(textNode, 0, textNode, textNode.textContent.length);
             }
-
-            contextLink._linkValue = contextLink.preview.textContent = contextLink.focusElement.value = contextLink.linkAnchorText.value = '';
-        }.bind(this);
-
-        try {
-            submitAction();
         } finally {
             this.plugins.dialog.close.call(this);
             this.closeLoading();
@@ -7565,23 +7806,11 @@ __webpack_require__.r(__webpack_exports__);
      * @Override dialog
      */
     on: function (update) {
-        const contextLink = this.context.link;
-        if (!update) {
-            this.plugins.link.init.call(this);
-            contextLink.linkAnchorText.value = this.getSelection().toString();
-        } else if (contextLink._linkAnchor) {
-            this.context.dialog.updateModal = true;
-            contextLink._linkValue = contextLink.preview.textContent = contextLink.focusElement.value = (contextLink._linkAnchor.id ? '#' + contextLink._linkAnchor.id : contextLink._linkAnchor.href);
-            contextLink.linkAnchorText.value = contextLink._linkAnchor.textContent;
-            contextLink.linkNewWindowCheck.checked = (/_blank/i.test(contextLink._linkAnchor.target) ? true : false);
-            if (contextLink.rel) contextLink.rel.value = contextLink._linkAnchor.rel;
-        }
-
-        this.plugins.link._onLinkPreview.call(this, contextLink.preview, contextLink, this.options.linkProtocol, contextLink._linkValue);
+        this.plugins.anchor.on.call(this, this.context.anchor.caller.link, update);
     },
 
     call_controller: function (selectionATag) {
-        this.editLink = this.context.link._linkAnchor = selectionATag;
+        this.editLink = this.context.link._linkAnchor = this.context.anchor.caller.link.linkAnchor = selectionATag;
         const linkBtn = this.context.link.linkController;
         const link = linkBtn.querySelector('a');
 
@@ -7594,23 +7823,6 @@ __webpack_require__.r(__webpack_exports__);
         this.controllersOn(linkBtn, selectionATag, 'link', this.util.removeClass.bind(this.util, this.context.link._linkAnchor, 'on'));
     },
 
-    onClick_bookmarkButton: function () {
-        const contextLink = this.context.link;
-        let url = contextLink.focusElement.value;
-        if (/^\#/.test(url)) {
-            url = url.substr(1);
-            contextLink.bookmark.style.display = 'none';
-            this.util.removeClass(contextLink.bookmarkButton, 'active');
-        } else {
-            url = '#' + url;
-            contextLink.bookmark.style.display = 'block';
-            this.util.addClass(contextLink.bookmarkButton, 'active');
-        }
-
-        contextLink._linkValue = contextLink.preview.textContent = contextLink.focusElement.value = url;
-        contextLink.focusElement.focus();
-    },
-
     onClick_linkController: function (e) {
         e.stopPropagation();
 
@@ -7620,23 +7832,16 @@ __webpack_require__.r(__webpack_exports__);
         e.preventDefault();
 
         if (/update/.test(command)) {
-            const contextLink = this.context.link;
-            contextLink._linkValue = contextLink.preview.textContent = contextLink.focusElement.value = contextLink._linkAnchor.href;
-            contextLink.linkAnchorText.value = contextLink._linkAnchor.textContent;
-            contextLink.linkNewWindowCheck.checked = (/_blank/i.test(contextLink._linkAnchor.target) ? true : false);
-            if (contextLink.rel) contextLink.rel.value = contextLink._linkAnchor.rel;
             this.plugins.dialog.open.call(this, 'link', true);
-        }
-        else if (/unlink/.test(command)) {
+        } else if (/unlink/.test(command)) {
             const sc = this.util.getChildElement(this.context.link._linkAnchor, function (current) { return current.childNodes.length === 0 || current.nodeType === 3; }, false);
             const ec = this.util.getChildElement(this.context.link._linkAnchor, function (current) { return current.childNodes.length === 0 || current.nodeType === 3; }, true);
             this.setRange(sc, 0, ec, ec.textContent.length);
             this.nodeChange(null, null, ['A'], false);
-        }
-        else {
+        } else {
             /** delete */
             this.util.removeItem(this.context.link._linkAnchor);
-            this.context.link._linkAnchor = null;
+            this.context.anchor.caller.link.linkAnchor = null;
             this.focus();
 
             // history stack
@@ -7650,19 +7855,14 @@ __webpack_require__.r(__webpack_exports__);
      * @Override dialog
      */
     init: function () {
-        const contextLink = this.context.link;
-        contextLink.linkController.style.display = 'none';
-        contextLink._linkAnchor = null;
-        contextLink._linkValue = contextLink.preview.textContent = contextLink.focusElement.value = '';
-        contextLink.linkAnchorText.value = '';
-        contextLink.linkNewWindowCheck.checked = false;
-        if (contextLink.rel) contextLink.rel.value = contextLink.rel.options[0].value;
+        this.context.link.linkController.style.display = 'none';
+        this.plugins.anchor.init.call(this, this.context.anchor.caller.link);
     }
 });
 
 
 /***/ }),
-/* 27 */
+/* 28 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -7671,7 +7871,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _modules_dialog__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_modules_dialog__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _modules_component__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(2);
 /* harmony import */ var _modules_component__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_modules_component__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var _modules_resizing__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(6);
+/* harmony import */ var _modules_resizing__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(7);
 /* harmony import */ var _modules_resizing__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(_modules_resizing__WEBPACK_IMPORTED_MODULE_2__);
 /* harmony import */ var _modules_fileManager__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(3);
 /* harmony import */ var _modules_fileManager__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(_modules_fileManager__WEBPACK_IMPORTED_MODULE_3__);
@@ -8084,7 +8284,7 @@ __webpack_require__.r(__webpack_exports__);
             if ((fileSize + infoSize) > limitSize) {
                 this.closeLoading();
                 const err = '[SUNEDITOR.videoUpload.fail] Size of uploadable total videos: ' + (limitSize/1000) + 'KB';
-                if (this.functions.onVideoUploadError !== 'function' || this.functions.onVideoUploadError(err, { 'limitSize': limitSize, 'currentSize': infoSize, 'uploadSize': fileSize }, this)) {
+                if (typeof this.functions.onVideoUploadError !== 'function' || this.functions.onVideoUploadError(err, { 'limitSize': limitSize, 'currentSize': infoSize, 'uploadSize': fileSize }, this)) {
                     this.functions.noticeOpen(err);
                 }
                 return;
@@ -8291,7 +8491,11 @@ __webpack_require__.r(__webpack_exports__);
 
         let changed = true;
         if (!isUpdate) {
-            changed = this.insertComponent(container, false, true, false);
+            changed = this.insertComponent(container, false, true, !this.options.mediaAutoSelect);
+            if (!this.options.mediaAutoSelect) {
+                const line = this.appendFormatTag(container, null);
+                this.setRange(line, 0, line, 0);
+            }
         } else if (contextVideo._resizing && this.context.resizing._rotateVertical && changeSize) {
             this.plugins.resizing.setTransformSize.call(this, oFrame, null, null);
         }
@@ -8323,7 +8527,7 @@ __webpack_require__.r(__webpack_exports__);
                 return this.isWysiwygDiv(current.parentNode);
             }.bind(this.util));
 
-        oFrame = oFrame.cloneNode(true);
+        contextVideo._element = oFrame = oFrame.cloneNode(true);
         const cover = contextVideo._cover = this.plugins.component.set_cover.call(this, oFrame);
         const container = contextVideo._container = this.plugins.component.set_container.call(this, cover, 'se-video-container');
 
@@ -8631,7 +8835,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 28 */
+/* 29 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -8957,7 +9161,7 @@ __webpack_require__.r(__webpack_exports__);
             if ((fileSize + infoSize) > limitSize) {
                 this.closeLoading();
                 const err = '[SUNEDITOR.audioUpload.fail] Size of uploadable total audios: ' + (limitSize/1000) + 'KB';
-                if (this.functions.onAudioUploadError !== 'function' || this.functions.onAudioUploadError(err, { 'limitSize': limitSize, 'currentSize': infoSize, 'uploadSize': fileSize }, this)) {
+                if (typeof this.functions.onAudioUploadError !== 'function' || this.functions.onAudioUploadError(err, { 'limitSize': limitSize, 'currentSize': infoSize, 'uploadSize': fileSize }, this)) {
                     this.functions.noticeOpen(err);
                 }
                 return;
@@ -9069,15 +9273,20 @@ __webpack_require__.r(__webpack_exports__);
             element.src = src;
             const cover = this.plugins.component.set_cover.call(this, element);
             const container = this.plugins.component.set_container.call(this, cover, '');
-            if (!this.insertComponent(container, false, true, false)) {
+            if (!this.insertComponent(container, false, true, !this.options.mediaAutoSelect)) {
                 this.focus();
                 return;
+            }
+            if (!this.options.mediaAutoSelect) {
+                const line = this.appendFormatTag(container, null);
+                this.setRange(line, 0, line, 0);
             }
         } // update
         else {
             if (contextAudio._element) element = contextAudio._element;
             if (element && element.src !== src) {
                 element.src = src;
+                this.selectComponent(element, 'audio');
             } else {
                 this.selectComponent(element, 'audio');
                 return;
@@ -9085,7 +9294,6 @@ __webpack_require__.r(__webpack_exports__);
         }
 
         this.plugins.fileManager.setInfo.call(this, 'audio', element, this.functions.onAudioUpload, file, false);
-        this.selectComponent(element, 'audio');
         if (isUpdate) this.history.push(false);
     },
 
@@ -9176,7 +9384,7 @@ __webpack_require__.r(__webpack_exports__);
 });
 
 /***/ }),
-/* 29 */
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9268,6 +9476,7 @@ __webpack_require__.r(__webpack_exports__);
                 url: 'URL til link',
                 text: 'Tekst for link',
                 newWindowCheck: 'Åben i nyt faneblad',
+                downloadLinkCheck: 'Download link',
                 bookmark: 'Bogmærke'
             },
             mathBox: {
@@ -9371,7 +9580,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 30 */
+/* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9460,6 +9669,7 @@ __webpack_require__.r(__webpack_exports__);
                 url: 'Link-URL',
                 text: 'Link-Text',
                 newWindowCheck: 'In neuem Fenster anzeigen',
+                downloadLinkCheck: 'Download-Link',
                 bookmark: 'Lesezeichen'
             },
             mathBox: {
@@ -9562,7 +9772,7 @@ __webpack_require__.r(__webpack_exports__);
 }));
 
 /***/ }),
-/* 31 */
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9651,6 +9861,7 @@ __webpack_require__.r(__webpack_exports__);
 				url: '¿Hacia que URL lleva el link?',
 				text: 'Texto para mostrar',
 				newWindowCheck: 'Abrir en una nueva ventana',
+				downloadLinkCheck: 'Enlace de descarga',
                 bookmark: 'Marcador'
 			},
 			mathBox: {
@@ -9753,7 +9964,7 @@ __webpack_require__.r(__webpack_exports__);
 }));
 
 /***/ }),
-/* 32 */
+/* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9842,6 +10053,7 @@ __webpack_require__.r(__webpack_exports__);
                 url: 'Adresse URL du lien',
                 text: 'Texte à afficher',
                 newWindowCheck: 'Ouvrir dans une nouvelle fenêtre',
+                downloadLinkCheck: 'Lien de téléchargement',
                 bookmark: 'Signet'
             },
             mathBox: {
@@ -9945,7 +10157,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 33 */
+/* 34 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10034,6 +10246,7 @@ __webpack_require__.r(__webpack_exports__);
                 url: 'インターネットアドレス',
                 text: '画面のテキスト',
                 newWindowCheck: '別ウィンドウで開く',
+                downloadLinkCheck: 'ダウンロードリンク',
                 bookmark: 'ブックマーク'
             },
             mathBox: {
@@ -10136,7 +10349,7 @@ __webpack_require__.r(__webpack_exports__);
 }));
 
 /***/ }),
-/* 34 */
+/* 35 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10225,6 +10438,7 @@ __webpack_require__.r(__webpack_exports__);
                 url: '인터넷 주소',
                 text: '화면 텍스트',
                 newWindowCheck: '새창으로 열기',
+                downloadLinkCheck: '다운로드 링크',
                 bookmark: '북마크'
             },
             mathBox: {
@@ -10327,7 +10541,7 @@ __webpack_require__.r(__webpack_exports__);
 }));
 
 /***/ }),
-/* 35 */
+/* 36 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10417,6 +10631,7 @@ __webpack_require__.r(__webpack_exports__);
                 url: 'URL para link',
                 text: 'Texto à mostrar',
                 newWindowCheck: 'Abrir em nova guia',
+                downloadLinkCheck: 'Link para Download',
                 bookmark: 'marca páginas'
             },
             mathBox: {
@@ -10519,7 +10734,7 @@ __webpack_require__.r(__webpack_exports__);
 }));
 
 /***/ }),
-/* 36 */
+/* 37 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10608,6 +10823,7 @@ __webpack_require__.r(__webpack_exports__);
                 url: 'Ссылка',
                 text: 'Текст',
                 newWindowCheck: 'Открывать в новом окне',
+                downloadLinkCheck: 'Ссылка для скачивания',
                 bookmark: 'Закладка'
             },
             mathBox: {
@@ -10710,7 +10926,7 @@ __webpack_require__.r(__webpack_exports__);
 }));
 
 /***/ }),
-/* 37 */
+/* 38 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10799,6 +11015,7 @@ __webpack_require__.r(__webpack_exports__);
                 url: 'Indirizzo in link',
                 text: 'Applica Testo da visualizzare',
                 newWindowCheck: 'Apri in una nuova finestra',
+                downloadLinkCheck: 'Link per scaricare',
                 bookmark: 'Segnalibro'
             },
             mathBox: {
@@ -10902,7 +11119,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 38 */
+/* 39 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10991,6 +11208,7 @@ __webpack_require__.r(__webpack_exports__);
                 url: '网址',
                 text: '字体',
                 newWindowCheck: '在新标签页中打开',
+                downloadLinkCheck: '下载链接',
                 bookmark: '书签'
             },
             mathBox: {
@@ -11093,7 +11311,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 39 */
+/* 40 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -11182,6 +11400,7 @@ __webpack_require__.r(__webpack_exports__);
                 url: 'Adresă link',
                 text: 'Text de afișat',
                 newWindowCheck: 'Deschide în fereastră nouă',
+                downloadLinkCheck: 'Link de descărcare',
                 bookmark: 'Marcaj'
             },
             mathBox: {
@@ -11284,7 +11503,7 @@ __webpack_require__.r(__webpack_exports__);
 }));
 
 /***/ }),
-/* 40 */
+/* 41 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -11373,6 +11592,7 @@ __webpack_require__.r(__webpack_exports__);
                 url: 'Adres URL',
                 text: 'Tekst do wyświetlenia',
                 newWindowCheck: 'Otwórz w nowym oknie',
+                downloadLinkCheck: 'Link do pobrania',
                 bookmark: 'Zakładka'
             },
             mathBox: {
@@ -11475,7 +11695,7 @@ __webpack_require__.r(__webpack_exports__);
 }));
 
 /***/ }),
-/* 41 */
+/* 42 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -11564,6 +11784,7 @@ __webpack_require__.r(__webpack_exports__);
                 url: 'به‌سته‌ر',
                 text: 'تێكستی به‌سته‌ر',
                 newWindowCheck: 'له‌ په‌نجه‌ره‌یه‌كی نوێ بكه‌ره‌وه‌',
+                downloadLinkCheck: 'رابط التحميل',
                 bookmark: 'المرجعية'
             },
             mathBox: {
@@ -11666,7 +11887,7 @@ __webpack_require__.r(__webpack_exports__);
 }));
 
 /***/ }),
-/* 42 */
+/* 43 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -11755,6 +11976,7 @@ __webpack_require__.r(__webpack_exports__);
                 url: 'Saites URL',
                 text: 'Parādāmais teksts',
                 newWindowCheck: 'Atvērt jaunā logā',
+                downloadLinkCheck: 'Lejupielādes saite',
                 bookmark: 'Grāmatzīme'
             },
             mathBox: {
@@ -11857,7 +12079,7 @@ __webpack_require__.r(__webpack_exports__);
 }));
 
 /***/ }),
-/* 43 */
+/* 44 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -11949,6 +12171,7 @@ __webpack_require__.r(__webpack_exports__);
                 url: 'URL till länk',
                 text: 'Länktext',
                 newWindowCheck: 'Öppna i nytt fönster',
+                downloadLinkCheck: 'Nedladdningslänk',
                 bookmark: 'Bokmärke'
             },
             mathBox: {
@@ -12052,7 +12275,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 44 */
+/* 45 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -12141,6 +12364,7 @@ __webpack_require__.r(__webpack_exports__);
                 url: "Посилання",
                 text: "Текст",
                 newWindowCheck: "Відкривати в новому вікні",
+                downloadLinkCheck: 'Посилання для завантаження',
                 bookmark: 'Закладка'
             },
             mathBox: {
@@ -12244,7 +12468,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /***/ }),
-/* 45 */
+/* 46 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -12257,7 +12481,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
-var ReactPropTypesSecret = __webpack_require__(46);
+var ReactPropTypesSecret = __webpack_require__(47);
 
 function emptyFunction() {}
 function emptyFunctionWithReset() {}
@@ -12315,7 +12539,7 @@ module.exports = function() {
 
 
 /***/ }),
-/* 46 */
+/* 47 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -12334,7 +12558,7 @@ module.exports = ReactPropTypesSecret;
 
 
 /***/ }),
-/* 47 */
+/* 48 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -12362,7 +12586,7 @@ var formatting = [["undo", "redo"], ["bold", "underline", "italic", "strike", "s
   formatting
 });
 // EXTERNAL MODULE: external "react"
-var external_react_ = __webpack_require__(7);
+var external_react_ = __webpack_require__(8);
 var external_react_default = /*#__PURE__*/__webpack_require__.n(external_react_);
 
 // CONCATENATED MODULE: ./node_modules/suneditor/src/assets/defaultIcons.js
@@ -12452,6 +12676,7 @@ var external_react_default = /*#__PURE__*/__webpack_require__.n(external_react_)
    audio: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14,3.23V5.29C16.89,6.15 19,8.83 19,12C19,15.17 16.89,17.84 14,18.7V20.77C18,19.86 21,16.28 21,12C21,7.72 18,4.14 14,3.23M16.5,12C16.5,10.23 15.5,8.71 14,7.97V16C15.5,15.29 16.5,13.76 16.5,12M3,9V15H7L12,20V4L7,9H3Z" /></svg>',
    image_gallery: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="30 30 150 150"><g><path d="M152.775,120.548V51.651c0-12.271-9.984-22.254-22.254-22.254H43.727c-12.271,0-22.254,9.983-22.254,22.254v68.896c0,12.27,9.983,22.254,22.254,22.254h86.795C142.791,142.802,152.775,132.817,152.775,120.548z M36.394,51.651c0-4.042,3.291-7.333,7.333-7.333h86.795c4.042,0,7.332,3.291,7.332,7.333v23.917l-14.938-17.767c-1.41-1.678-3.487-2.649-5.68-2.658h-0.029c-2.184,0-4.255,0.954-5.674,2.613L76.709,98.519l-9.096-9.398c-1.427-1.474-3.392-2.291-5.448-2.273c-2.052,0.025-4.004,0.893-5.396,2.4L36.394,111.32V51.651z M41.684,127.585l20.697-22.416l9.312,9.622c1.461,1.511,3.489,2.334,5.592,2.27c2.101-0.066,4.075-1.013,5.44-2.612l34.436-40.308l20.693,24.613v21.794c0,4.042-3.29,7.332-7.332,7.332H43.727C43.018,127.88,42.334,127.775,41.684,127.585z M182.616,152.5V75.657c0-4.12-3.34-7.46-7.461-7.46c-4.119,0-7.46,3.34-7.46,7.46V152.5c0,4.112-3.347,7.46-7.461,7.46h-94c-4.119,0-7.46,3.339-7.46,7.459c0,4.123,3.341,7.462,7.46,7.462h94C172.576,174.881,182.616,164.841,182.616,152.5z"/></g></svg>',
    bookmark: '<svg viewBox="0 0 24 24"><path d="M17,3H7A2,2 0 0,0 5,5V21L12,18L19,21V5C19,3.89 18.1,3 17,3Z" /></svg>',
+   download: '<svg viewBox="0 0 24 24"><path d="M2 12H4V17H20V12H22V17C22 18.11 21.11 19 20 19H4C2.9 19 2 18.11 2 17V12M12 15L17.55 9.54L16.13 8.13L13 11.25V2H11V11.25L7.88 8.13L6.46 9.55L12 15Z" /></svg>',
    // More icons
    more_text: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="10 10 180 180"><g><path d="M49.711,142.188h49.027c2.328,0.002,4.394,1.492,5.129,3.699l9.742,29.252c0.363,1.092,1.385,1.828,2.537,1.83l15.883,0.01c0.859,0,1.667-0.412,2.17-1.109s0.641-1.594,0.37-2.41l-16.625-50.045L86.503,28.953c-0.36-1.097-1.383-1.839-2.537-1.842H64.532c-1.153-0.001-2.178,0.736-2.542,1.831L13.847,173.457c-0.271,0.816-0.135,1.713,0.369,2.412c0.503,0.697,1.311,1.109,2.171,1.109h15.872c1.151,0,2.173-0.736,2.537-1.828l9.793-29.287C45.325,143.66,47.39,142.18,49.711,142.188L49.711,142.188z M53.493,119.098l15.607-46.9c0.744-2.196,2.806-3.674,5.125-3.674s4.381,1.478,5.125,3.674l15.607,46.904c0.537,1.621,0.263,3.402-0.736,4.789c-1.018,1.408-2.649,2.24-4.386,2.24H58.615c-1.736,0-3.368-0.832-4.386-2.24C53.23,122.504,52.956,120.721,53.493,119.098L53.493,119.098z M190.465,63.32c0-2.919-1.015-5.396-3.059-7.428c-2.029-2.031-4.496-3.047-7.383-3.047c-2.889,0-5.355,1.016-7.388,3.047c-2.029,2.032-3.056,4.498-3.056,7.386c0,2.889,1.026,5.354,3.056,7.385c2.032,2.032,4.499,3.059,7.388,3.059c2.887,0,5.354-1.026,7.383-3.059C189.45,68.633,190.465,66.178,190.465,63.32L190.465,63.32z M190.465,101.994c0-2.858-1.015-5.313-3.059-7.333c-2.029-2.042-4.496-3.047-7.383-3.047c-2.889,0-5.355,1.005-7.388,3.047c-2.029,2.021-3.056,4.486-3.056,7.376c0,2.887,1.026,5.352,3.056,7.395c2.032,2.021,4.499,3.047,7.388,3.047c2.887,0,5.354-1.025,7.383-3.047C189.45,107.389,190.465,104.914,190.465,101.994L190.465,101.994z M190.465,140.76c0-2.918-1.015-5.395-3.059-7.438c-2.029-2.041-4.496-3.047-7.383-3.047c-2.889,0-5.355,1.006-7.388,3.047c-2.029,2.043-3.056,4.52-3.056,7.438c0,2.922,1.026,5.398,3.056,7.439c2.032,2.021,4.499,3.047,7.388,3.047c2.887,0,5.354-1.025,7.383-3.047C189.45,146.158,190.465,143.682,190.465,140.76L190.465,140.76z"/></g></svg>',
    more_paragraph: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="10 10 180 180"><g><path d="M128.39,28.499H63.493c-25.558,0-46.354,20.796-46.354,46.354c0,25.559,20.796,46.353,46.354,46.353h9.271v55.625h18.542V47.04h9.271V176.83h18.543V47.04h9.271V28.499z M72.764,102.664h-9.271c-15.337,0-27.813-12.475-27.813-27.812c0-15.336,12.476-27.813,27.813-27.813h9.271V102.664z M190.465,63.32c0-2.919-1.015-5.396-3.059-7.428c-2.029-2.031-4.496-3.047-7.383-3.047c-2.889,0-5.355,1.016-7.388,3.047c-2.029,2.032-3.056,4.498-3.056,7.386c0,2.889,1.026,5.354,3.056,7.385c2.032,2.032,4.499,3.059,7.388,3.059c2.887,0,5.354-1.026,7.383-3.059C189.45,68.633,190.465,66.178,190.465,63.32L190.465,63.32z M190.465,101.994c0-2.858-1.015-5.313-3.059-7.333c-2.029-2.042-4.496-3.047-7.383-3.047c-2.889,0-5.355,1.005-7.388,3.047c-2.029,2.021-3.056,4.486-3.056,7.376c0,2.887,1.026,5.352,3.056,7.395c2.032,2.021,4.499,3.047,7.388,3.047c2.887,0,5.354-1.025,7.383-3.047C189.45,107.389,190.465,104.914,190.465,101.994L190.465,101.994z M190.465,140.76c0-2.918-1.015-5.395-3.059-7.438c-2.029-2.041-4.496-3.047-7.383-3.047c-2.889,0-5.355,1.006-7.388,3.047c-2.029,2.043-3.056,4.52-3.056,7.438c0,2.922,1.026,5.398,3.056,7.439c2.032,2.021,4.499,3.047,7.388,3.047c2.887,0,5.354-1.025,7.383-3.047C189.45,146.158,190.465,143.682,190.465,140.76L190.465,140.76z"/></g></svg>',
@@ -12837,7 +13062,7 @@ const util_util = {
     },
 
     /**
-     * @description It is judged whether it is the component [img, iframe, video, audio] cover(class="se-component") and table, hr
+     * @description It is judged whether it is the component[img, iframe, video, audio, table] cover(class="se-component") and table, hr
      * @param {Node} element The node to check
      * @returns {Boolean}
      */
@@ -13608,19 +13833,23 @@ const util_util = {
      * @description Argument value If there is no class name, insert it and delete the class name if it exists
      * @param {Element} element Elements to replace class name
      * @param {String} className Class name to be change
+     * @returns {Boolean|undefined}
      */
     toggleClass: function (element, className) {
         if (!element) return;
+        let result = false;
 
         const check = new this._w.RegExp('(\\s|^)' + className + '(\\s|$)');
         if (check.test(element.className)) {
             element.className = element.className.replace(check, ' ').trim();
-        }
-        else {
+        } else {
             element.className += ' ' + className;
+            result = true;
         }
 
         if (!element.className.trim()) element.removeAttribute('class');
+
+        return result;
     },
 
     /**
@@ -14865,6 +15094,7 @@ const util_util = {
         /** Link */
         options.linkProtocol = typeof options.linkProtocol === 'string' ? options.linkProtocol : null;
         options.linkRel = Array.isArray(options.linkRel) ? options.linkRel : [];
+        options.linkRelDefault = options.linkRelDefault || {};
         /** Key actions */
         options.tabDisable = !!options.tabDisable;
         options.shortcutsDisable = Array.isArray(options.shortcutsDisable) ? options.shortcutsDisable : [];
@@ -14875,6 +15105,7 @@ const util_util = {
         options.templates = !options.templates ? null : options.templates;
         /** ETC */
         options.placeholder = typeof options.placeholder === 'string' ? options.placeholder : null;
+        options.mediaAutoSelect = options.mediaAutoSelect === undefined ? true : !!options.mediaAutoSelect;
         /** Buttons */
         options.buttonList = !!options.buttonList ? options.buttonList : [
             ['undo', 'redo'],
@@ -15179,6 +15410,12 @@ const util_util = {
             case 1:
                 lib_util.removeClass(_buttonTray.firstElementChild, 'se-btn-module-border');
                 break;
+            default:
+                if (options.rtl) {
+                    const sv =  separator_vertical.cloneNode(false);
+                    sv.style.float = _buttonTray.lastElementChild.style.float;
+                    _buttonTray.appendChild(sv);
+                }
         }
 
         if (responsiveButtons.length > 0) responsiveButtons.unshift(buttonList);
@@ -15428,6 +15665,7 @@ const _Context = function (element, cons, options) {
         reset: function (ignoreChangeEvent) {
             if (undo) undo.setAttribute('disabled', true);
             if (redo) redo.setAttribute('disabled', true);
+            core._variable.isChanged = false;
             if (core.context.tool.save) core.context.tool.save.setAttribute('disabled', true);
             
             stack.splice(0);
@@ -15461,6 +15699,7 @@ const _Context = function (element, cons, options) {
             if (stackIndex === 0) {
                 if (undo) undo.setAttribute('disabled', true);
                 if (redo && stackIndex === stack.length - 1) redo.setAttribute('disabled', true);
+                core._variable.isChanged = false;
                 if (core.context.tool.save) core.context.tool.save.setAttribute('disabled', true);
             } else if (stackIndex === stack.length - 1) {
                 if (redo) redo.setAttribute('disabled', true);
@@ -15987,6 +16226,7 @@ const _Context = function (element, cons, options) {
          * @private
          */
         _variable: {
+            isChanged: false,
             isCodeView: false,
             isFullScreen: false,
             innerHeight_fullScreen: 0,
@@ -17160,16 +17400,19 @@ const _Context = function (element, cons, options) {
                         if (!isFormats && prevContainer) {
                             parentNode = prevContainer.nodeType === 3 ? prevContainer.parentNode : prevContainer;
                             if (parentNode.contains(container)) {
+                                let sameParent = true;
                                 afterNode = container;
                                 while (afterNode.parentNode !== parentNode) {
                                     afterNode = afterNode.parentNode;
+                                    sameParent = false;
                                 }
+                                if (sameParent && container === prevContainer) afterNode = afterNode.nextSibling;
                             } else {
                                 afterNode = null;
                             }
                         } else {
-                            parentNode = isFormats ? commonCon : container;
-                            afterNode = isFormats ? endCon : null;
+                            afterNode = isFormats ? endCon : container === prevContainer ? container.nextSibling : container;
+                            parentNode = (!afterNode || !afterNode.parentNode) ? commonCon : afterNode.parentNode;
                         }
 
                         while (afterNode && !util.isFormatElement(afterNode) && afterNode.parentNode !== commonCon) {
@@ -19593,13 +19836,14 @@ const _Context = function (element, cons, options) {
                     break;
                 case 'save':
                     if (typeof options.callBackSave === 'function') {
-                        options.callBackSave(this.getContents(false));
-                    } else if (typeof functions.save === 'function') {
+                        options.callBackSave(this.getContents(false), this._variable.isChanged);
+                    } else if (this._variable.isChanged && typeof functions.save === 'function') {
                         functions.save();
                     } else {
                         throw Error('[SUNEDITOR.core.commandHandler.fail] Please register call back function in creation option. (callBackSave : Function)');
                     }
 
+                    this._variable.isChanged = false;
                     if (context.tool.save) context.tool.save.setAttribute('disabled', true);
                     break;
                 default : // 'STRONG', 'U', 'EM', 'DEL', 'SUB', 'SUP'..
@@ -19995,7 +20239,6 @@ const _Context = function (element, cons, options) {
             const contentsHTML = options.previewTemplate ? options.previewTemplate.replace(/\{\{\s*contents\s*\}\}/i, this.getContents(true)) : this.getContents(true);
             const windowObject = _w.open('', '_blank');
             windowObject.mimeType = 'text/html';
-            const w = context.element.wysiwygFrame.offsetWidth + 'px !important';
             const wDoc = this._wd;
 
             if (options.iframe) {
@@ -20005,7 +20248,7 @@ const _Context = function (element, cons, options) {
                     '<!DOCTYPE html><html>' +
                     '<head>' +
                     wDoc.head.innerHTML +
-                    '<style>body {overflow:auto !important; margin: 10px auto !important; height:auto !important;}</style>' +
+                    '<style>body {overflow:auto !important; margin: 10px auto !important; height:auto !important; outline:1px dashed #ccc;}</style>' +
                     '</head>' +
                     '<body ' + arrts + '>' + contentsHTML + '</body>' +
                     '</html>'
@@ -20029,7 +20272,7 @@ const _Context = function (element, cons, options) {
                     '<title>' + lang.toolbar.preview + '</title>' +
                     linkHTML +
                     '</head>' +
-                    '<body class="' + options._editableClass + '" style="margin:10px auto !important; height:auto !important;">' + contentsHTML + '</body>' +
+                    '<body class="' + options._editableClass + '" style="margin:10px auto !important; height:auto !important; outline:1px dashed #ccc;">' + contentsHTML + '</body>' +
                     '</html>'
                 );
             }
@@ -20568,7 +20811,7 @@ const _Context = function (element, cons, options) {
             this._disallowedTextTagsRegExp = disallowTextTags.length === 0 ? null : new wRegExp('(<\\/?)(' + disallowTextTags.join('|') + ')\\b\\s*(?:[^>^<]+)?\\s*(?=>)', 'gi');
 
             // set whitelist
-            const defaultAttr = 'contenteditable|colspan|rowspan|target|href|src|class|type|controls|data-format|data-size|data-file-size|data-file-name|data-origin|data-align|data-image-link|data-rotate|data-proportion|data-percentage|origin-size|data-exp|data-font-size';
+            const defaultAttr = 'contenteditable|colspan|rowspan|target|href|download|rel|src|alt|class|type|controls|data-format|data-size|data-file-size|data-file-name|data-origin|data-align|data-image-link|data-rotate|data-proportion|data-percentage|origin-size|data-exp|data-font-size';
             this._allowHTMLComments = options._editorTagsWhitelist.indexOf('//') > -1;
             this._htmlCheckWhitelistRegExp = new wRegExp('^(' + options._editorTagsWhitelist.replace('|//', '') + ')$', 'i');
             this.editorTagsWhitelistRegExp = util.createTagsWhitelist(options._editorTagsWhitelist.replace('|//', '|<!--|-->'));
@@ -20721,6 +20964,7 @@ const _Context = function (element, cons, options) {
          */
         _onChange_historyStack: function () {
             event._applyTagEffects();
+            core._variable.isChanged = true;
             if (context.tool.save) context.tool.save.removeAttribute('disabled');
             if (functions.onChange) functions.onChange(this.getContents(true), this);
         },
@@ -21183,16 +21427,19 @@ const _Context = function (element, cons, options) {
                 const range = core.getRange();
                 if (util.getFormatElement(range.startContainer) === util.getFormatElement(range.endContainer)) {
                     if (util.isList(rangeEl)) {
+                        e.preventDefault();
                         const oLi = util.createElement('LI');
                         const prevLi = selectionNode.nextElementSibling;
                         oLi.appendChild(selectionNode);
                         rangeEl.insertBefore(oLi, prevLi);
+                        core.focus();
                     } else if (!util.isWysiwygDiv(selectionNode) && !util.isComponent(selectionNode) && (!util.isTable(selectionNode) || util.isCell(selectionNode))) {
+                        e.preventDefault();
                         core._setDefaultFormat(util.isRangeFormatElement(rangeEl) ? 'DIV' : options.defaultTag);
+                        core.focus();
+                    } else {
+                        event._applyTagEffects();
                     }
-                    
-                    e.preventDefault();
-                    core.focus();
                 }
             } else {
                 event._applyTagEffects();
@@ -22483,8 +22730,9 @@ const _Context = function (element, cons, options) {
         },
 
         _setClipboardData: function (type, e, plainText, cleanData, data) {
-            // MS word
-            if (/class=["']*Mso(Normal|List)/i.test(cleanData) || /content=["']*Word.Document/i.test(cleanData) || /content=["']*OneNote.File/i.test(cleanData)) {
+            // MS word, OneNode, Excel
+            const MSData = /class=["']*Mso(Normal|List)/i.test(cleanData) || /content=["']*Word.Document/i.test(cleanData) || /content=["']*OneNote.File/i.test(cleanData) || /content=["']*Excel.Sheet/i.test(cleanData);
+            if (MSData) {
                 cleanData = cleanData.replace(/\n/g, ' ');
                 plainText = plainText.replace(/\n/g, ' ');
             } else {
@@ -22509,7 +22757,7 @@ const _Context = function (element, cons, options) {
 
             // files
             const files = data.files;
-            if (files.length > 0) {
+            if (files.length > 0 && !MSData) {
                 if (/^image/.test(files[0].type) && core.plugins.image) {
                     functions.insertImage(files);
                 }
@@ -22530,19 +22778,20 @@ const _Context = function (element, cons, options) {
             if (core.isDisabled) return;
             const component = util.getParentElement(e.target, util.isComponent);
             const lineBreakerStyle = core._lineBreaker.style;
-
+            
             if (component && !core.currentControllerName) {
+                const ctxEl = context.element;
                 let scrollTop = 0;
-                let el = context.element.wysiwyg;
+                let el = ctxEl.wysiwyg;
                 do {
                     scrollTop += el.scrollTop;
                     el = el.parentElement;
                 } while (el && !/^(BODY|HTML)$/i.test(el.nodeName));
 
-                const wScroll = context.element.wysiwyg.scrollTop;
+                const wScroll = ctxEl.wysiwyg.scrollTop;
                 const offsets = event._getEditorOffsets(null);
-                const componentTop = util.getOffset(component, context.element.wysiwygFrame).top + wScroll;
-                const y = e.pageY + scrollTop + (options.iframe && !options.toolbarContainer ? context.element.toolbar.offsetHeight : 0);
+                const componentTop = util.getOffset(component, ctxEl.wysiwygFrame).top + wScroll;
+                const y = e.pageY + scrollTop + (options.iframe && !options.toolbarContainer ? ctxEl.toolbar.offsetHeight : 0);
                 const c = componentTop + (options.iframe ? scrollTop : offsets.top);
 
                 const isList = util.isListCell(component.parentNode);
@@ -23553,26 +23802,26 @@ var getPlugins = function getPlugins(_ref) {
   if (!isArray(buttonList)) throw new Error("Button List must be of type array");else {
     var pluginList = [];
     buttonList = flatten(buttonList);
-    if (buttonList.indexOf("align") >= 0) pluginList.push(__webpack_require__(9).default);
-    if (buttonList.indexOf("math") >= 0) pluginList.push(__webpack_require__(10).default);
-    if (buttonList.indexOf("imageGallery") >= 0) pluginList.push(__webpack_require__(11).default);
-    if (buttonList.indexOf("blockquote") >= 0) pluginList.push(__webpack_require__(12).default);
-    if (buttonList.indexOf("font") >= 0) pluginList.push(__webpack_require__(13).default);
-    if (buttonList.indexOf("fontColor") >= 0) pluginList.push(__webpack_require__(14).default);
-    if (buttonList.indexOf("fontSize") >= 0) pluginList.push(__webpack_require__(15).default);
-    if (buttonList.indexOf("formatBlock") >= 0) pluginList.push(__webpack_require__(16).default);
-    if (buttonList.indexOf("hiliteColor") >= 0) pluginList.push(__webpack_require__(17).default);
-    if (buttonList.indexOf("horizontalRule") >= 0) pluginList.push(__webpack_require__(18).default);
-    if (buttonList.indexOf("lineHeight") >= 0) pluginList.push(__webpack_require__(19).default);
-    if (buttonList.indexOf("list") >= 0) pluginList.push(__webpack_require__(20).default);
-    if (buttonList.indexOf("paragraphStyle") >= 0) pluginList.push(__webpack_require__(21).default);
-    if (buttonList.indexOf("table") >= 0) pluginList.push(__webpack_require__(22).default);
-    if (buttonList.indexOf("template") >= 0) pluginList.push(__webpack_require__(23).default);
-    if (buttonList.indexOf("textStyle") >= 0) pluginList.push(__webpack_require__(24).default);
-    if (buttonList.indexOf("image") >= 0) pluginList.push(__webpack_require__(25).default);
-    if (buttonList.indexOf("link") >= 0) pluginList.push(__webpack_require__(26).default);
-    if (buttonList.indexOf("video") >= 0) pluginList.push(__webpack_require__(27).default);
-    if (buttonList.indexOf("audio") >= 0) pluginList.push(__webpack_require__(28).default);
+    if (buttonList.indexOf("align") >= 0) pluginList.push(__webpack_require__(10).default);
+    if (buttonList.indexOf("math") >= 0) pluginList.push(__webpack_require__(11).default);
+    if (buttonList.indexOf("imageGallery") >= 0) pluginList.push(__webpack_require__(12).default);
+    if (buttonList.indexOf("blockquote") >= 0) pluginList.push(__webpack_require__(13).default);
+    if (buttonList.indexOf("font") >= 0) pluginList.push(__webpack_require__(14).default);
+    if (buttonList.indexOf("fontColor") >= 0) pluginList.push(__webpack_require__(15).default);
+    if (buttonList.indexOf("fontSize") >= 0) pluginList.push(__webpack_require__(16).default);
+    if (buttonList.indexOf("formatBlock") >= 0) pluginList.push(__webpack_require__(17).default);
+    if (buttonList.indexOf("hiliteColor") >= 0) pluginList.push(__webpack_require__(18).default);
+    if (buttonList.indexOf("horizontalRule") >= 0) pluginList.push(__webpack_require__(19).default);
+    if (buttonList.indexOf("lineHeight") >= 0) pluginList.push(__webpack_require__(20).default);
+    if (buttonList.indexOf("list") >= 0) pluginList.push(__webpack_require__(21).default);
+    if (buttonList.indexOf("paragraphStyle") >= 0) pluginList.push(__webpack_require__(22).default);
+    if (buttonList.indexOf("table") >= 0) pluginList.push(__webpack_require__(23).default);
+    if (buttonList.indexOf("template") >= 0) pluginList.push(__webpack_require__(24).default);
+    if (buttonList.indexOf("textStyle") >= 0) pluginList.push(__webpack_require__(25).default);
+    if (buttonList.indexOf("image") >= 0) pluginList.push(__webpack_require__(26).default);
+    if (buttonList.indexOf("link") >= 0) pluginList.push(__webpack_require__(27).default);
+    if (buttonList.indexOf("video") >= 0) pluginList.push(__webpack_require__(28).default);
+    if (buttonList.indexOf("audio") >= 0) pluginList.push(__webpack_require__(29).default);
     return [].concat(pluginList, _toConsumableArray(plugins || customPlugins || []));
   }
 };
@@ -23608,52 +23857,52 @@ var getLanguage = function getLanguage(lang) {
           return __webpack_require__(4);
 
         case 'da':
-          return __webpack_require__(29);
-
-        case 'de':
           return __webpack_require__(30);
 
-        case 'es':
+        case 'de':
           return __webpack_require__(31);
 
-        case 'fr':
+        case 'es':
           return __webpack_require__(32);
 
-        case 'ja':
+        case 'fr':
           return __webpack_require__(33);
 
-        case 'ko':
+        case 'ja':
           return __webpack_require__(34);
 
-        case 'pt_br':
+        case 'ko':
           return __webpack_require__(35);
 
-        case 'ru':
+        case 'pt_br':
           return __webpack_require__(36);
 
-        case 'it':
+        case 'ru':
           return __webpack_require__(37);
 
-        case 'zh_cn':
+        case 'it':
           return __webpack_require__(38);
 
-        case 'ro':
+        case 'zh_cn':
           return __webpack_require__(39);
 
-        case 'pl':
+        case 'ro':
           return __webpack_require__(40);
 
-        case 'ckb':
+        case 'pl':
           return __webpack_require__(41);
 
-        case 'lv':
+        case 'ckb':
           return __webpack_require__(42);
 
-        case 'se':
+        case 'lv':
           return __webpack_require__(43);
 
-        case 'ua':
+        case 'se':
           return __webpack_require__(44);
+
+        case 'ua':
+          return __webpack_require__(45);
 
         default:
           return __webpack_require__(4);
