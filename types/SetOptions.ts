@@ -93,7 +93,7 @@ export default interface SetOptions {
   plugins?: Array<Plugin> | Record<string, Plugin>;
   audioTagAttrs?: object;
   tableCellControllerPosition?: string;
-  tabDisable?: string;
+  tabDisable?: boolean;
   shortcutsDisable?: Array<string>;
   videoTagAttrs?: object;
   videoIframeAttrs?: object;

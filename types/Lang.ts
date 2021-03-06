@@ -18,6 +18,8 @@ type Lang =
   | "lv"
   | "se"
   | "ua"
+  | "he"
+  | "it"
   | LangObj;
 
 export default Lang;
