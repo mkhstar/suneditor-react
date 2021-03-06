@@ -26,7 +26,8 @@ class SunEditor extends Component {
     if (name && defaultValue) this.txtArea.current.value = defaultValue;
 
     this.editor = suneditor.create(this.txtArea.current, {
-      value: defaultValue
+      value: defaultValue,
+      ...setOptions
     });
     const {
       insertHTML,
