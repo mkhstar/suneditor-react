@@ -71,6 +71,7 @@ export default interface SetOptions {
   resizingBar?: boolean;
   popupDisplay?: string;
   display?: string;
+  pasteTagsBlacklist?: string;
   position?: string;
   katex?: any | { src: any; options: object };
   codeMirror?: any | { src: any; options: object };
@@ -80,6 +81,9 @@ export default interface SetOptions {
   stickyToolbar?: number | string;
   toolbarWidth?: number | string;
   mode?: string;
+  mathFontSize?: { text: string; value: string; default?: boolean; }[];
+  imageGalleryHeader?: Record<string, string>;
+  tagsBlacklist?: string;
   lang?: object;
   rtl?: boolean;
   linkProtocol?: string;
