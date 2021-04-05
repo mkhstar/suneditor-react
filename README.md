@@ -78,7 +78,7 @@ const MyComponent = props => {
     useEffect(() => {
         // Get underlining core object here
         // Notice that useEffect is been used because you have to make sure the editor is rendered.
-        // We are using null aware feature in typescript
+        // We are using the null aware feature in typescript
         console.log(editorRef.current?.editor.core);
     }, []);
     return (
