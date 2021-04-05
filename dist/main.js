@@ -16668,8 +16668,8 @@ const _Context = function (element, cons, options) {
             underline: options.textTags.underline,
             italic: options.textTags.italic,
             strike: options.textTags.strike,
-            subscript: 'SUB',
-            superscript: 'SUP'
+            subscript: options.textTags.sub,
+            superscript: options.textTags.sup
         },
 
         /**
@@ -17228,7 +17228,7 @@ const _Context = function (element, cons, options) {
         removeRange: function () {
             this._variable._range = null;
             this._variable._selectionNode = null;
-            this.getSelection().removeAllRanges();
+            if (this.hasFocus) this.getSelection().removeAllRanges();
 
             const commandMap = this.commandMap;
             const activePlugins = this.activePlugins;
@@ -17919,6 +17919,11 @@ const _Context = function (element, cons, options) {
 
             // --- insert node ---
             try {
+                if (util.isWysiwygDiv(afterNode) || parentNode === context.element.wysiwyg.parentNode) {
+                    parentNode = context.element.wysiwyg;
+                    afterNode = null;
+                }
+
                 if (util.isFormatElement(oNode) || util.isRangeFormatElement(oNode) || (!util.isListCell(parentNode) && util.isComponent(oNode))) {
                     const oldParent = parentNode;
                     if (util.isList(afterNode)) {
@@ -17941,10 +17946,24 @@ const _Context = function (element, cons, options) {
                     afterNode = parentNode.nextElementSibling;
                     parentNode = parentNode.parentNode;
                 }
+
+                if (util.isWysiwygDiv(parentNode) && (oNode.nodeType === 3 || util.isBreak(oNode))) {
+                    const fNode = util.createElement(options.defaultTag);
+                    fNode.appendChild(oNode);
+                    oNode = fNode;
+                }
+
                 parentNode.insertBefore(oNode, parentNode === afterNode ? parentNode.lastChild : afterNode);
             } catch (e) {
                 parentNode.appendChild(oNode);
             } finally {
+                if ((util.isFormatElement(oNode) || util.isComponent(oNode)) && startCon === endCon) {
+                    const cItem = util.getFormatElement(commonCon, null);
+                    if (cItem && cItem.nodeType === 1 && util.onlyZeroWidthSpace(cItem.textContent)) {
+                        util.removeItem(cItem);
+                    }
+                }
+
                 if (freeFormat && (util.isFormatElement(oNode) || util.isRangeFormatElement(oNode))) {
                     oNode = this._setIntoFreeFormat(oNode);
                 }
@@ -20930,7 +20949,7 @@ const _Context = function (element, cons, options) {
             if (v) {
                 for (let i = 0, len = v.length; i < len; i++) {
                     if (rowLevelCheck && /^class="(?!(__se__|se-|katex))/.test(v[i])) continue;
-                    t += ' ' + (/^href\s*=\s*('|"|\s)*javascript\s*\:/.test(v[i]) ? '' : v[i]);
+                    t += ' ' + (/^href\s*=\s*('|"|\s)*javascript\s*\:/i.test(v[i]) ? '' : v[i]);
                 }
             }
 
@@ -21295,12 +21314,12 @@ const _Context = function (element, cons, options) {
                     if (k === 'all') {
                         allAttr = _attr[k] + '|';
                     } else {
-                        tagsAttr[k] = new wRegExp('((?:' + _attr[k] + '|' + defaultAttr + ')\s*=\s*"[^"]*")', 'ig');
+                        tagsAttr[k] = new wRegExp('((?:' + _attr[k] + '|' + defaultAttr + ')\\s*=.*\\S)', 'ig');
                     }
                 }
             }
 
-            this._attributesWhitelistRegExp = new wRegExp('((?:' + allAttr + defaultAttr + ')\s*=\s*"[^"]*")', 'ig');
+            this._attributesWhitelistRegExp = new wRegExp('((?:' + allAttr + defaultAttr + ')\\s*=.*\\S)', 'ig');
             this._attributesTagsWhitelist = tagsAttr;
 
             // set modes
@@ -23210,8 +23229,8 @@ const _Context = function (element, cons, options) {
             if (MSData) {
                 cleanData = cleanData.replace(/\n/g, ' ');
                 plainText = plainText.replace(/\n/g, ' ');
-            } else {
-                plainText = plainText.replace(/\n/g, '');
+            } else if (plainText === cleanData) {
+                cleanData = plainText.replace(/\n/g, '<br>');
             }
 
             cleanData = core.cleanHTML(cleanData, core.pasteTagsWhitelistRegExp);
@@ -23955,13 +23974,20 @@ const _Context = function (element, cons, options) {
                         if (!core.checkCharCount(checkHTML, null)) return;
                     }
 
-                    let c, a, t, firstCon;
+                    let c, a, t, prev, firstCon;
                     while ((c = domTree[0])) {
+                        if (prev && prev.nodeType === 3 && a && a.nodeType === 1 && util.isBreak(c)) {
+                            prev = c;
+                            util.removeItem(c);
+                            continue;
+                        }
                         t = core.insertNode(c, a, false);
                         a = t.container || t;
                         if (!firstCon) firstCon = t;
+                        prev = c;
                     }
 
+                    if (prev.nodeType === 3 && a.nodeType === 1) a = prev;
                     const offset = a.nodeType === 3 ? (t.endOffset || a.textContent.length): a.childNodes.length;
                     if (rangeSelection) core.setRange(firstCon.container || firstCon, firstCon.startOffset || 0, a, offset);
                     else core.setRange(a, offset, a, offset);
