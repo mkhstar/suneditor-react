@@ -46,6 +46,9 @@ import SunEditor from 'suneditor-react';
 import 'suneditor/dist/css/suneditor.min.css'; // Import Sun Editor's CSS File
 
 const MyComponent = props => {
+    /**
+   * @type {React.MutableRefObject<SunEditor>} get type definitions for editor
+   */
     const editorRef = useRef();
     useEffect(() => {
         // Get underlining core object here
