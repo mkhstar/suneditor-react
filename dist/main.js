@@ -7643,10 +7643,21 @@ __webpack_require__.r(__webpack_exports__);
      */
     checkFileInfo: function () {
         const imagePlugin = this.plugins.image;
+        const contextImage = this.context.image;
 
         const modifyHandler = function (tag) {
             imagePlugin.onModifyMode.call(this, tag, null);
             imagePlugin.openModify.call(this, true);
+            // get size
+            contextImage.inputX.value = contextImage._origin_w;
+            contextImage.inputY.value = contextImage._origin_h;
+            // get align
+            const format = this.util.getFormatElement(tag);
+            if (format) contextImage._align = format.style.textAlign || format.style.float;
+            // link
+            const link = this.util.getParentElement(tag, this.util.isAnchor);
+            if (link && !contextImage.anchorCtx.linkValue) contextImage.anchorCtx.linkValue = ' ';
+            
             imagePlugin.update_image.call(this, true, false, true);
         }.bind(this);
 
@@ -7773,12 +7784,13 @@ __webpack_require__.r(__webpack_exports__);
             cover.insertBefore(this.plugins.image.onRender_link.call(this, imageEl, contextImage._linkElement), contextImage._caption);
         } else if (contextImage._linkElement !== null) {
             const imageElement = imageEl;
-
             imageElement.setAttribute('data-image-link', '');
-            const newEl = imageElement.cloneNode(true);
-            cover.removeChild(contextImage._linkElement);
-            cover.insertBefore(newEl, contextImage._caption);
-            imageEl = newEl;
+            if (cover.contains(contextImage._linkElement)) {
+                const newEl = imageElement.cloneNode(true);
+                cover.removeChild(contextImage._linkElement);
+                cover.insertBefore(newEl, contextImage._caption);
+                imageEl = newEl;
+            }
         }
 
         if (isNewContainer) {
@@ -7821,7 +7833,6 @@ __webpack_require__.r(__webpack_exports__);
         }
 
         // size
-        let isPercent = false;
         if (contextImage._resizing) {
             imageEl.setAttribute('data-proportion', contextImage._proportionChecked);
             if (changeSize) {
@@ -7830,9 +7841,7 @@ __webpack_require__.r(__webpack_exports__);
         }
 
         // align
-        if (!(isPercent && contextImage._align === 'center')) {
-            this.plugins.image.setAlign.call(this, null, imageEl, null, null);
-        }
+        this.plugins.image.setAlign.call(this, null, imageEl, null, null);
 
         // set imagesInfo
         if (init) {
@@ -7877,14 +7886,18 @@ __webpack_require__.r(__webpack_exports__);
         }
 
         let userSize = contextImage._element.getAttribute('data-size') || contextImage._element.getAttribute('data-origin');
+        let w, h;
         if (userSize) {
             userSize = userSize.split(',');
-            contextImage._origin_w = userSize[0];
-            contextImage._origin_h = userSize[1];
+            w = userSize[0];
+            h = userSize[1];
         } else if (size) {
-            contextImage._origin_w = size.w;
-            contextImage._origin_h = size.h;
+            w = size.w;
+            h = size.h;
         }
+
+        contextImage._origin_w = w || element.style.width || element.width || '';
+        contextImage._origin_h = h || element.style.height || element.height || '';
     },
 
     /**
@@ -9026,8 +9039,14 @@ __webpack_require__.r(__webpack_exports__);
                 this.util.removeItem(figcaption);
             }
 
+            // size
             const size = (oFrame.getAttribute('data-size') || oFrame.getAttribute('data-origin') || '').split(',');
-            this.plugins.video.applySize.call(this, size[0], size[1]);
+            this.plugins.video.applySize.call(this, (size[0] || prevFrame.style.width || prevFrame.width || ''), (size[1] || prevFrame.style.height || prevFrame.height || ''));
+
+            // align
+            const format = this.util.getFormatElement(prevFrame);
+            if (format) contextVideo._align = format.style.textAlign || format.style.float;
+            this.plugins.video.setAlign.call(this, null, oFrame, cover, container);
 
             if (this.util.isFormatElement(existElement) && existElement.childNodes.length > 0) {
                 existElement.parentNode.insertBefore(container, existElement);
@@ -9066,14 +9085,18 @@ __webpack_require__.r(__webpack_exports__);
         }
 
         let origin = contextVideo._element.getAttribute('data-size') || contextVideo._element.getAttribute('data-origin');
+        let w, h;
         if (origin) {
             origin = origin.split(',');
-            contextVideo._origin_w = origin[0];
-            contextVideo._origin_h = origin[1];
+            w = origin[0];
+            h = origin[1];
         } else if (size) {
-            contextVideo._origin_w = size.w;
-            contextVideo._origin_h = size.h;
+            w = size.w;
+            h = size.h;
         }
+
+        contextVideo._origin_w = w || element.style.width || element.width || '';
+        contextVideo._origin_h = h || element.style.height || element.height || '';
     },
 
     /**
@@ -13915,6 +13938,15 @@ const util_util = {
     },
 
     /**
+     * @description Check the line element(util.isFormatElement) is empty.
+     * @param {Element} element Format element node
+     * @returns {Boolean}
+     */
+    isEmptyLine: function (element) {
+        return !element || !element.parentNode || (!element.querySelector('IMG, IFRAME, AUDIO, VIDEO, CANVAS, TABLE') && this.onlyZeroWidthSpace(element.textContent));
+    },
+
+    /**
      * @description Check the node is a list (ol, ul)
      * @param {Node|String} node The element or element name to check
      * @returns {Boolean}
@@ -17851,8 +17883,8 @@ const _Context = function (element, cons, options) {
             const startOff = range.startOffset;
             const endOff = range.endOffset;
             const formatRange = range.startContainer === commonCon && util.isFormatElement(commonCon);
-            const startCon = formatRange ? commonCon.childNodes[startOff] : range.startContainer;
-            const endCon = formatRange ? commonCon.childNodes[endOff] : range.endContainer;
+            const startCon = formatRange ? (commonCon.childNodes[startOff] || commonCon.childNodes[0]) : range.startContainer;
+            const endCon = formatRange ? (commonCon.childNodes[endOff] || commonCon.childNodes[commonCon.childNodes.length - 1]) : range.endContainer;
             let parentNode, originAfter = null;
 
             if (!afterNode) {
@@ -17985,7 +18017,7 @@ const _Context = function (element, cons, options) {
             } finally {
                 if ((util.isFormatElement(oNode) || util.isComponent(oNode)) && startCon === endCon) {
                     const cItem = util.getFormatElement(commonCon, null);
-                    if (cItem && cItem.nodeType === 1 && util.onlyZeroWidthSpace(cItem.textContent)) {
+                    if (cItem && cItem.nodeType === 1 && util.isEmptyLine(cItem)) {
                         util.removeItem(cItem);
                     }
                 }
@@ -20894,12 +20926,12 @@ const _Context = function (element, cons, options) {
             }
             // text
             if (node.nodeType === 3) {
-                if (!requireFormat) return node.textContent;
+                if (!requireFormat) return util._HTMLConvertor(node.textContent);
                 const textArray = node.textContent.split(/\n/g);
                 let html = '';
                 for (let i = 0, tLen = textArray.length, text; i < tLen; i++) {
                     text = textArray[i].trim();
-                    if (text.length > 0) html += '<' + defaultTag + '>' + text + '</' + defaultTag + '>';
+                    if (text.length > 0) html += '<' + defaultTag + '>' + util._HTMLConvertor(text) + '</' + defaultTag + '>';
                 }
                 return html;
             }
@@ -24025,6 +24057,7 @@ const _Context = function (element, cons, options) {
                     if (rangeSelection) core.setRange(firstCon.container || firstCon, firstCon.startOffset || 0, a, offset);
                     else core.setRange(a, offset, a, offset);
                 } catch (error) {
+                    console.warn('[SUNEDITOR.insertHTML.fail] ' + error);
                     core.execCommand('insertHTML', false, html);
                 }
             } else {
