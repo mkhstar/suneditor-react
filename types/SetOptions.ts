@@ -54,6 +54,7 @@ export default interface SetOptions {
     string | { tag: string; name: string; command: string; class: string }
   >;
   fontSizeUnit?: string;
+  printTemplate?: string;
   fontSize?: Array<number>;
   font?: Array<string>;
   maxHeight?: string | number;
