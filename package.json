@@ -35,12 +35,12 @@
     "react": "^16.12.0",
     "react-dom": "^16.12.0",
     "style-loader": "^1.1.3",
+    "suneditor": "^2.38.8",
     "webpack": "^4.41.2",
     "webpack-cli": "^3.3.10"
   },
   "dependencies": {
-    "prop-types": "^15.7.2",
-    "suneditor": "^2.38.3"
+    "prop-types": "^15.7.2"
   },
   "browserslist": [
     ">0.2%",
