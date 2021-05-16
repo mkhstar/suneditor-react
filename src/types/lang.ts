@@ -1,6 +1,6 @@
-import { Lang as LangObj } from "suneditor/src/lang/Lang";
+import { Lang } from "suneditor/src/lang/Lang";
 
-type Lang =
+type lang =
   | "en"
   | "da"
   | "de"
@@ -20,6 +20,6 @@ type Lang =
   | "ua"
   | "he"
   | "it"
-  | LangObj;
+  | Lang;
 
-export default Lang;
+export default lang;

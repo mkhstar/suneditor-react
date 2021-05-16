@@ -1,6 +1,5 @@
-import * as React from "react";
-import Lang from "./types/Lang";
-import SetOptions from "./types/SetOptions";
+import lang from "./lang";
+import SetOptions from "./SetOptions";
 import SunEditorCore from "suneditor/src/lib/core";
 
 export interface SunEditorReactProps {
@@ -14,7 +13,7 @@ export interface SunEditorReactProps {
   onCut?: (
     event: ClipboardEvent,
     clipboardData: ClipboardEvent["clipboardData"]
-  ) => void;
+  ) => boolean;
   onClick?: (event: MouseEvent) => void;
   onMouseDown?: (event: MouseEvent) => void;
   onKeyUp?: (event: KeyboardEvent) => void;
@@ -26,7 +25,7 @@ export interface SunEditorReactProps {
     event: DragEvent,
     cleanData: string,
     maxCharCount: boolean
-  ) => boolean;
+  ) => boolean | Array<any> | void;
   onPaste?: (
     event: ClipboardEvent,
     cleanData: string,
@@ -68,9 +67,9 @@ export interface SunEditorReactProps {
     info: object,
     uploadHandler: Function
   ) => void;
-  onImageUploadError?: (errorMessage: Error, result: any) => void;
-  onVideoUploadError?: (errorMessage: Error, result: any) => void;
-  onAudioUploadError?: (errorMessage: Error, result: any) => void;
+  onImageUploadError?: (errorMessage: string, result: any) => void;
+  onVideoUploadError?: (errorMessage: string, result: any) => void;
+  onAudioUploadError?: (errorMessage: string, result: any) => void;
   toggleCodeView?: (isCodeView: boolean) => void;
   toggleFullScreen?: (isFullScreen: boolean) => void;
   showInline?: (toolbar: Element, context: any) => void;
@@ -94,26 +93,14 @@ export interface SunEditorReactProps {
   name?: string;
   appendContents?: string;
   setDefaultStyle?: string;
-  enable?: boolean;
-  showToolbar?: boolean;
-  enableToolbar?: boolean;
+  hideToolbar?: boolean;
+  disableToolbar?: boolean;
   disable?: boolean;
   hide?: boolean;
-  show?: boolean;
   autoFocus?: boolean;
+  getSunEditorInstance?: (sunEditor: SunEditorCore) => void;
   placeholder?: string;
-  lang?: Lang;
-  width?: number | string;
-  height?: number | string;
+  lang?: lang;
+  width?: string;
+  height?: string;
 }
-
-export const buttonList: {
-  basic: (string | string[])[];
-  complex: (string | string[])[];
-  formatting: (string | string[])[];
-};
-declare class SunEditor extends React.Component<SunEditorReactProps, any> {
-  editor: SunEditorCore;
-}
-
-export default SunEditor;

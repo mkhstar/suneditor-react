@@ -2,7 +2,7 @@ export const basic = [
   ["font", "fontSize"],
   ["fontColor"],
   ["horizontalRule"],
-  ["link", "image"]
+  ["link", "image"],
 ];
 
 export const complex = [
@@ -17,7 +17,7 @@ export const complex = [
   ["link", "image", "video"],
   ["fullScreen", "showBlocks", "codeView"],
   ["preview", "print"],
-  ["save", "template"]
+  ["save", "template"],
 ];
 
 export const formatting = [
@@ -26,6 +26,5 @@ export const formatting = [
   ["removeFormat"],
   ["outdent", "indent"],
   ["fullScreen", "showBlocks", "codeView"],
-  ["preview", "print"]
+  ["preview", "print"],
 ];
-export default { basic, complex, formatting };

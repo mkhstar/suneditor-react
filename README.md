@@ -11,7 +11,7 @@
 #### npm
 
 ```sh
-$ npm install --save suneditor-react
+$ npm install --save suneditor suneditor-react # make sure to install suneditor yourself
 ```
 
 ## Getting Started
@@ -36,7 +36,7 @@ export default MyComponent;
 
 ## About Core
 
-**Note:** `suneditor-react` doesn't expose the core object in the callback functions such as `onScroll` etc. This is because it can be easily retrieved by attaching a ref to the Suneditor component.
+**Note:** `suneditor-react` doesn't expose the core object in the callback functions such as `onScroll` etc. This is because it can be easily retrieved by using the `getSunEditorInstance` like below.
 
 ```jsx
 // Javascript Version
@@ -49,16 +49,17 @@ const MyComponent = props => {
     /**
    * @type {React.MutableRefObject<SunEditor>} get type definitions for editor
    */
-    const editorRef = useRef();
-    useEffect(() => {
-        // Get underlining core object here
-        // Notice that useEffect is been used because you have to make sure the editor is rendered.
-        console.log(editorRef.current.editor.core);
-    }, []);
+    const editor = useRef();
+
+    // The sunEditor parameter will be set to the core suneditor instance when this function is called
+    const getSunEditorInstance = (sunEditor) => {
+        editor.current = sunEditor;
+    };
+
     return (
         <div>
             <p> My Other Contents </p>
-            <SunEditor ref={editorRef} />
+            <SunEditor getSunEditorInstance={getSunEditorInstance} />
         </div>
     );
 };
@@ -71,20 +72,20 @@ export default MyComponent;
 
 import React, { useRef, useEffect } from "react";
 import SunEditor from 'suneditor-react';
+import SunEditorCore from "suneditor/src/lib/core";
 import 'suneditor/dist/css/suneditor.min.css'; // Import Sun Editor's CSS File
 
 const MyComponent = props => {
-    const editorRef = useRef<SunEditor>(null);
-    useEffect(() => {
-        // Get underlining core object here
-        // Notice that useEffect is been used because you have to make sure the editor is rendered.
-        // We are using the null aware feature in typescript
-        console.log(editorRef.current?.editor.core);
-    }, []);
+    const editor = useRef<SunEditorCore>();
+
+    // The sunEditor parameter will be set to the core suneditor instance when this function is called
+     const getSunEditorInstance = (sunEditor: SunEditorCore) => {
+        editor.current = sunEditor;
+    };
     return (
         <div>
             <p> My Other Contents </p>
-            <SunEditor ref={editorRef} />
+            <SunEditor getSunEditorInstance={getSunEditorInstance} />
         </div>
     );
 };
@@ -143,9 +144,8 @@ render() {
 
 ```javascript
 //...
-// Accepts number representing px
-// or percentage string
-// eg width={100} or width="100%"
+// px and percentage values are accepted
+// eg width="100%" or width="500px"
 // default is 100%
 render() {
 	return <SunEditor width="100%" />
@@ -158,11 +158,10 @@ render() {
 
 ```javascript
 //...
-// Accepts number representing px
-// or percentage string
-// eg height={100} or height="100"
+// px and percentage values are accepted
+// eg height="100%" or height="100px"
 render() {
-	return <SunEditor height="100" />
+	return <SunEditor height="100%" />
 }
 ```
 
@@ -221,7 +220,7 @@ render() {
 **_Set Editor's Content_**
 
 **Note:** To set the initial contents of the editor without calling the ``onChange`` event please use the ``defaultValue`` prop.
-``setContents`` is good in setting the contents of the editor programmatically.
+``setContents`` is used to set the contents of the editor programmatically.
 
 
 ```javascript
@@ -255,21 +254,6 @@ render() {
 ```
 
 ### Editor Status
-**Note:** This prop is now dynamic! Which means that, the Boolean passed to the Editor's status prop (like enable, disable, show, hide) can be used to toggle the Editor Status.
-
-This is really useful when you are building an app that requires **validation**.
-
-
-**enable**
-
-**_Enable Editor_**
-
-```javascript
-//...
-render() {
-	return <SunEditor enable={true} />
-}
-```
 
 **disable**
 
@@ -278,6 +262,7 @@ render() {
 ```javascript
 //...
 render() {
+    // set to false to enable, default value is false
 	return <SunEditor disable={true} />
 }
 ```
@@ -289,48 +274,38 @@ render() {
 ```javascript
 //...
 render() {
+    // set to false to hide, default value is false
 	return <SunEditor hide={true} />
 }
 ```
 
-**show**
+**hideToolbar**
 
-**_Show Editor_**
-
-```javascript
-//...
-render() {
-	return <SunEditor show={true} />
-}
-```
-
-**showToolbar**
-
-**_Show Editor Toolbar_**
+**_Hide Editor Toolbar_**
 
 ```javascript
 //...
 render() {
-	return <SunEditor showToolbar={true} />
+
+    // set to false to hide toolbar, default value is false
+	return <SunEditor hideToolbar={true} />
 }
 ```
-**enableToolbar**
+**disableToolbar**
 
-**_Enable Editor Toolbar_**
+**_Disable Editor Toolbar_**
 
 ```javascript
 //...
 render() {
-	return <SunEditor enableToolbar={true} />
+    // set to false to enable toolbar, default value is false
+	return <SunEditor disableToolbar={true} />
 }
 ```
-
-Example of Dynamic Editor Status, Code is Included in the gif
-![Dynamic Editor Status Code](https://media.giphy.com/media/mCgoSYsr707bYW0ybB/giphy.gifhttps://media.giphy.com/media/mCgoSYsr707bYW0ybB/giphy.gif)
 
 ## Events
 
-**Note** that you need to bind the function passed to the event in the constructor if you are using a _class Component_, or use arrow functions instead. This is just how react works. Otherwise it won't work. This documentation assumes you bind all your functions to the constructor. Eg below:
+**Note** that you need to bind the function passed to the event in the constructor if you are using a _class Component_, or use arrow functions instead. This is just how react works. Otherwise it won't work. This documentation assumes you bind all your class component methods to the constructor. Eg below:
 
 ```javascript
 
@@ -341,8 +316,6 @@ constructor(props) {
 ```
 
 **onChange**
-
-**Note** ``onChange`` is used to handle changes to the editor. Make sure that you are not using the same variable for ``setContents``.
 
 **_Has the content inside the editor been changed?_**
 
