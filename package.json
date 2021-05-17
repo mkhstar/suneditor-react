@@ -10,7 +10,7 @@
   "scripts": {
     "build": "rm -rf ./dist && tsc",
     "prepare": "npm run build",
-    "copy": "npm run build && rm -rf ../suneditor-react-dom/src/dist &&  cp dist ../suneditor-react-dom/src"
+    "copy": "rm -rf ./build && tsc --outDir build && rm -rf ../suneditor-react-dom/src/build &&  mv build ../suneditor-react-dom/src"
   },
   "keywords": [
     "editor",
