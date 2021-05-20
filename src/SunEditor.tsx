@@ -17,6 +17,7 @@ const SunEditor: FC<SunEditorReactProps> = (props) => {
     defaultValue,
     setContents,
     setDefaultStyle,
+    onResizeEditor,
     getSunEditorInstance,
     appendContents,
     disable = false,
@@ -36,7 +37,6 @@ const SunEditor: FC<SunEditorReactProps> = (props) => {
   const txtArea = useRef<HTMLTextAreaElement>(null);
   const editor = useRef<SunEditorCore>();
 
-
   useEffect(() => {
     setOptions.lang = setOptions.lang || getLanguage(lang);
     setOptions.plugins = getPlugins(setOptions);
@@ -49,7 +49,6 @@ const SunEditor: FC<SunEditorReactProps> = (props) => {
     editor.current = suneditor.create(txtArea.current!, {
       value: defaultValue,
       ...setOptions,
-      lang: setOptions.lang as any,
     });
 
     if (getSunEditorInstance) getSunEditorInstance(editor.current);
@@ -62,6 +61,10 @@ const SunEditor: FC<SunEditorReactProps> = (props) => {
     if (onBlur)
       editor.current.onBlur = (e) =>
         editor.current && onBlur(e, editor.current.getContents(true));
+
+    if (onResizeEditor)
+      editor.current.onResizeEditor = (height, prevHeight) =>
+        onResizeEditor(height, prevHeight) as any;
 
     const fromClipBoardEvents = ["onCopy", "onCut"] as const;
     const singleEvents = [
@@ -206,11 +209,12 @@ const SunEditor: FC<SunEditorReactProps> = (props) => {
   }, [setDefaultStyle]);
 
   useEffect(() => {
-    if (setContents) editor.current?.setContents(setContents);
+    if (setContents !== undefined) editor.current?.setContents(setContents);
   }, [setContents]);
 
   useEffect(() => {
-    if (appendContents) editor.current?.appendContents(appendContents);
+    if (appendContents !== undefined)
+      editor.current?.appendContents(appendContents);
   }, [appendContents]);
 
   useEffect(() => {
