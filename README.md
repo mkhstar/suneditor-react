@@ -32,6 +32,31 @@ const MyComponent = props => {
 export default MyComponent;
 ```
 
+
+###  [Next.js](https://nextjs.org/)
+
+To use suneditor-react with Next.js, please use the dynamic import syntax like below:
+
+```javascript
+import React from 'react';
+import dynamic from "next/dynamic";
+import 'suneditor/dist/css/suneditor.min.css'; // Import Sun Editor's CSS File
+
+const SunEditor = dynamic(() => import("suneditor-react"), {
+  ssr: false,
+});
+
+const MyComponent = props => {
+  return (
+    <div>
+      <p> My Other Contents </p>
+      <SunEditor />
+    </div>
+  );
+};
+export default MyComponent;
+```
+
 # Props
 
 ## About Core
@@ -592,6 +617,20 @@ handleAudioUploadError(errorMessage, result){
 }
 render() {
 	return <SunEditor onAudioUploadError={handleAudioUploadError} />
+}
+```
+
+
+**onResizeEditor**
+
+**_Has the editor been resized?_**
+
+```javascript
+handleOnResizeEditor(height, prevHeight){
+	console.log(height, prevHeight)
+}
+render() {
+	return <SunEditor onResizeEditor={handleOnResizeEditor} />
 }
 ```
 
