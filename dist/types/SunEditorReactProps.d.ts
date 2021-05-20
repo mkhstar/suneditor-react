@@ -41,6 +41,7 @@ export interface SunEditorReactProps {
     defaultValue?: string;
     setContents?: string;
     name?: string;
+    onResizeEditor?: (height: number, prevHeight: number) => void;
     appendContents?: string;
     setDefaultStyle?: string;
     hideToolbar?: boolean;

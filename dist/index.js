@@ -1,4 +1,3 @@
-import * as buttonList from "./misc/buttonList";
 import SunEditor from "./SunEditor";
-export { buttonList };
+export * as buttonList from './misc/buttonList';
 export default SunEditor;

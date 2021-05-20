@@ -15,7 +15,7 @@ import getLanguage from "./misc/getLanguage";
 import { getPlugins } from "./misc/getPlugins";
 import suneditor from "suneditor";
 var SunEditor = function (props) {
-    var name = props.name, lang = props.lang, _a = props.setOptions, setOptions = _a === void 0 ? {} : _a, placeholder = props.placeholder, _b = props.width, width = _b === void 0 ? "100%" : _b, height = props.height, defaultValue = props.defaultValue, setContents = props.setContents, setDefaultStyle = props.setDefaultStyle, getSunEditorInstance = props.getSunEditorInstance, appendContents = props.appendContents, _c = props.disable, disable = _c === void 0 ? false : _c, _d = props.hide, hide = _d === void 0 ? false : _d, _e = props.hideToolbar, hideToolbar = _e === void 0 ? false : _e, _f = props.disableToolbar, disableToolbar = _f === void 0 ? false : _f, onChange = props.onChange, autoFocus = props.autoFocus, onBlur = props.onBlur, onLoad = props.onLoad, toggleCodeView = props.toggleCodeView, toggleFullScreen = props.toggleFullScreen, showInline = props.showInline, showController = props.showController, imageUploadHandler = props.imageUploadHandler;
+    var name = props.name, lang = props.lang, _a = props.setOptions, setOptions = _a === void 0 ? {} : _a, placeholder = props.placeholder, _b = props.width, width = _b === void 0 ? "100%" : _b, height = props.height, defaultValue = props.defaultValue, setContents = props.setContents, setDefaultStyle = props.setDefaultStyle, onResizeEditor = props.onResizeEditor, getSunEditorInstance = props.getSunEditorInstance, appendContents = props.appendContents, _c = props.disable, disable = _c === void 0 ? false : _c, _d = props.hide, hide = _d === void 0 ? false : _d, _e = props.hideToolbar, hideToolbar = _e === void 0 ? false : _e, _f = props.disableToolbar, disableToolbar = _f === void 0 ? false : _f, onChange = props.onChange, autoFocus = props.autoFocus, onBlur = props.onBlur, onLoad = props.onLoad, toggleCodeView = props.toggleCodeView, toggleFullScreen = props.toggleFullScreen, showInline = props.showInline, showController = props.showController, imageUploadHandler = props.imageUploadHandler;
     var txtArea = useRef(null);
     var editor = useRef();
     useEffect(function () {
@@ -26,7 +26,7 @@ var SunEditor = function (props) {
             setOptions.height = height;
         if (name && defaultValue)
             txtArea.current.value = defaultValue;
-        editor.current = suneditor.create(txtArea.current, __assign(__assign({ value: defaultValue }, setOptions), { lang: setOptions.lang }));
+        editor.current = suneditor.create(txtArea.current, __assign({ value: defaultValue }, setOptions));
         if (getSunEditorInstance)
             getSunEditorInstance(editor.current);
         editor.current.onChange = function (content) {
@@ -38,6 +38,10 @@ var SunEditor = function (props) {
         if (onBlur)
             editor.current.onBlur = function (e) {
                 return editor.current && onBlur(e, editor.current.getContents(true));
+            };
+        if (onResizeEditor)
+            editor.current.onResizeEditor = function (height, prevHeight) {
+                return onResizeEditor(height, prevHeight);
             };
         var fromClipBoardEvents = ["onCopy", "onCut"];
         var singleEvents = [
@@ -171,12 +175,12 @@ var SunEditor = function (props) {
     }, [setDefaultStyle]);
     useEffect(function () {
         var _a;
-        if (setContents)
+        if (setContents !== undefined)
             (_a = editor.current) === null || _a === void 0 ? void 0 : _a.setContents(setContents);
     }, [setContents]);
     useEffect(function () {
         var _a;
-        if (appendContents)
+        if (appendContents !== undefined)
             (_a = editor.current) === null || _a === void 0 ? void 0 : _a.appendContents(appendContents);
     }, [appendContents]);
     useEffect(function () {
