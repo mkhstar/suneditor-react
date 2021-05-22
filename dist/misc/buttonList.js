@@ -1,10 +1,13 @@
-export var basic = [
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.formatting = exports.complex = exports.basic = void 0;
+exports.basic = [
     ["font", "fontSize"],
     ["fontColor"],
     ["horizontalRule"],
     ["link", "image"],
 ];
-export var complex = [
+exports.complex = [
     ["undo", "redo"],
     ["font", "fontSize", "formatBlock"],
     ["bold", "underline", "italic", "strike", "subscript", "superscript"],
@@ -18,7 +21,7 @@ export var complex = [
     ["preview", "print"],
     ["save", "template"],
 ];
-export var formatting = [
+exports.formatting = [
     ["undo", "redo"],
     ["bold", "underline", "italic", "strike", "subscript", "superscript"],
     ["removeFormat"],

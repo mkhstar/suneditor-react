@@ -218,14 +218,14 @@ const SunEditor: FC<SunEditorReactProps> = (props) => {
   }, [appendContents]);
 
   useEffect(() => {
-    if (disable === true) editor.current?.disabled();
-    else editor.current?.enabled();
-
     if (hideToolbar === true) editor.current?.toolbar.hide();
     else editor.current?.toolbar.show();
 
     if (disableToolbar === true) editor.current?.toolbar.disabled();
     else editor.current?.toolbar.enabled();
+
+    if (disable === true) editor.current?.disabled();
+    else editor.current?.enabled();
 
     if (hide === true) editor.current?.hide();
     else editor.current?.show();

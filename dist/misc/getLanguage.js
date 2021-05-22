@@ -1,3 +1,5 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var getLanguage = function (lang) {
     switch (typeof lang) {
         case "object":
@@ -47,4 +49,4 @@ var getLanguage = function (lang) {
             return require("suneditor/src/lang/en");
     }
 };
-export default getLanguage;
+exports.default = getLanguage;

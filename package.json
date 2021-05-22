@@ -1,6 +1,6 @@
 {
   "name": "suneditor-react",
-  "version": "3.1.0",
+  "version": "3.1.1",
   "description": "A React Component for Suneditor",
   "repository": {
     "type": "git",
@@ -10,7 +10,7 @@
   "scripts": {
     "build": "rm -rf ./dist && tsc",
     "prepare": "npm run build",
-    "copy": "rm -rf ./build && tsc --outDir build && rm -rf ../suneditor-react-dom/src/build &&  cp -r build ../suneditor-react-dom/src"
+    "copy": "rm -rf ./build && tsc --outDir build && rm -rf ../suneditor-react-dom/src/build &&  cp -r build ../suneditor-react-dom/src && rm -rf ../suneditor-react-next/pages/build &&  cp -r build ../suneditor-react-next/pages"
   },
   "keywords": [
     "editor",

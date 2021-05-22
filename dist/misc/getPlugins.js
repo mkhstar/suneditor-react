@@ -1,12 +1,15 @@
+"use strict";
 var __spreadArray = (this && this.__spreadArray) || function (to, from) {
     for (var i = 0, il = from.length, j = to.length; i < il; i++, j++)
         to[j] = from[i];
     return to;
 };
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getPlugins = void 0;
 var isArray = function (obj) {
     return Object.prototype.toString.call(obj) === "[object Array]";
 };
-export var getPlugins = function (_a) {
+var getPlugins = function (_a) {
     var buttonList = _a.buttonList, plugins = _a.plugins, customPlugins = _a.customPlugins;
     if (!buttonList)
         return undefined;
@@ -58,6 +61,7 @@ export var getPlugins = function (_a) {
         return __spreadArray(__spreadArray([], pluginList), (plugins || customPlugins || []));
     }
 };
+exports.getPlugins = getPlugins;
 var flatten = function (arr, result) {
     if (result === void 0) { result = []; }
     if (!isArray(arr)) {
