@@ -179,14 +179,16 @@ var SunEditor = function (props) {
             (_a = editor.current) === null || _a === void 0 ? void 0 : _a.setDefaultStyle(setDefaultStyle);
     }, [setDefaultStyle]);
     react_1.useEffect(function () {
-        var _a;
+        var _a, _b;
         if (setContents !== undefined)
-            (_a = editor.current) === null || _a === void 0 ? void 0 : _a.setContents(setContents);
+            !((_a = editor.current) === null || _a === void 0 ? void 0 : _a.core.hasFocus) &&
+                ((_b = editor.current) === null || _b === void 0 ? void 0 : _b.setContents(setContents));
     }, [setContents]);
     react_1.useEffect(function () {
-        var _a;
+        var _a, _b;
         if (appendContents !== undefined)
             (_a = editor.current) === null || _a === void 0 ? void 0 : _a.appendContents(appendContents);
+        (_b = editor.current) === null || _b === void 0 ? void 0 : _b.core.focusEdge(null);
     }, [appendContents]);
     react_1.useEffect(function () {
         var _a, _b, _c, _d, _e, _f, _g, _h;
