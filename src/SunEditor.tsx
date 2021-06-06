@@ -209,12 +209,15 @@ const SunEditor: FC<SunEditorReactProps> = (props) => {
   }, [setDefaultStyle]);
 
   useEffect(() => {
-    if (setContents !== undefined) editor.current?.setContents(setContents);
+    if (setContents !== undefined)
+      !editor.current?.core.hasFocus &&
+        editor.current?.setContents(setContents);
   }, [setContents]);
 
   useEffect(() => {
     if (appendContents !== undefined)
       editor.current?.appendContents(appendContents);
+    editor.current?.core.focusEdge(null);
   }, [appendContents]);
 
   useEffect(() => {
