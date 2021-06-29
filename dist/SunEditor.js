@@ -20,7 +20,7 @@ var getLanguage_1 = __importDefault(require("./misc/getLanguage"));
 var getPlugins_1 = require("./misc/getPlugins");
 var suneditor_1 = __importDefault(require("suneditor"));
 var SunEditor = function (props) {
-    var name = props.name, lang = props.lang, _a = props.setOptions, setOptions = _a === void 0 ? {} : _a, placeholder = props.placeholder, _b = props.width, width = _b === void 0 ? "100%" : _b, height = props.height, defaultValue = props.defaultValue, setContents = props.setContents, setDefaultStyle = props.setDefaultStyle, onResizeEditor = props.onResizeEditor, getSunEditorInstance = props.getSunEditorInstance, appendContents = props.appendContents, _c = props.disable, disable = _c === void 0 ? false : _c, _d = props.hide, hide = _d === void 0 ? false : _d, _e = props.hideToolbar, hideToolbar = _e === void 0 ? false : _e, _f = props.disableToolbar, disableToolbar = _f === void 0 ? false : _f, onChange = props.onChange, autoFocus = props.autoFocus, onBlur = props.onBlur, onLoad = props.onLoad, toggleCodeView = props.toggleCodeView, toggleFullScreen = props.toggleFullScreen, showInline = props.showInline, showController = props.showController, imageUploadHandler = props.imageUploadHandler;
+    var name = props.name, lang = props.lang, _a = props.setOptions, setOptions = _a === void 0 ? {} : _a, placeholder = props.placeholder, _b = props.width, width = _b === void 0 ? "100%" : _b, height = props.height, defaultValue = props.defaultValue, setContents = props.setContents, setDefaultStyle = props.setDefaultStyle, onResizeEditor = props.onResizeEditor, getSunEditorInstance = props.getSunEditorInstance, appendContents = props.appendContents, _c = props.disable, disable = _c === void 0 ? false : _c, _d = props.readOnly, readOnly = _d === void 0 ? false : _d, _e = props.hide, hide = _e === void 0 ? false : _e, _f = props.hideToolbar, hideToolbar = _f === void 0 ? false : _f, _g = props.disableToolbar, disableToolbar = _g === void 0 ? false : _g, onChange = props.onChange, autoFocus = props.autoFocus, onBlur = props.onBlur, onLoad = props.onLoad, toggleCodeView = props.toggleCodeView, toggleFullScreen = props.toggleFullScreen, showInline = props.showInline, showController = props.showController, imageUploadHandler = props.imageUploadHandler;
     var txtArea = react_1.useRef(null);
     var editor = react_1.useRef();
     react_1.useEffect(function () {
@@ -127,6 +127,8 @@ var SunEditor = function (props) {
                     editor.current.core._createDefaultRange();
                 if (disable === true)
                     editor.current.disabled();
+                if (readOnly === true)
+                    editor.current.readOnly(true);
                 if (hide === true)
                     editor.current.hide();
                 if (hideToolbar === true)
@@ -191,7 +193,7 @@ var SunEditor = function (props) {
         (_b = editor.current) === null || _b === void 0 ? void 0 : _b.core.focusEdge(null);
     }, [appendContents]);
     react_1.useEffect(function () {
-        var _a, _b, _c, _d, _e, _f, _g, _h;
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
         if (hideToolbar === true)
             (_a = editor.current) === null || _a === void 0 ? void 0 : _a.toolbar.hide();
         else
@@ -204,10 +206,14 @@ var SunEditor = function (props) {
             (_e = editor.current) === null || _e === void 0 ? void 0 : _e.disabled();
         else
             (_f = editor.current) === null || _f === void 0 ? void 0 : _f.enabled();
-        if (hide === true)
-            (_g = editor.current) === null || _g === void 0 ? void 0 : _g.hide();
+        if (readOnly === true)
+            (_g = editor.current) === null || _g === void 0 ? void 0 : _g.readOnly(true);
         else
-            (_h = editor.current) === null || _h === void 0 ? void 0 : _h.show();
+            (_h = editor.current) === null || _h === void 0 ? void 0 : _h.readOnly(false);
+        if (hide === true)
+            (_j = editor.current) === null || _j === void 0 ? void 0 : _j.hide();
+        else
+            (_k = editor.current) === null || _k === void 0 ? void 0 : _k.show();
     }, [disable, hideToolbar, disableToolbar, hide]);
     return (jsx_runtime_1.jsx("textarea", __assign({ style: { visibility: "hidden" }, ref: txtArea }, { name: name }), void 0));
 };

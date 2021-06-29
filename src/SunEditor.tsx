@@ -21,6 +21,7 @@ const SunEditor: FC<SunEditorReactProps> = (props) => {
     getSunEditorInstance,
     appendContents,
     disable = false,
+    readOnly = false,
     hide = false,
     hideToolbar = false,
     disableToolbar = false,
@@ -162,6 +163,7 @@ const SunEditor: FC<SunEditorReactProps> = (props) => {
         if (editor.current!.util.isIE)
           (editor.current!.core as any)._createDefaultRange();
         if (disable === true) editor.current!.disabled();
+        if (readOnly === true) editor.current!.readOnly(true);
         if (hide === true) editor.current!.hide();
         if (hideToolbar === true) editor.current!.toolbar.hide();
         if (disableToolbar === true) editor.current!.toolbar.disabled();
@@ -229,6 +231,9 @@ const SunEditor: FC<SunEditorReactProps> = (props) => {
 
     if (disable === true) editor.current?.disabled();
     else editor.current?.enabled();
+
+    if (readOnly === true) editor.current?.readOnly(true);
+    else editor.current?.readOnly(false);
 
     if (hide === true) editor.current?.hide();
     else editor.current?.show();

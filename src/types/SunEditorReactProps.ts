@@ -97,6 +97,7 @@ export interface SunEditorReactProps {
   hideToolbar?: boolean;
   disableToolbar?: boolean;
   disable?: boolean;
+  readOnly?: boolean;
   hide?: boolean;
   autoFocus?: boolean;
   getSunEditorInstance?: (sunEditor: SunEditorCore) => void;

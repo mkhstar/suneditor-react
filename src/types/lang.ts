@@ -9,6 +9,7 @@ type lang =
   | "ja"
   | "ko"
   | "pt_br"
+  | "nl"
   | "ru"
   | "it"
   | "zh_cn"

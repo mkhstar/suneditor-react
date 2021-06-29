@@ -42,6 +42,8 @@ var getLanguage = function (lang) {
                     return require("suneditor/src/lang/ua");
                 case "he":
                     return require("suneditor/src/lang/he");
+                case "nl":
+                    return require("suneditor/src/lang/nl");
                 default:
                     return require("suneditor/src/lang/en");
             }
