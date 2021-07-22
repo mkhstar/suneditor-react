@@ -105,4 +105,5 @@ export interface SunEditorReactProps {
   lang?: lang;
   width?: string;
   height?: string;
+  setAllPlugins?: boolean;
 }

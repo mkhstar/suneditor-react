@@ -2,7 +2,7 @@ import { FC, useEffect, useRef } from "react";
 import { SunEditorReactProps } from "./types/SunEditorReactProps";
 import SunEditorCore from "suneditor/src/lib/core";
 import getLanguage from "./misc/getLanguage";
-import { getPlugins } from "./misc/getPlugins";
+import plugins from "suneditor/src/plugins";
 import suneditor from "suneditor";
 import SetOptions from "./types/SetOptions";
 
@@ -20,6 +20,7 @@ const SunEditor: FC<SunEditorReactProps> = (props) => {
     onResizeEditor,
     getSunEditorInstance,
     appendContents,
+    setAllPlugins = true,
     disable = false,
     readOnly = false,
     hide = false,
@@ -37,11 +38,13 @@ const SunEditor: FC<SunEditorReactProps> = (props) => {
   } = props;
   const txtArea = useRef<HTMLTextAreaElement>(null);
   const editor = useRef<SunEditorCore>();
+  const initialEffect = useRef<boolean>(true);
 
   useEffect(() => {
     setOptions.lang = setOptions.lang || getLanguage(lang);
-    setOptions.plugins = getPlugins(setOptions);
     setOptions.width = setOptions.width || width;
+
+    if (!setOptions.plugins && setAllPlugins) setOptions.plugins = plugins;
 
     if (height) setOptions.height = height;
 
@@ -198,46 +201,59 @@ const SunEditor: FC<SunEditorReactProps> = (props) => {
   }, []);
 
   useEffect(() => {
-    editor.current?.setOptions({
-      lang: getLanguage(lang),
-      placeholder,
-      height,
-      width,
-    });
+    if (!initialEffect.current) {
+      editor.current?.setOptions({
+        lang: getLanguage(lang),
+        placeholder,
+        height,
+        width,
+      });
+    }
   }, [lang, placeholder, height, width]);
 
   useEffect(() => {
-    if (setDefaultStyle) editor.current?.setDefaultStyle(setDefaultStyle);
+    if (setDefaultStyle && !initialEffect.current)
+      editor.current?.setDefaultStyle(setDefaultStyle);
   }, [setDefaultStyle]);
 
   useEffect(() => {
-    if (setContents !== undefined)
-      !editor.current?.core.hasFocus &&
-        editor.current?.setContents(setContents);
+    if (!initialEffect.current) {
+      if (setContents !== undefined)
+        !editor.current?.core.hasFocus &&
+          editor.current?.setContents(setContents);
+    }
   }, [setContents]);
 
   useEffect(() => {
-    if (appendContents !== undefined)
-      editor.current?.appendContents(appendContents);
-    editor.current?.core.focusEdge(null);
+    if (!initialEffect.current) {
+      if (appendContents !== undefined)
+        editor.current?.appendContents(appendContents);
+      editor.current?.core.focusEdge(null);
+    }
   }, [appendContents]);
 
   useEffect(() => {
-    if (hideToolbar === true) editor.current?.toolbar.hide();
-    else editor.current?.toolbar.show();
+    if (!initialEffect.current) {
+      if (hideToolbar === true) editor.current?.toolbar.hide();
+      else editor.current?.toolbar.show();
 
-    if (disableToolbar === true) editor.current?.toolbar.disabled();
-    else editor.current?.toolbar.enabled();
+      if (disableToolbar === true) editor.current?.toolbar.disabled();
+      else editor.current?.toolbar.enabled();
 
-    if (disable === true) editor.current?.disabled();
-    else editor.current?.enabled();
+      if (disable === true) editor.current?.disabled();
+      else editor.current?.enabled();
 
-    if (readOnly === true) editor.current?.readOnly(true);
-    else editor.current?.readOnly(false);
+      if (readOnly === true) editor.current?.readOnly(true);
+      else editor.current?.readOnly(false);
 
-    if (hide === true) editor.current?.hide();
-    else editor.current?.show();
+      if (hide === true) editor.current?.hide();
+      else editor.current?.show();
+    }
   }, [disable, hideToolbar, disableToolbar, hide]);
+
+  useEffect(() => {
+    initialEffect.current = false;
+  }, []);
 
   return (
     <textarea style={{ visibility: "hidden" }} ref={txtArea} {...{ name }} />

@@ -219,6 +219,8 @@ render() {
 **_Set Options (Settings) for the editor_**
 [Click to see all options available](https://github.com/JiHong88/SunEditor/blob/master/README.md#options)
 
+**Important Note:** Some toolbar buttons in `suneditor` require specific plugins to make them work properly. For example when you specify 'font' in the button list, you will need to import the required plugin from `suneditor`. `suneditor-react` by default loads all plugins. To change this behaviour, you can pass a plugin list of only the plugins you would like to load to the plugin option. This will override the default behaviour. To disable the loading of all plugins, set the `setAllPlugins` prop to false. Read More by clicking [this](https://github.com/JiHong88/SunEditor/#1-load-only-what-you-want)
+
 ```javascript
 
 import SunEditor,{buttonList} from "suneditor-react";
@@ -226,18 +228,30 @@ import SunEditor,{buttonList} from "suneditor-react";
 	buttonList.basic = basic buttons for wordprocessing
 	buttonList.formatting = most tools used for formatting - This is the default option
 	buttonList.complex = contains most of the buttons
-
-	Note that you do not need to pass plugins explicitly from the suneditor package. suneditor-react handles it behind the scenes
 */
-
 //...
 render() {
 	return <SunEditor setOptions={{
 				    height: 200,
 					buttonList: buttonList.formatting // Or Array of button list, eg. [['font', 'align'], ['image']]
+                    // plugins: [font] set plugins, all plugins are set by default
 					// Other option
 			}} />
 }
+```
+
+**setAllPlugins**
+
+Sets all plugins used by buttons. Default value is true
+
+```javascript
+import SunEditor,{buttonList} from "suneditor-react";
+
+//...
+render() {
+	return <SunEditor setAllPlugins={false} /> // When set to false, you must explicitly set required plugins
+}
+
 ```
 
 **setContents**
