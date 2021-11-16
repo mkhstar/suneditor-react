@@ -10,12 +10,30 @@ var __assign = (this && this.__assign) || function () {
     };
     return __assign.apply(this, arguments);
 };
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var jsx_runtime_1 = require("react/jsx-runtime");
-var react_1 = require("react");
+var react_1 = __importStar(require("react"));
 var getLanguage_1 = __importDefault(require("./misc/getLanguage"));
 var plugins_1 = __importDefault(require("suneditor/src/plugins"));
 var suneditor_1 = __importDefault(require("suneditor"));
@@ -27,6 +45,7 @@ var SunEditor = function (props) {
     react_1.useEffect(function () {
         setOptions.lang = setOptions.lang || getLanguage_1.default(lang);
         setOptions.width = setOptions.width || width;
+        setOptions.placeholder = setOptions.placeholder || placeholder;
         if (!setOptions.plugins && setAllPlugins)
             setOptions.plugins = plugins_1.default;
         if (height)
@@ -224,10 +243,10 @@ var SunEditor = function (props) {
             else
                 (_k = editor.current) === null || _k === void 0 ? void 0 : _k.show();
         }
-    }, [disable, hideToolbar, disableToolbar, hide]);
+    }, [disable, hideToolbar, disableToolbar, hide, readOnly]);
     react_1.useEffect(function () {
         initialEffect.current = false;
     }, []);
-    return (jsx_runtime_1.jsx("textarea", __assign({ style: { visibility: "hidden" }, ref: txtArea }, { name: name }), void 0));
+    return (react_1.default.createElement("textarea", __assign({ style: { visibility: "hidden" }, ref: txtArea }, { name: name })));
 };
 exports.default = SunEditor;
