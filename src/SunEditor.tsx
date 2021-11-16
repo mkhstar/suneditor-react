@@ -1,4 +1,4 @@
-import { FC, useEffect, useRef } from "react";
+import React, { FC, useEffect, useRef } from "react";
 import { SunEditorReactProps } from "./types/SunEditorReactProps";
 import SunEditorCore from "suneditor/src/lib/core";
 import getLanguage from "./misc/getLanguage";
@@ -43,6 +43,7 @@ const SunEditor: FC<SunEditorReactProps> = (props) => {
   useEffect(() => {
     setOptions.lang = setOptions.lang || getLanguage(lang);
     setOptions.width = setOptions.width || width;
+    setOptions.placeholder = setOptions.placeholder || placeholder;
 
     if (!setOptions.plugins && setAllPlugins) setOptions.plugins = plugins;
 
@@ -249,7 +250,7 @@ const SunEditor: FC<SunEditorReactProps> = (props) => {
       if (hide === true) editor.current?.hide();
       else editor.current?.show();
     }
-  }, [disable, hideToolbar, disableToolbar, hide]);
+  }, [disable, hideToolbar, disableToolbar, hide, readOnly]);
 
   useEffect(() => {
     initialEffect.current = false;
