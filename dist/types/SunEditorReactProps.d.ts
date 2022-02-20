@@ -5,7 +5,7 @@ export interface SunEditorReactProps {
     onChange?: (content: string) => void;
     onInput?: (event: InputEvent) => void;
     onScroll?: (event: UIEvent) => void;
-    onCopy?: (event: ClipboardEvent, clipboardData: ClipboardEvent["clipboardData"]) => void;
+    onCopy?: (event: ClipboardEvent, clipboardData: ClipboardEvent["clipboardData"]) => boolean;
     onCut?: (event: ClipboardEvent, clipboardData: ClipboardEvent["clipboardData"]) => boolean;
     onClick?: (event: MouseEvent) => void;
     onMouseDown?: (event: MouseEvent) => void;
@@ -13,6 +13,8 @@ export interface SunEditorReactProps {
     onKeyDown?: (event: KeyboardEvent) => void;
     onFocus?: (event: FocusEvent) => void;
     onBlur?: (event: FocusEvent, editorContents: string) => void;
+    onSave?: (contents: string) => void;
+    onSetToolbarButtons?: (buttonList: Array<any>) => void;
     onLoad?: (reload: boolean) => void;
     onDrop?: (event: DragEvent, cleanData: string, maxCharCount: boolean) => boolean | Array<any> | void;
     onPaste?: (event: ClipboardEvent, cleanData: string, maxCharCount: boolean) => void;

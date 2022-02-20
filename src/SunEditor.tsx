@@ -16,6 +16,8 @@ const SunEditor: FC<SunEditorReactProps> = (props) => {
     height,
     defaultValue,
     setContents,
+    onSave,
+    onSetToolbarButtons,
     setDefaultStyle,
     onResizeEditor,
     getSunEditorInstance,
@@ -67,11 +69,15 @@ const SunEditor: FC<SunEditorReactProps> = (props) => {
       editor.current.onBlur = (e) =>
         editor.current && onBlur(e, editor.current.getContents(true));
 
+    if (onSave) editor.current.onSave = (content) => onSave(content);
+    if (onSetToolbarButtons) editor.current.onSetToolbarButtons = (buttonList) => onSetToolbarButtons(buttonList);
+
     if (onResizeEditor)
       editor.current.onResizeEditor = (height, prevHeight) =>
         onResizeEditor(height, prevHeight) as any;
 
     const fromClipBoardEvents = ["onCopy", "onCut"] as const;
+    const toClipBoardEvents = ["onDrop", "onPaste"] as const;
     const singleEvents = [
       "onMouseDown",
       "onScroll",
@@ -97,7 +103,6 @@ const SunEditor: FC<SunEditorReactProps> = (props) => {
       "onVideoUploadError",
       "onAudioUploadError",
     ] as const;
-    const toClipBoardEvents = ["onDrop", "onPaste"] as const;
 
     fromClipBoardEvents.forEach((event) => {
       const value = props[event];
@@ -166,11 +171,11 @@ const SunEditor: FC<SunEditorReactProps> = (props) => {
 
         if (editor.current!.util.isIE)
           (editor.current!.core as any)._createDefaultRange();
-        if (disable === true) editor.current!.disabled();
+        if (disable === true) editor.current!.disable();
         if (readOnly === true) editor.current!.readOnly(true);
         if (hide === true) editor.current!.hide();
         if (hideToolbar === true) editor.current!.toolbar.hide();
-        if (disableToolbar === true) editor.current!.toolbar.disabled();
+        if (disableToolbar === true) editor.current!.toolbar.disable();
 
         if (autoFocus === false)
           (editor.current!.core.context.element.wysiwyg as any).blur();
@@ -238,11 +243,11 @@ const SunEditor: FC<SunEditorReactProps> = (props) => {
       if (hideToolbar === true) editor.current?.toolbar.hide();
       else editor.current?.toolbar.show();
 
-      if (disableToolbar === true) editor.current?.toolbar.disabled();
-      else editor.current?.toolbar.enabled();
+      if (disableToolbar === true) editor.current?.toolbar.disable();
+      else editor.current?.toolbar.enable();
 
-      if (disable === true) editor.current?.disabled();
-      else editor.current?.enabled();
+      if (disable === true) editor.current?.disable();
+      else editor.current?.enable();
 
       if (readOnly === true) editor.current?.readOnly(true);
       else editor.current?.readOnly(false);

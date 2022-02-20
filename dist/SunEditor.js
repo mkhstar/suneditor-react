@@ -38,12 +38,12 @@ var getLanguage_1 = __importDefault(require("./misc/getLanguage"));
 var plugins_1 = __importDefault(require("suneditor/src/plugins"));
 var suneditor_1 = __importDefault(require("suneditor"));
 var SunEditor = function (props) {
-    var name = props.name, lang = props.lang, _a = props.setOptions, setOptions = _a === void 0 ? {} : _a, placeholder = props.placeholder, _b = props.width, width = _b === void 0 ? "100%" : _b, height = props.height, defaultValue = props.defaultValue, setContents = props.setContents, setDefaultStyle = props.setDefaultStyle, onResizeEditor = props.onResizeEditor, getSunEditorInstance = props.getSunEditorInstance, appendContents = props.appendContents, _c = props.setAllPlugins, setAllPlugins = _c === void 0 ? true : _c, _d = props.disable, disable = _d === void 0 ? false : _d, _e = props.readOnly, readOnly = _e === void 0 ? false : _e, _f = props.hide, hide = _f === void 0 ? false : _f, _g = props.hideToolbar, hideToolbar = _g === void 0 ? false : _g, _h = props.disableToolbar, disableToolbar = _h === void 0 ? false : _h, onChange = props.onChange, autoFocus = props.autoFocus, onBlur = props.onBlur, onLoad = props.onLoad, toggleCodeView = props.toggleCodeView, toggleFullScreen = props.toggleFullScreen, showInline = props.showInline, showController = props.showController, imageUploadHandler = props.imageUploadHandler;
-    var txtArea = react_1.useRef(null);
-    var editor = react_1.useRef();
-    var initialEffect = react_1.useRef(true);
-    react_1.useEffect(function () {
-        setOptions.lang = setOptions.lang || getLanguage_1.default(lang);
+    var name = props.name, lang = props.lang, _a = props.setOptions, setOptions = _a === void 0 ? {} : _a, placeholder = props.placeholder, _b = props.width, width = _b === void 0 ? "100%" : _b, height = props.height, defaultValue = props.defaultValue, setContents = props.setContents, onSave = props.onSave, onSetToolbarButtons = props.onSetToolbarButtons, setDefaultStyle = props.setDefaultStyle, onResizeEditor = props.onResizeEditor, getSunEditorInstance = props.getSunEditorInstance, appendContents = props.appendContents, _c = props.setAllPlugins, setAllPlugins = _c === void 0 ? true : _c, _d = props.disable, disable = _d === void 0 ? false : _d, _e = props.readOnly, readOnly = _e === void 0 ? false : _e, _f = props.hide, hide = _f === void 0 ? false : _f, _g = props.hideToolbar, hideToolbar = _g === void 0 ? false : _g, _h = props.disableToolbar, disableToolbar = _h === void 0 ? false : _h, onChange = props.onChange, autoFocus = props.autoFocus, onBlur = props.onBlur, onLoad = props.onLoad, toggleCodeView = props.toggleCodeView, toggleFullScreen = props.toggleFullScreen, showInline = props.showInline, showController = props.showController, imageUploadHandler = props.imageUploadHandler;
+    var txtArea = (0, react_1.useRef)(null);
+    var editor = (0, react_1.useRef)();
+    var initialEffect = (0, react_1.useRef)(true);
+    (0, react_1.useEffect)(function () {
+        setOptions.lang = setOptions.lang || (0, getLanguage_1.default)(lang);
         setOptions.width = setOptions.width || width;
         setOptions.placeholder = setOptions.placeholder || placeholder;
         if (!setOptions.plugins && setAllPlugins)
@@ -65,11 +65,16 @@ var SunEditor = function (props) {
             editor.current.onBlur = function (e) {
                 return editor.current && onBlur(e, editor.current.getContents(true));
             };
+        if (onSave)
+            editor.current.onSave = function (content) { return onSave(content); };
+        if (onSetToolbarButtons)
+            editor.current.onSetToolbarButtons = function (buttonList) { return onSetToolbarButtons(buttonList); };
         if (onResizeEditor)
             editor.current.onResizeEditor = function (height, prevHeight) {
                 return onResizeEditor(height, prevHeight);
             };
         var fromClipBoardEvents = ["onCopy", "onCut"];
+        var toClipBoardEvents = ["onDrop", "onPaste"];
         var singleEvents = [
             "onMouseDown",
             "onScroll",
@@ -95,7 +100,6 @@ var SunEditor = function (props) {
             "onVideoUploadError",
             "onAudioUploadError",
         ];
-        var toClipBoardEvents = ["onDrop", "onPaste"];
         fromClipBoardEvents.forEach(function (event) {
             var value = props[event];
             if (editor.current && event && value)
@@ -147,7 +151,7 @@ var SunEditor = function (props) {
                 if (editor.current.util.isIE)
                     editor.current.core._createDefaultRange();
                 if (disable === true)
-                    editor.current.disabled();
+                    editor.current.disable();
                 if (readOnly === true)
                     editor.current.readOnly(true);
                 if (hide === true)
@@ -155,7 +159,7 @@ var SunEditor = function (props) {
                 if (hideToolbar === true)
                     editor.current.toolbar.hide();
                 if (disableToolbar === true)
-                    editor.current.toolbar.disabled();
+                    editor.current.toolbar.disable();
                 if (autoFocus === false)
                     editor.current.core.context.element.wysiwyg.blur();
                 else if (autoFocus === true)
@@ -187,23 +191,23 @@ var SunEditor = function (props) {
                 editor.current.destroy();
         };
     }, []);
-    react_1.useEffect(function () {
+    (0, react_1.useEffect)(function () {
         var _a;
         if (!initialEffect.current) {
             (_a = editor.current) === null || _a === void 0 ? void 0 : _a.setOptions({
-                lang: getLanguage_1.default(lang),
+                lang: (0, getLanguage_1.default)(lang),
                 placeholder: placeholder,
                 height: height,
                 width: width,
             });
         }
     }, [lang, placeholder, height, width]);
-    react_1.useEffect(function () {
+    (0, react_1.useEffect)(function () {
         var _a;
         if (setDefaultStyle && !initialEffect.current)
             (_a = editor.current) === null || _a === void 0 ? void 0 : _a.setDefaultStyle(setDefaultStyle);
     }, [setDefaultStyle]);
-    react_1.useEffect(function () {
+    (0, react_1.useEffect)(function () {
         var _a, _b;
         if (!initialEffect.current) {
             if (setContents !== undefined)
@@ -211,7 +215,7 @@ var SunEditor = function (props) {
                     ((_b = editor.current) === null || _b === void 0 ? void 0 : _b.setContents(setContents));
         }
     }, [setContents]);
-    react_1.useEffect(function () {
+    (0, react_1.useEffect)(function () {
         var _a, _b;
         if (!initialEffect.current) {
             if (appendContents !== undefined)
@@ -219,7 +223,7 @@ var SunEditor = function (props) {
             (_b = editor.current) === null || _b === void 0 ? void 0 : _b.core.focusEdge(null);
         }
     }, [appendContents]);
-    react_1.useEffect(function () {
+    (0, react_1.useEffect)(function () {
         var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
         if (!initialEffect.current) {
             if (hideToolbar === true)
@@ -227,13 +231,13 @@ var SunEditor = function (props) {
             else
                 (_b = editor.current) === null || _b === void 0 ? void 0 : _b.toolbar.show();
             if (disableToolbar === true)
-                (_c = editor.current) === null || _c === void 0 ? void 0 : _c.toolbar.disabled();
+                (_c = editor.current) === null || _c === void 0 ? void 0 : _c.toolbar.disable();
             else
-                (_d = editor.current) === null || _d === void 0 ? void 0 : _d.toolbar.enabled();
+                (_d = editor.current) === null || _d === void 0 ? void 0 : _d.toolbar.enable();
             if (disable === true)
-                (_e = editor.current) === null || _e === void 0 ? void 0 : _e.disabled();
+                (_e = editor.current) === null || _e === void 0 ? void 0 : _e.disable();
             else
-                (_f = editor.current) === null || _f === void 0 ? void 0 : _f.enabled();
+                (_f = editor.current) === null || _f === void 0 ? void 0 : _f.enable();
             if (readOnly === true)
                 (_g = editor.current) === null || _g === void 0 ? void 0 : _g.readOnly(true);
             else
@@ -244,7 +248,7 @@ var SunEditor = function (props) {
                 (_k = editor.current) === null || _k === void 0 ? void 0 : _k.show();
         }
     }, [disable, hideToolbar, disableToolbar, hide, readOnly]);
-    react_1.useEffect(function () {
+    (0, react_1.useEffect)(function () {
         initialEffect.current = false;
     }, []);
     return (react_1.default.createElement("textarea", __assign({ style: { visibility: "hidden" }, ref: txtArea }, { name: name })));

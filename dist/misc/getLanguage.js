@@ -5,7 +5,7 @@ var getLanguage = function (lang) {
         case "object":
             return lang;
         case "string":
-            return require("suneditor/src/lang/" + lang + ".js");
+            return require("suneditor/src/lang/".concat(lang, ".js"));
         default:
             return undefined;
     }
