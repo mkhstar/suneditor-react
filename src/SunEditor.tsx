@@ -21,6 +21,7 @@ const SunEditor: FC<SunEditorReactProps> = (props) => {
     setDefaultStyle,
     onResizeEditor,
     getSunEditorInstance,
+    getTextAreaElement,
     appendContents,
     setAllPlugins = true,
     disable = false,
@@ -59,6 +60,7 @@ const SunEditor: FC<SunEditorReactProps> = (props) => {
     });
 
     if (getSunEditorInstance) getSunEditorInstance(editor.current);
+    if (getTextAreaElement) getTextAreaElement(txtArea);
 
     editor.current.onChange = (content) => {
       if (name && txtArea.current) txtArea.current.value = content;
