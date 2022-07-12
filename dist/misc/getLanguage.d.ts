@@ -1,3 +1,3 @@
 import Lang from "../types/lang";
-declare const getLanguage: (lang?: Lang | undefined) => any;
+declare const getLanguage: (lang?: Lang) => any;
 export default getLanguage;
