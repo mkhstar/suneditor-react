@@ -8,5 +8,4 @@ jest.config.js
 tsconfig.json
 tsconfig.eslint.json
 .eslintignore
-.babelrc
 .github
