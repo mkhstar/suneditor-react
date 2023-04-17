@@ -1,0 +1,71 @@
+{
+    "extends": [
+      "airbnb",
+      "airbnb-typescript",
+      "airbnb/hooks",
+      "plugin:@typescript-eslint/recommended",
+      "plugin:prettier/recommended",
+      "prettier"
+    ],
+    "plugins": ["react", "@typescript-eslint"],
+    "env": {
+      "browser": true,
+      "es6": true,
+      "jest": false
+    },
+    "parser": "@typescript-eslint/parser",
+    "parserOptions": {
+      "ecmaFeatures": {
+        "jsx": true
+      },
+      "ecmaVersion": 2020,
+      "sourceType": "module",
+      "project": "./tsconfig.eslint.json"
+    },
+    "rules": {
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-non-null-assertion": "off",
+      "react/function-component-definition": "off",
+      "import/extensions": ["off"],
+      "react/no-unstable-nested-components": ["warn", { "allowAsProps": true }],
+      "import/no-extraneous-dependencies": [
+        "warn",
+        {
+          "devDependencies": [
+            "**/*.test.ts",
+            "**/*.spec.ts",
+            "**/*.test.tsx",
+            "**/*.spec.tsx"
+          ],
+          "optionalDependencies": false,
+          "peerDependencies": true
+        }
+      ],
+      "import/no-dynamic-require": "off",
+      "global-require": "off",
+      "comma-dangle": "off",
+      "import/no-cycle": "off",
+      "jsx-a11y/control-has-associated-label": "off",
+      "jsx-a11y/label-has-associated-control": "off",
+      "jsx-a11y/click-events-have-key-events": "off",
+      "react/require-default-props": "off",
+      "jsx-a11y/interactive-supports-focus": "off",
+      "@typescript-eslint/no-use-before-define": "off",
+      "@typescript-eslint/no-unused-expressions": ["error"],
+      "no-plusplus": "off",
+      "react/destructuring-assignment": "off",
+      "react-hooks/exhaustive-deps": "off",
+      "import/prefer-default-export": "off",
+      "react/prop-types": "off",
+      "no-unused-vars": "error",
+      "no-console": "warn",
+      "no-underscore-dangle": "off",
+      "react/jsx-props-no-spreading": "off",
+      "prettier/prettier": [
+        "error",
+        {
+          "endOfLine": "auto"
+        }
+      ]
+    }
+  }
