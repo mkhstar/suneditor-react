@@ -1,5 +1,5 @@
-import SunEditor from "./SunEditor";
+import SunEditor from "./components/SunEditor";
 
+export * as buttonList from "./buttons/buttonList";
 
-export * as buttonList from './misc/buttonList';
 export default SunEditor;

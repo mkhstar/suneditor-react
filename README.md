@@ -219,11 +219,11 @@ render() {
 **_Set Options (Settings) for the editor_**
 [Click to see all options available](https://github.com/JiHong88/SunEditor/blob/master/README.md#options)
 
-**Important Note:** Some toolbar buttons in `suneditor` require specific plugins to make them work properly. For example when you specify 'font' in the button list, you will need to import the required plugin from `suneditor`. `suneditor-react` by default loads all plugins. To change this behaviour, you can pass a plugin list of only the plugins you would like to load to the plugin option. This will override the default behaviour. To disable the loading of all plugins, set the `setAllPlugins` prop to false. Read More by clicking [this](https://github.com/JiHong88/SunEditor/#1-load-only-what-you-want)
+**Important Note:** Some toolbar buttons in `suneditor` require specific plugins to make them work properly. For example when you specify 'font' in the button list, you will need to import the required plugin from `suneditor`. `suneditor-react` by default loads all plugins. To change this behaviour, you can pass a plugin list of only the plugins you would like to load to the plugin option. This will override the default behaviour. To disable the loading of all plugins, set the `setAllPlugins` prop to false. Read More by clicking [this](https://github.com/JiHong88/SunEditor/#1-load-only-what-you-want).
 
 ```javascript
 
-import SunEditor,{buttonList} from "suneditor-react";
+import SunEditor, { buttonList } from "suneditor-react";
 /*
 	buttonList.basic = basic buttons for wordprocessing
 	buttonList.formatting = most tools used for formatting - This is the default option
@@ -245,7 +245,7 @@ render() {
 Sets all plugins used by buttons. Default value is true
 
 ```javascript
-import SunEditor,{buttonList} from "suneditor-react";
+import SunEditor, { buttonList } from "suneditor-react";
 
 //...
 render() {
@@ -759,7 +759,8 @@ render() {
 ## Editor Language Object
 
 You can translate the object below to any other language and pass it to the lang prop to set your locale language if it is not part of the strings of array above.
-Note: You will be aided by your editors intellisense
+Note: You will be aided by your editor's intellisense.
+**Note** If you are using an object like below, you need to make sure that you memoize it so that it doesn't run setOptions every time the editor re-renders. You can do this using `useRef` or `useMemo`
 
 ```javascript
 

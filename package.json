@@ -1,6 +1,6 @@
 {
   "name": "suneditor-react",
-  "version": "3.4.1",
+  "version": "3.5.0",
   "description": "A React Component for Suneditor",
   "repository": {
     "type": "git",
@@ -9,7 +9,10 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "rm -rf ./dist && tsc",
-    "prepare": "npm run build",
+    "lint": "eslint src/.",
+    "test": "jest",
+    "test-cov": "jest --coverage",
+    "prepublishOnly": "npm run build",
     "copy": "rm -rf ./build && tsc --outDir build && rm -rf ../suneditor-react-dom/src/build &&  cp -r build ../suneditor-react-dom/src && rm -rf ../suneditor-react-next/build &&  cp -r build ../suneditor-react-next"
   },
   "keywords": [
@@ -22,21 +25,41 @@
   ],
   "author": "Kusi Musah Hussein",
   "license": "MIT",
-  "peerDependencies": {
-    "react": ">= 16.9.0",
-    "react-dom": ">= 16.9.0",
-    "suneditor": "^2.42.0"
-  },
   "devDependencies": {
-    "@types/node": "^18.0.0",
-    "@types/react": "^18.0.14",
+    "@testing-library/jest-dom": "^5.16.5",
+    "@testing-library/react": "^14.0.0",
+    "@types/jest": "^29.4.0",
+    "@types/node": "^18.15.11",
+    "@types/react": "^18.0.27",
+    "@typescript-eslint/eslint-plugin": "^5.48.2",
+    "@typescript-eslint/parser": "^5.48.2",
+    "eslint": "^8.32.0",
+    "eslint-config-airbnb": "^19.0.4",
+    "eslint-config-airbnb-typescript": "^17.0.0",
+    "eslint-config-prettier": "^8.6.0",
+    "eslint-plugin-import": "^2.27.5",
+    "eslint-plugin-jsx-a11y": "^6.7.1",
+    "eslint-plugin-prettier": "^4.2.1",
+    "eslint-plugin-react": "^7.32.1",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "jest": "^29.4.1",
+    "jest-environment-jsdom": "^29.4.1",
+    "prettier": "^2.8.3",
     "react": "^18.2.0",
-    "suneditor": "^2.42.0",
-    "typescript": "^4.2.4"
+    "react-dom": "^18.2.0",
+    "suneditor": "^2.44.10",
+    "ts-jest": "^29.0.5",
+    "typescript": "^5.0.4"
+  },
+  "peerDependencies": {
+    "react": ">= 16.8.0",
+    "react-dom": ">= 16.8.0",
+    "suneditor": "^2.44.10"
   },
   "browserslist": [
     ">0.2%",
     "not ie <= 11",
     "not op_mini all"
-  ]
+  ],
+  "dependencies": {}
 }

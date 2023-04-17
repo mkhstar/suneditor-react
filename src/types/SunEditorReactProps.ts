@@ -1,8 +1,9 @@
-import lang from "./lang";
-import SetOptions from "./SetOptions";
 import SunEditorCore from "suneditor/src/lib/core";
+import { SunEditorOptions } from "suneditor/src/options";
+import lang from "./lang";
+import { UploadBeforeHandler, UploadBeforeReturn, UploadInfo } from "./upload";
 
-export interface SunEditorReactProps {
+interface SunEditorEventProps {
   onChange?: (content: string) => void;
   onInput?: (event: InputEvent) => void;
   onScroll?: (event: UIEvent) => void;
@@ -36,39 +37,39 @@ export interface SunEditorReactProps {
   onImageUpload?: (
     targetImgElement: HTMLImageElement,
     index: number,
-    state: string,
-    imageInfo: object,
+    state: "create" | "update" | "delete",
+    imageInfo: UploadInfo<HTMLImageElement>,
     remainingFilesCount: number
   ) => void;
   onVideoUpload?: (
-    targetElement: HTMLElement,
+    targetElement: HTMLVideoElement,
     index: number,
-    state: string,
-    info: object,
+    state: "create" | "update" | "delete",
+    videoInfo: UploadInfo<HTMLVideoElement>,
     remainingFilesCount: number
   ) => void;
   onAudioUpload?: (
-    targetElement: HTMLElement,
+    targetElement: HTMLAudioElement,
     index: number,
-    state: string,
-    info: object,
+    state: "create" | "update" | "delete",
+    audioInfo: UploadInfo<HTMLAudioElement>,
     remainingFilesCount: number
   ) => void;
   onImageUploadBefore?: (
     files: Array<File>,
     info: object,
-    uploadHandler: Function
-  ) => void;
+    uploadHandler: UploadBeforeHandler
+  ) => UploadBeforeReturn;
   onVideoUploadBefore?: (
     files: Array<File>,
     info: object,
-    uploadHandler: Function
-  ) => void;
+    uploadHandler: UploadBeforeHandler
+  ) => UploadBeforeReturn;
   onAudioUploadBefore?: (
     files: Array<File>,
     info: object,
-    uploadHandler: Function
-  ) => void;
+    uploadHandler: UploadBeforeHandler
+  ) => UploadBeforeReturn;
   onImageUploadError?: (errorMessage: string, result: any) => void;
   onVideoUploadError?: (errorMessage: string, result: any) => void;
   onAudioUploadError?: (errorMessage: string, result: any) => void;
@@ -85,27 +86,38 @@ export interface SunEditorReactProps {
       align: any;
       linkNewWindow: any;
       [key: string]: any;
-    },
-    core: any
+    }
   ) => void;
 
-  setOptions?: SetOptions;
+  onResizeEditor?: (height: number, prevHeight: number) => any;
+}
+
+interface SunEditorDefaultStateProps {
   defaultValue?: string;
+  autoFocus?: boolean;
+  setAllPlugins?: boolean;
+  getSunEditorInstance?: (sunEditor: SunEditorCore) => void;
+}
+
+interface SunEditorReactiveProps {
+  setDefaultStyle?: string;
+  placeholder?: string;
+  lang?: lang;
+  width?: string;
+  height?: string;
   setContents?: string;
   name?: string;
-  onResizeEditor?: (height: number, prevHeight: number) => void;
   appendContents?: string;
-  setDefaultStyle?: string;
   hideToolbar?: boolean;
   disableToolbar?: boolean;
   disable?: boolean;
   readOnly?: boolean;
   hide?: boolean;
-  autoFocus?: boolean;
-  getSunEditorInstance?: (sunEditor: SunEditorCore) => void;
-  placeholder?: string;
-  lang?: lang;
-  width?: string;
-  height?: string;
-  setAllPlugins?: boolean;
+}
+
+export interface SunEditorReactProps
+  extends SunEditorEventProps,
+    SunEditorDefaultStateProps,
+    SunEditorReactiveProps {
+  setOptions?: SunEditorOptions;
 }
