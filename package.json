@@ -12,7 +12,7 @@
     "lint": "eslint src/.",
     "test": "jest --verbose",
     "test-cov": "jest --verbose --coverage",
-    "prepublishOnly": "npm run build",
+    "prepublishOnly": "yarn build",
     "copy": "rm -rf ./build && tsc --outDir build && rm -rf ../suneditor-react-dom/src/build &&  cp -r build ../suneditor-react-dom/src && rm -rf ../suneditor-react-next/build &&  cp -r build ../suneditor-react-next"
   },
   "keywords": [
