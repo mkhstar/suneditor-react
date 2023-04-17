@@ -10,8 +10,8 @@
   "scripts": {
     "build": "rm -rf ./dist && tsc",
     "lint": "eslint src/.",
-    "test": "jest",
-    "test-cov": "jest --coverage",
+    "test": "jest --verbose",
+    "test-cov": "jest --verbose --coverage",
     "prepublishOnly": "npm run build",
     "copy": "rm -rf ./build && tsc --outDir build && rm -rf ../suneditor-react-dom/src/build &&  cp -r build ../suneditor-react-dom/src && rm -rf ../suneditor-react-next/build &&  cp -r build ../suneditor-react-next"
   },
