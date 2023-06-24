@@ -5,7 +5,7 @@ import plugins from "suneditor/src/plugins";
 import suneditor from "suneditor";
 import { SunEditorReactProps } from "../types/SunEditorReactProps";
 import getLanguage from "../lang/getLanguage";
-import { events } from "../data/events";
+import { events, uploadBeforeEvents } from "../data/events";
 
 const SunEditor: FC<SunEditorReactProps> = (props) => {
   const {
@@ -87,6 +87,18 @@ const SunEditor: FC<SunEditorReactProps> = (props) => {
       editor.current.onBlur = (e) =>
         onBlur(e, editor.current!.getContents(true));
     }
+
+    uploadBeforeEvents.forEach((event) => {
+      const value = props[event];
+
+      if (editor.current && value)
+        editor.current[event] = (
+          files: Array<File>,
+          info: object,
+          _: any,
+          uploadHandler: any
+        ) => value(files, info, uploadHandler) as any;
+    });
 
     events.forEach((event) => {
       const value = props[event];

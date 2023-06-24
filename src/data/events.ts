@@ -6,9 +6,6 @@ export const events = [
   "onKeyUp",
   "onKeyDown",
   "onFocus",
-  "onImageUploadBefore",
-  "onVideoUploadBefore",
-  "onAudioUploadBefore",
   "onImageUpload",
   "onAudioUpload",
   "onVideoUpload",
@@ -26,4 +23,10 @@ export const events = [
   "onCut",
   "onDrop",
   "onPaste",
+] as const;
+
+export const uploadBeforeEvents = [
+  "onImageUploadBefore",
+  "onVideoUploadBefore",
+  "onAudioUploadBefore",
 ] as const;

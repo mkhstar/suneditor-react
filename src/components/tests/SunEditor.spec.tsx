@@ -2,7 +2,7 @@ import React from "react";
 import suneditor from "suneditor";
 import { fireEvent, render } from "@testing-library/react";
 import SunEditor from "../SunEditor";
-import { events } from "../../data/events";
+import { events, uploadBeforeEvents } from "../../data/events";
 
 jest.mock("suneditor", () => ({
   __esModule: true,
@@ -341,9 +341,6 @@ describe("<SunEditor />", () => {
         onKeyUp: expect.any(Function),
         onKeyDown: expect.any(Function),
         onFocus: expect.any(Function),
-        onImageUploadBefore: expect.any(Function),
-        onVideoUploadBefore: expect.any(Function),
-        onAudioUploadBefore: expect.any(Function),
         onImageUpload: expect.any(Function),
         onAudioUpload: expect.any(Function),
         onVideoUpload: expect.any(Function),
@@ -361,6 +358,25 @@ describe("<SunEditor />", () => {
         onCut: expect.any(Function),
         onDrop: expect.any(Function),
         onPaste: expect.any(Function),
+      });
+    });
+
+    it("should set expected upload before events", () => {
+      const createSpy = jest.spyOn(suneditor, "create");
+
+      render(
+        <SunEditor
+          {...uploadBeforeEvents.reduce(
+            (acc, v) => ({ ...acc, [v]: jest.fn() }),
+            {}
+          )}
+        />
+      );
+
+      expect(createSpy.mock.results[0].value).toMatchObject({
+        onImageUploadBefore: expect.any(Function),
+        onVideoUploadBefore: expect.any(Function),
+        onAudioUploadBefore: expect.any(Function),
       });
     });
   });
