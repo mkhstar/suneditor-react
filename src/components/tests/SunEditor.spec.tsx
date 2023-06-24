@@ -357,6 +357,10 @@ describe("<SunEditor />", () => {
         toggleFullScreen: expect.any(Function),
         showInline: expect.any(Function),
         showController: expect.any(Function),
+        onCopy: expect.any(Function),
+        onCut: expect.any(Function),
+        onDrop: expect.any(Function),
+        onPaste: expect.any(Function),
       });
     });
   });

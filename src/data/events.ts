@@ -22,4 +22,8 @@ export const events = [
   "toggleFullScreen",
   "showInline",
   "showController",
+  "onCopy",
+  "onCut",
+  "onDrop",
+  "onPaste",
 ] as const;
