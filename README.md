@@ -67,8 +67,8 @@ In Next.js 13, you need to use the new `use client` declarative.
 import SunEditor from 'suneditor-react'
 import 'suneditor/dist/css/suneditor.min.css'
                                            
-export default function Editor() {
-    return <SunEditor />
+export default function Editor(props) {
+    return <SunEditor {...props} />
 }
 ```
 
