@@ -57,6 +57,36 @@ const MyComponent = props => {
 export default MyComponent;
 ```
 
+### Next.js 13
+
+In Next.js 13, you need to use the new `use client` declarative.
+
+```jsx
+// components/Editor.js
+'use client'
+import SunEditor from 'suneditor-react'
+import 'suneditor/dist/css/suneditor.min.css'
+                                           
+export default function Editor(props) {
+    return <SunEditor {...props} />
+}
+```
+
+```jsx
+// page.jsx
+import SunEditor from 'components/Editor'
+
+const MyComponent = props => {
+  return (
+    <div>
+      <p> My Other Contents </p>
+      <SunEditor />
+    </div>
+  );
+};
+export default MyComponent;
+```
+
 # Props
 
 ## About Core
