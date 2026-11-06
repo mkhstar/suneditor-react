@@ -5,7 +5,10 @@
 [![NPM](https://img.shields.io/npm/v/suneditor-react.svg)](https://www.npmjs.com/package/suneditor-react) [![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
 
 > [!NOTE]
-> **Using SunEditor v3?** This package targets SunEditor **v2**.
+> **Using SunEditor v3?**
+>
+> This package targets SunEditor **v2**.
+>
 > For v3, use the official wrapper [`@suneditor/suneditor-react`](https://github.com/suneditor/suneditor-react).
 >
 > ```sh
